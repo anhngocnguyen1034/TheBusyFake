@@ -11,7 +11,9 @@ object ChatMessageMapper {
             messageId = data.messageId,
             text = data.text,
             timestamp = Date(data.timestamp),
-            isFromMe = data.isFromMe
+            isFromMe = data.isFromMe,
+            imageUri = data.imageUri,
+            replyToMessageId = data.replyToMessageId
         )
     }
     
@@ -21,7 +23,9 @@ object ChatMessageMapper {
             messageId = entity.messageId,
             text = entity.text,
             timestamp = entity.timestamp.time,
-            isFromMe = entity.isFromMe
+            isFromMe = entity.isFromMe,
+            imageUri = entity.imageUri,
+            replyToMessageId = entity.replyToMessageId
         )
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,14 +43,7 @@ import com.example.thebusysimulator.presentation.navigation.Screen
 import kotlin.math.PI
 import kotlin.math.sin
 
-object AppColors {
-    val BackgroundStart = Color(0xFF1F2029)
-    val BackgroundEnd = Color(0xFF2C2D3A)
-    val BottomNavBg = Color(0xFFFFFFFF)
-    val Accent = Color(0xFF6C63FF)
-    val AccentSecondary = Color(0xFFFF6584)
-    val IconInactive = Color(0xFFB0B3C7)
-}
+// AppColors removed - using MaterialTheme.colorScheme instead
 
 const val DEFAULT_PADDING = 44
 
@@ -139,12 +133,13 @@ fun MainScreenUI(
     clickAnimationProgress: Float = 0f,
     toggleAnimation: () -> Unit = { }
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(AppColors.BackgroundStart, AppColors.BackgroundEnd)
+                    colors = listOf(colorScheme.background, colorScheme.surface)
                 )
             ) ,
         contentAlignment = Alignment.BottomCenter
@@ -154,11 +149,11 @@ fun MainScreenUI(
             // Bạn có thể đặt nội dung game/app ở đây
         }
 
-        CustomBottomNavigation(navController = navController)
+        CustomBottomNavigation(navController = navController, colorScheme = colorScheme)
 
         // Hiệu ứng lan tỏa khi click
         Circle(
-            color = AppColors.Accent.copy(alpha = 0.5f),
+            color = colorScheme.primary.copy(alpha = 0.5f),
             animationProgress = 0.5f
         )
 
@@ -202,7 +197,10 @@ fun Circle(color: Color, animationProgress: Float) {
 }
 
 @Composable
-fun CustomBottomNavigation(navController: NavController) {
+fun CustomBottomNavigation(
+    navController: NavController,
+    colorScheme: androidx.compose.material3.ColorScheme = MaterialTheme.colorScheme
+) {
     Box(
         modifier = Modifier
             .height(100.dp)
@@ -235,7 +233,7 @@ fun CustomBottomNavigation(navController: NavController) {
                 close()
             }
             // Vẽ bóng đổ nhẹ cho thanh nav (giả lập elevation)
-            drawPath(path, color = AppColors.BottomNavBg)
+            drawPath(path, color = colorScheme.onBackground)
         }
 
         // Icon Buttons trên thanh Navigation
@@ -252,7 +250,7 @@ fun CustomBottomNavigation(navController: NavController) {
                 Icon(
                     imageVector = Icons.Rounded.Home,
                     contentDescription = "Home",
-                    tint = AppColors.IconInactive,
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -261,7 +259,7 @@ fun CustomBottomNavigation(navController: NavController) {
                 Icon(
                     imageVector = Icons.Rounded.Person,
                     contentDescription = "Profile",
-                    tint = AppColors.IconInactive,
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -276,6 +274,7 @@ fun FabGroup(
     renderEffect: androidx.compose.ui.graphics.RenderEffect? = null,
     toggleAnimation: () -> Unit = { }
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         Modifier
             .fillMaxSize()
@@ -294,7 +293,7 @@ fun FabGroup(
                     ) * FastOutSlowInEasing.transform(0f, 0.8f, animationProgress)
                 ),
             opacity = LinearEasing.transform(0.2f, 0.7f, animationProgress),
-            backgroundColor = AppColors.AccentSecondary,
+            backgroundColor = colorScheme.secondary,
             onClick = { navController.navigate(Screen.FakeCall.route) }
         )
 
@@ -307,8 +306,8 @@ fun FabGroup(
                 ) * FastOutSlowInEasing.transform(0.1f, 0.9f, animationProgress)
             ),
             opacity = LinearEasing.transform(0.3f, 0.8f, animationProgress),
-            backgroundColor = Color.White,
-            iconColor = AppColors.Accent,
+            backgroundColor = colorScheme.onBackground,
+            iconColor = colorScheme.primary,
             onClick = { navController.navigate(Screen.Settings.route) }
         )
 
@@ -322,7 +321,7 @@ fun FabGroup(
                 ) * FastOutSlowInEasing.transform(0.2f, 1.0f, animationProgress)
             ),
             opacity = LinearEasing.transform(0.4f, 0.9f, animationProgress),
-            backgroundColor = AppColors.AccentSecondary,
+            backgroundColor = colorScheme.secondary,
             onClick = { navController.navigate(Screen.Message.route) }
         )
 
@@ -330,7 +329,7 @@ fun FabGroup(
         AnimatedFab(
             modifier = Modifier
                 .scale(1f - LinearEasing.transform(0.5f, 0.85f, animationProgress)),
-            backgroundColor = AppColors.Accent
+            backgroundColor = colorScheme.primary
         )
 
         // Nút chính (Dấu + xoay)
@@ -353,7 +352,7 @@ fun AnimatedFab(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     opacity: Float = 1f,
-    backgroundColor: Color = AppColors.Accent,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
     iconColor: Color = Color.White,
     onClick: () -> Unit = {}
 ) {

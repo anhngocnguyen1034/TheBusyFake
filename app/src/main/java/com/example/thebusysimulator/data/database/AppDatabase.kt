@@ -13,7 +13,7 @@ import com.example.thebusysimulator.data.model.MessageEntity
 
 @Database(
     entities = [MessageEntity::class, ChatMessageEntity::class],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -59,6 +59,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Thêm cột imageUri vào bảng chat_messages
+                database.execSQL("ALTER TABLE chat_messages ADD COLUMN imageUri TEXT")
+            }
+        }
+        
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Thêm cột replyToMessageId vào bảng chat_messages
+                database.execSQL("ALTER TABLE chat_messages ADD COLUMN replyToMessageId TEXT")
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val builder = Room.databaseBuilder(
@@ -66,7 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 val instance = builder.build()
                 INSTANCE = instance
                 instance

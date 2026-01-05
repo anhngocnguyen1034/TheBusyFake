@@ -57,5 +57,13 @@ class MessageRepository(
             unreadCount = if (chatMessage.isFromMe) 0 else (message?.unreadCount ?: 0) + 1
         )
     }
+    
+    suspend fun deleteChatMessage(chatMessageId: String) {
+        chatMessageDao.deleteChatMessageById(chatMessageId)
+    }
+    
+    suspend fun updateChatMessage(chatMessage: ChatMessage) {
+        chatMessageDao.updateChatMessage(ChatMessageMapper.fromEntity(chatMessage))
+    }
 }
 

@@ -23,6 +23,8 @@ data class ChatMessageEntity(
     val messageId: String, // Foreign key to MessageEntity
     val text: String,
     val timestamp: Long,
-    val isFromMe: Boolean
+    val isFromMe: Boolean,
+    val imageUri: String? = null, // URI của ảnh nếu có
+    val replyToMessageId: String? = null // ID của tin nhắn được phản hồi
 )
 

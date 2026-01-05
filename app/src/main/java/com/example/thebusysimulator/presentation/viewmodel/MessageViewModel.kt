@@ -76,7 +76,9 @@ class MessageViewModel(
                         messageId = momId,
                         text = text,
                         timestamp = calendar.time,
-                        isFromMe = false
+                        isFromMe = false,
+                        imageUri = null,
+                        replyToMessageId = null
                     )
                     messageRepository.insertChatMessage(chatMessage)
                 }
@@ -131,7 +133,9 @@ class MessageViewModel(
                         messageId = loverId,
                         text = text,
                         timestamp = calendar.time,
-                        isFromMe = false
+                        isFromMe = false,
+                        imageUri = null,
+                        replyToMessageId = null
                     )
                     messageRepository.insertChatMessage(chatMessage)
                 }
@@ -229,7 +233,7 @@ class MessageViewModel(
         }
     }
     
-    fun sendChatMessage(messageId: String, text: String) {
+    fun sendChatMessage(messageId: String, text: String, imageUri: String? = null) {
         viewModelScope.launch {
             try {
                 // Gửi tin nhắn của người dùng
@@ -238,7 +242,9 @@ class MessageViewModel(
                     messageId = messageId,
                     text = text,
                     timestamp = Date(),
-                    isFromMe = true
+                    isFromMe = true,
+                    imageUri = imageUri,
+                    replyToMessageId = null
                 )
                 messageRepository.insertChatMessage(chatMessage)
                 
@@ -283,7 +289,9 @@ class MessageViewModel(
                         messageId = messageId,
                         text = replyText,
                         timestamp = Date(),
-                        isFromMe = false
+                        isFromMe = false,
+                        imageUri = null,
+                        replyToMessageId = null // Tin nhắn tự động không phải là phản hồi
                     )
                     messageRepository.insertChatMessage(replyMessage)
                     
@@ -301,6 +309,58 @@ class MessageViewModel(
                 val existingState = currentState[messageId]
                 currentState[messageId] = existingState?.copy(errorMessage = e.message)
                     ?: ChatUiState(errorMessage = e.message, isTyping = false)
+                _chatUiState.value = currentState
+            }
+        }
+    }
+    
+    fun deleteChatMessage(chatMessageId: String, messageId: String) {
+        viewModelScope.launch {
+            try {
+                messageRepository.deleteChatMessage(chatMessageId)
+            } catch (e: Exception) {
+                val currentState = _chatUiState.value.toMutableMap()
+                val existingState = currentState[messageId]
+                currentState[messageId] = existingState?.copy(errorMessage = e.message)
+                    ?: ChatUiState(errorMessage = e.message)
+                _chatUiState.value = currentState
+            }
+        }
+    }
+    
+    fun updateChatMessage(chatMessage: ChatMessage) {
+        viewModelScope.launch {
+            try {
+                messageRepository.updateChatMessage(chatMessage)
+            } catch (e: Exception) {
+                val currentState = _chatUiState.value.toMutableMap()
+                val existingState = currentState[chatMessage.messageId]
+                currentState[chatMessage.messageId] = existingState?.copy(errorMessage = e.message)
+                    ?: ChatUiState(errorMessage = e.message)
+                _chatUiState.value = currentState
+            }
+        }
+    }
+    
+    fun replyToChatMessage(messageId: String, replyText: String, originalMessage: ChatMessage) {
+        viewModelScope.launch {
+            try {
+                // Tạo tin nhắn phản hồi với replyToMessageId để biết đang phản hồi tin nhắn nào
+                val replyMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = replyText,
+                    timestamp = Date(),
+                    isFromMe = true,
+                    imageUri = null,
+                    replyToMessageId = originalMessage.id // Lưu ID của tin nhắn gốc
+                )
+                messageRepository.insertChatMessage(replyMessage)
+            } catch (e: Exception) {
+                val currentState = _chatUiState.value.toMutableMap()
+                val existingState = currentState[messageId]
+                currentState[messageId] = existingState?.copy(errorMessage = e.message)
+                    ?: ChatUiState(errorMessage = e.message)
                 _chatUiState.value = currentState
             }
         }

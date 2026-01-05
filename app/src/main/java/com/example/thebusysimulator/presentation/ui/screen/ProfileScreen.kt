@@ -10,17 +10,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
 import androidx.navigation.NavController
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(AppColors.BackgroundStart, AppColors.BackgroundEnd)
+                    colors = listOf(colorScheme.background, colorScheme.surface)
                 )
             )
     ) {
@@ -39,14 +41,14 @@ fun ProfileScreen(navController: NavController) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBack,
                         contentDescription = "Back",
-                        tint = AppColors.BottomNavBg
+                        tint = colorScheme.onBackground
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Profile",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = AppColors.BottomNavBg
+                    color = colorScheme.onBackground
                 )
             }
             
@@ -60,7 +62,7 @@ fun ProfileScreen(navController: NavController) {
                 Text(
                     text = "Profile Screen",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = AppColors.BottomNavBg
+                    color = colorScheme.onBackground
                 )
             }
         }

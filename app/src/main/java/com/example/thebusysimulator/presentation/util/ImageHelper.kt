@@ -10,6 +10,7 @@ import java.io.InputStream
 
 object ImageHelper {
     private const val AVATAR_DIR = "avatars"
+    private const val CHAT_IMAGES_DIR = "chat_images"
     
     /**
      * Copy image from URI to app's internal storage and return the file path
@@ -24,6 +25,34 @@ object ImageHelper {
                 
                 val fileName = "avatar_${System.currentTimeMillis()}.jpg"
                 val file = File(avatarDir, fileName)
+                
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    FileOutputStream(file).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                
+                file.absolutePath
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+    
+    /**
+     * Save chat image from URI to app's internal storage and return the file path
+     */
+    suspend fun saveChatImageToInternalStorage(context: Context, uri: Uri): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val chatImagesDir = File(context.filesDir, CHAT_IMAGES_DIR)
+                if (!chatImagesDir.exists()) {
+                    chatImagesDir.mkdirs()
+                }
+                
+                val fileName = "chat_image_${System.currentTimeMillis()}.jpg"
+                val file = File(chatImagesDir, fileName)
                 
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     FileOutputStream(file).use { outputStream ->

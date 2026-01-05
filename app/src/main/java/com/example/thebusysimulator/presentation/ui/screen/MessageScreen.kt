@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,12 +69,13 @@ fun MessageScreen(
         }
     }
 
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(AppColors.BackgroundStart, AppColors.BackgroundEnd)
+                    colors = listOf(colorScheme.background, colorScheme.surface)
                 )
             )
     ) {
@@ -96,14 +98,14 @@ fun MessageScreen(
                         Icon(
                             imageVector = Icons.Rounded.ArrowBack,
                             contentDescription = "Back",
-                            tint = AppColors.BottomNavBg
+                            tint = colorScheme.onBackground
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Messages",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = AppColors.BottomNavBg,
+                        color = colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -113,7 +115,7 @@ fun MessageScreen(
                     Icon(
                         imageVector = Icons.Rounded.Add,
                         contentDescription = "Add Message",
-                        tint = AppColors.Accent
+                        tint = colorScheme.primary
                     )
                 }
             }
@@ -133,12 +135,12 @@ fun MessageScreen(
                         Text(
                             text = "No messages yet",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = AppColors.BottomNavBg.copy(alpha = 0.6f)
+                            color = colorScheme.onBackground.copy(alpha = 0.6f)
                         )
                         Text(
                             text = "Tap + to create a fake message",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = AppColors.BottomNavBg.copy(alpha = 0.4f)
+                            color = colorScheme.onBackground.copy(alpha = 0.4f)
                         )
                     }
                 }
@@ -205,7 +207,7 @@ fun MessageScreen(
                                 } else {
                                     Modifier.background(
                                         Brush.linearGradient(
-                                            colors = listOf(AppColors.Accent, AppColors.AccentSecondary)
+                                            colors = listOf(colorScheme.primary, colorScheme.secondary)
                                         )
                                     )
                                 }
@@ -281,8 +283,8 @@ fun MessageScreen(
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = AppColors.BottomNavBg,
-            textContentColor = AppColors.BottomNavBg
+            titleContentColor = colorScheme.onSurface,
+            textContentColor = colorScheme.onSurface
         )
     }
 }
@@ -292,6 +294,7 @@ fun MessageItem(
     message: Message,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
     val now = Date()
@@ -331,7 +334,7 @@ fun MessageItem(
                         } else {
                             Modifier.background(
                                 Brush.linearGradient(
-                                    colors = listOf(AppColors.Accent, AppColors.AccentSecondary)
+                                    colors = listOf(colorScheme.primary, colorScheme.secondary)
                                 )
                             )
                         }
@@ -396,20 +399,20 @@ fun MessageItem(
                     Text(
                         text = message.contactName,
                         style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.BottomNavBg,
+                        color = colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = timeText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.BottomNavBg.copy(alpha = 0.6f)
+                        color = colorScheme.onBackground.copy(alpha = 0.6f)
                     )
                 }
                 
                 Text(
                     text = message.lastMessage,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.BottomNavBg.copy(alpha = 0.8f),
+                    color = colorScheme.onBackground.copy(alpha = 0.8f),
                     maxLines = 1,
                     modifier = Modifier.fillMaxWidth()
                 )
