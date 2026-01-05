@@ -5,6 +5,7 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -15,7 +16,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
+import com.example.thebusysimulator.R
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
@@ -36,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -284,7 +286,7 @@ fun FabGroup(
     ) {
         // Nút con 1: Call (Màu phụ)
         AnimatedFab(
-            icon = Icons.Rounded.Call,
+            iconId = R.drawable.ic_call,
             modifier = Modifier
                 .padding(
                     PaddingValues(
@@ -299,7 +301,7 @@ fun FabGroup(
 
         // Nút con 2: Settings (Màu trắng, icon màu chính)
         AnimatedFab(
-            icon = Icons.Rounded.Settings,
+            iconId = R.drawable.ic_settings,
             modifier = Modifier.padding(
                 PaddingValues(
                     bottom = 88.dp,
@@ -313,7 +315,7 @@ fun FabGroup(
 
         // Nút con 3: ShoppingCart (Màu phụ)
         AnimatedFab(
-            icon = Icons.Rounded.ShoppingCart,
+            iconId = R.drawable.ic_message,
             modifier = Modifier.padding(
                 PaddingValues(
                     bottom = 72.dp,
@@ -334,7 +336,7 @@ fun FabGroup(
 
         // Nút chính (Dấu + xoay)
         AnimatedFab(
-            icon = Icons.Rounded.Add,
+            iconId = R.drawable.ic_add,
             modifier = Modifier
                 .rotate(
                     225 * FastOutSlowInEasing
@@ -346,11 +348,10 @@ fun FabGroup(
         )
     }
 }
-
 @Composable
 fun AnimatedFab(
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
+    @DrawableRes iconId: Int? = null,
     opacity: Float = 1f,
     backgroundColor: Color = MaterialTheme.colorScheme.primary,
     iconColor: Color = Color.White,
@@ -375,9 +376,9 @@ fun AnimatedFab(
         )
 
         // Icon
-        icon?.let {
+        iconId?.let {
             Icon(
-                imageVector = it,
+                painter = painterResource(id = it),
                 contentDescription = null,
                 tint = iconColor.copy(alpha = opacity),
                 modifier = Modifier.size(24.dp)

@@ -595,9 +595,9 @@ fun TypingIndicatorBubble() {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         Box(
             modifier = Modifier.padding(horizontal = 4.dp)
-                .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
+                .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
                 .background(Color.White.copy(alpha = 0.2f))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             TypingIndicator(animatedValue = animatedValue)
         }
