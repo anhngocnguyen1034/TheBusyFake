@@ -49,6 +49,12 @@ import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.sin
 
+// Sealed class để đại diện cho các item trong chat list
+sealed class ChatListItem {
+    data class DateHeader(val date: java.util.Date, val label: String) : ChatListItem()
+    data class MessageItem(val message: ChatMessage) : ChatListItem()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
@@ -84,6 +90,28 @@ fun ChatScreen(
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
     val reversedMessages = remember(messages) { messages.reversed() }
+    
+    // Tạo list items với header theo ngày
+    // Vì reverseLayout = true, cần reverse lại để hiển thị đúng
+    val chatItems = remember(messages) {
+        val items = mutableListOf<ChatListItem>()
+        var lastDate: java.util.Date? = null
+        
+        // Duyệt từ tin cũ đến tin mới (thứ tự gốc)
+        messages.forEach { message ->
+            val messageDate = message.timestamp
+            // Kiểm tra nếu là ngày mới, thêm header
+            if (lastDate == null || !DateUtils.isSameDate(messageDate, lastDate)) {
+                items.add(ChatListItem.DateHeader(messageDate, DateUtils.getDateHeaderLabel(messageDate)))
+                lastDate = messageDate
+            }
+            items.add(ChatListItem.MessageItem(message))
+        }
+        // Reverse lại vì reverseLayout = true sẽ đảo ngược thứ tự hiển thị
+        // Sau khi reverse: [tin mới, header "Hôm nay", tin cũ, header "Hôm qua"]
+        // Với reverseLayout = true, hiển thị: [header "Hôm qua", tin cũ, header "Hôm nay", tin mới] - ĐÚNG!
+        items.reversed()
+    }
 
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
@@ -170,14 +198,26 @@ fun ChatScreen(
                 if (isTyping) {
                     item { TypingIndicatorBubble() }
                 }
-                items(reversedMessages, key = { it.id }) { message ->
-                    ChatBubble(
-                        message = message,
-                        allMessages = reversedMessages,
-                        onLongClick = { openMessageOptions(message) },
-                        onReplyClick = { replyId -> scrollToMessage(replyId) },
-                        isHighlighted = message.id == highlightedMessageId
-                    )
+                items(chatItems.size, key = { index ->
+                    when (val item = chatItems[index]) {
+                        is ChatListItem.DateHeader -> "header_${item.date.time}"
+                        is ChatListItem.MessageItem -> item.message.id
+                    }
+                }) { index ->
+                    when (val item = chatItems[index]) {
+                        is ChatListItem.DateHeader -> {
+                            DateHeader(label = item.label)
+                        }
+                        is ChatListItem.MessageItem -> {
+                            ChatBubble(
+                                message = item.message,
+                                allMessages = reversedMessages,
+                                onLongClick = { openMessageOptions(item.message) },
+                                onReplyClick = { replyId -> scrollToMessage(replyId) },
+                                isHighlighted = item.message.id == highlightedMessageId
+                            )
+                        }
+                    }
                 }
             }
 
@@ -483,6 +523,35 @@ fun ChatBubble(
                 style = MaterialTheme.typography.bodySmall,
                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+    }
+}
+
+// --- DATE HEADER ---
+@Composable
+fun DateHeader(label: String) {
+    val colorScheme = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
         }
     }

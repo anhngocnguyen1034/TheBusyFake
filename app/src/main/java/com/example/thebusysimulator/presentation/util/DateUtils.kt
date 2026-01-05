@@ -15,11 +15,10 @@ object DateUtils {
             isSameDay(now, msgTime) -> {
                 SimpleDateFormat("HH:mm", Locale.getDefault()).format(msgTime.time)
             }
-
-            // 2. Hôm qua -> Hôm qua 14:30
+            
             isYesterday(now, msgTime) -> {
                 val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(msgTime.time)
-                "Hôm qua $time"
+                "$time"
             }
 
             // 3. Trong tuần (cách đây dưới 7 ngày) -> T2 14:30
@@ -43,6 +42,36 @@ object DateUtils {
     // Overload function để nhận Date
     fun formatMessageTime(date: Date): String {
         return formatMessageTime(date.time)
+    }
+
+    // Hàm để lấy label header theo ngày (Hôm nay, Hôm qua, hoặc ngày tháng)
+    fun getDateHeaderLabel(date: Date): String {
+        val now = Calendar.getInstance()
+        val msgTime = Calendar.getInstance().apply { time = date }
+
+        return when {
+            isSameDay(now, msgTime) -> "Hôm nay"
+            isYesterday(now, msgTime) -> "Hôm qua"
+            isSameWeek(now, msgTime) -> {
+                // Thứ trong tuần
+                SimpleDateFormat("EEEE", Locale("vi", "VN")).format(date)
+            }
+            isSameYear(now, msgTime) -> {
+                // Ngày/tháng
+                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
+            }
+            else -> {
+                // Ngày/tháng/năm
+                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
+            }
+        }
+    }
+
+    // Hàm để kiểm tra 2 Date có cùng ngày không (dùng cho header)
+    fun isSameDate(date1: Date, date2: Date): Boolean {
+        val cal1 = Calendar.getInstance().apply { time = date1 }
+        val cal2 = Calendar.getInstance().apply { time = date2 }
+        return isSameDay(cal1, cal2)
     }
 
     // --- Các hàm kiểm tra logic ---
