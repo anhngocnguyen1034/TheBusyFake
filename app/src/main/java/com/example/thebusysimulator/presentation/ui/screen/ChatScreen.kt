@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -66,6 +68,7 @@ fun ChatScreen(
     var selectedMessageForMenu by remember { mutableStateOf<ChatMessage?>(null) }
     var replyingToMessage by remember { mutableStateOf<ChatMessage?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
+    var selectedMessageIdForTimestamp by remember { mutableStateOf<String?>(null) }
 
     // Bottom Sheet State
     val sheetState = rememberModalBottomSheetState()
@@ -172,7 +175,7 @@ fun ChatScreen(
                     top = 8.dp,
                     bottom = 8.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (isTyping) {
                     item { TypingIndicatorBubble() }
@@ -183,7 +186,15 @@ fun ChatScreen(
                         allMessages = reversedMessages,
                         onLongClick = { openMessageOptions(message) },
                         onReplyClick = { replyId -> scrollToMessage(replyId) },
-                        isHighlighted = message.id == highlightedMessageId
+                        isHighlighted = message.id == highlightedMessageId,
+                        showTimestamp = message.id == selectedMessageIdForTimestamp,
+                        onClick = {
+                            if (selectedMessageIdForTimestamp == message.id) {
+                                selectedMessageIdForTimestamp = null
+                            } else {
+                                selectedMessageIdForTimestamp = message.id
+                            }
+                        }
                     )
                 }
             }
@@ -359,7 +370,9 @@ fun ChatBubble(
     allMessages: List<ChatMessage>,
     onLongClick: () -> Unit,
     onReplyClick: (String) -> Unit = {},
-    isHighlighted: Boolean = false
+    isHighlighted: Boolean = false,
+    showTimestamp: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
@@ -375,7 +388,7 @@ fun ChatBubble(
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .padding(horizontal = 4.dp),
+                .padding(horizontal = 2.dp),
             horizontalAlignment = if (message.isFromMe) Alignment.End else Alignment.Start
         ) {
             Box(
@@ -387,7 +400,7 @@ fun ChatBubble(
                             bottomEnd = if (message.isFromMe) 4.dp else 16.dp
                         )
                     )
-                    .combinedClickable(onClick = {}, onLongClick = onLongClick)
+                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                     .background(
                         if (isHighlighted) {
                             colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -401,7 +414,7 @@ fun ChatBubble(
                     originalMessage?.let { original ->
                         Row(
                             modifier = Modifier
-                                .padding(start = 8.dp, end = 8.dp, top = 8.dp) // Cách lề và top một chút
+                                .padding(start = 6.dp, end = 6.dp, top = 6.dp) // Cách lề và top một chút
                                 .fillMaxWidth()
                                 .height(IntrinsicSize.Min) // Để thanh dọc (Bar) dãn theo chiều cao nội dung
                                 .clip(RoundedCornerShape(8.dp)) // Bo tròn phần reply
@@ -428,7 +441,7 @@ fun ChatBubble(
                             // 2. Nội dung reply
                             Column(
                                 modifier = Modifier
-                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
                                     .fillMaxWidth()
                             ) {
                                 Text(
@@ -476,7 +489,7 @@ fun ChatBubble(
                             text = message.text,
                             color = if (message.isFromMe) Color.White else colorScheme.onBackground,
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                     } else if (originalMessage != null && message.imageUri == null) {
                         // Trường hợp hiếm: chỉ reply mà không có text/ảnh (thường không xảy ra nhưng cứ padding cho đẹp)
@@ -484,13 +497,19 @@ fun ChatBubble(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = DateUtils.formatMessageTime(message.timestamp),
-                style = MaterialTheme.typography.bodySmall,
-                color = colorScheme.onBackground.copy(alpha = 0.5f),
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
+            Spacer(modifier = Modifier.height(2.dp))
+            AnimatedVisibility(
+                visible = showTimestamp,
+                enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)),
+                exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
+            ) {
+                Text(
+                    text = DateUtils.formatMessageTime(message.timestamp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
         }
     }
 }
