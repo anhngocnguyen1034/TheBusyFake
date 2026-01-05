@@ -1,21 +1,30 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,21 +33,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import android.content.Intent
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.thebusysimulator.domain.model.ChatMessage
+import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.util.DateUtils
+import com.example.thebusysimulator.presentation.util.ImageHelper
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
-import java.text.SimpleDateFormat
-import java.util.*
+import kotlinx.coroutines.launch
 import kotlin.math.sin
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     navController: NavController,
@@ -48,229 +59,308 @@ fun ChatScreen(
 ) {
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
-    
-    // Load chat messages when screen opens
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // --- State quản lý Long Press & Reply ---
+    var selectedMessageForMenu by remember { mutableStateOf<ChatMessage?>(null) }
+    var replyingToMessage by remember { mutableStateOf<ChatMessage?>(null) }
+    var highlightedMessageId by remember { mutableStateOf<String?>(null) }
+
+    // Bottom Sheet State
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+
+    fun openMessageOptions(message: ChatMessage) {
+        selectedMessageForMenu = message
+        showBottomSheet = true
+    }
+
     LaunchedEffect(messageId) {
         viewModel.loadChatMessages(messageId)
     }
-    
+
     val chatUiState by viewModel.chatUiState.collectAsState()
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
-    
-    // Đảo ngược danh sách tin nhắn để tin nhắn mới nhất ở index 0 (dưới cùng với reverseLayout)
-    val reversedMessages = remember(messages) {
-        messages.reversed()
+    val reversedMessages = remember(messages) { messages.reversed() }
+
+    // Hàm để scroll đến tin nhắn được phản hồi
+    fun scrollToMessage(replyToMessageId: String) {
+        val index = reversedMessages.indexOfFirst { it.id == replyToMessageId }
+        if (index != -1) {
+            scope.launch {
+                highlightedMessageId = replyToMessageId
+                listState.animateScrollToItem(index)
+                // Xóa highlight sau 2 giây
+                kotlinx.coroutines.delay(2000)
+                highlightedMessageId = null
+            }
+        }
     }
-    
+
+    // Auto scroll logic
     var previousMessageCount by remember(messageId) { mutableStateOf(messages.size) }
     var previousTypingState by remember(messageId) { mutableStateOf(isTyping) }
-    
-    // Tự động scroll khi có tin nhắn mới hoặc typing indicator xuất hiện
+
     LaunchedEffect(messages.size, isTyping) {
         val currentCount = messages.size
         val itemCount = reversedMessages.size + if (isTyping) 1 else 0
-        
-        // Khi có tin nhắn mới (số lượng tăng)
-        if (currentCount > previousMessageCount && itemCount > 0) {
-            kotlinx.coroutines.delay(50) // Đợi một chút để UI cập nhật
-            // Với reverseLayout, scroll đến index 0 (tin nhắn mới nhất ở dưới cùng)
-            listState.animateScrollToItem(0)
-            previousMessageCount = currentCount
-        } 
-        // Khi typing indicator xuất hiện (chuyển từ false sang true)
-        else if (isTyping && !previousTypingState && itemCount > 0) {
+        if ((currentCount > previousMessageCount || (isTyping && !previousTypingState)) && itemCount > 0) {
             kotlinx.coroutines.delay(50)
             listState.animateScrollToItem(0)
         }
-        
         previousTypingState = isTyping
-        if (currentCount > previousMessageCount) {
-            previousMessageCount = currentCount
-        }
+        if (currentCount > previousMessageCount) previousMessageCount = currentCount
     }
-    
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(AppColors.BackgroundStart, AppColors.BackgroundEnd)
-                )
-            )
+            .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Top bar
+        Column(modifier = Modifier.fillMaxSize()) {
+            // --- TOP BAR ---
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarPadding()
+                modifier = Modifier.fillMaxWidth().statusBarPadding()
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            tint = AppColors.BottomNavBg
-                        )
+                        Icon(Icons.Rounded.ArrowBack, "Back", tint = colorScheme.onBackground)
                     }
-                    
                     Spacer(modifier = Modifier.width(8.dp))
-                    
-                    // Avatar
                     Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(AppColors.Accent, AppColors.AccentSecondary)
-                                )
-                            ),
+                        modifier = Modifier.size(40.dp).clip(CircleShape).background(
+                            Brush.linearGradient(listOf(colorScheme.primary, colorScheme.secondary))
+                        ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = contactName.take(1).uppercase(),
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(contactName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                     }
-                    
                     Spacer(modifier = Modifier.width(12.dp))
-                    
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = contactName,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = AppColors.BottomNavBg,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    // Video Call Button
-                    val context = LocalContext.current
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
-                                putExtra("caller_name", contactName)
-                                putExtra("caller_number", "")
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            }
-                            context.startActivity(intent)
+                    Text(contactName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = {
+                        val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
+                            putExtra("caller_name", contactName)
+                            putExtra("caller_number", "")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Call,
-                            contentDescription = "Video Call",
-                            tint = AppColors.Accent,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        context.startActivity(intent)
+                    }) {
+                        Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
                 }
             }
-            
-            // Messages list với reverseLayout để tin nhắn mới nhất ở dưới cùng
+
+            // --- MESSAGE LIST ---
             LazyColumn(
                 state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .imePadding(), // Để bàn phím đẩy nội dung lên mượt mà
-                reverseLayout = true, // Bật reverseLayout: tin nhắn mới nhất ở index 0 (dưới cùng)
+                modifier = Modifier.weight(1f).fillMaxWidth().imePadding(),
+                reverseLayout = true,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Hiển thị typing indicator khi đang chờ tin nhắn (ở đầu list vì reverseLayout)
                 if (isTyping) {
-                    item {
-                        TypingIndicatorBubble()
-                    }
+                    item { TypingIndicatorBubble() }
                 }
-                
-                // Tin nhắn đã được đảo ngược: tin nhắn mới nhất ở index 0
                 items(reversedMessages, key = { it.id }) { message ->
-                    ChatBubble(message = message)
+                    ChatBubble(
+                        message = message,
+                        allMessages = reversedMessages,
+                        onLongClick = { openMessageOptions(message) },
+                        onReplyClick = { replyId -> scrollToMessage(replyId) },
+                        isHighlighted = message.id == highlightedMessageId
+                    )
                 }
             }
-            
-            // Input field
+
+            // --- INPUT AREA ---
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = messageText,
-                        onValueChange = { messageText = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { 
-                            Text(
-                                text = "Type a message...",
-                                color = AppColors.BottomNavBg.copy(alpha = 0.5f)
-                            )
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AppColors.BottomNavBg,
-                            unfocusedTextColor = AppColors.BottomNavBg,
-                            focusedBorderColor = AppColors.Accent,
-                            unfocusedBorderColor = AppColors.BottomNavBg.copy(alpha = 0.3f),
-                            cursorColor = AppColors.Accent
-                        ),
-                        shape = RoundedCornerShape(24.dp),
-                        singleLine = true
-                    )
-                    
-                    IconButton(
-                        onClick = {
-                            if (messageText.isNotBlank()) {
-                                viewModel.sendChatMessage(messageId, messageText)
-                                messageText = ""
-                            }
-                        },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (messageText.isNotBlank()) {
-                                    AppColors.Accent
-                                } else {
-                                    AppColors.BottomNavBg.copy(alpha = 0.3f)
-                                }
-                            ),
-                        enabled = messageText.isNotBlank()
+                Column {
+                    // 1. THANH TRẠNG THÁI REPLY (ĐÃ SỬA GIAO DIỆN PREVIEW)
+                    AnimatedVisibility(
+                        visible = replyingToMessage != null,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Send,
-                            contentDescription = "Send",
-                            tint = if (messageText.isNotBlank()) Color.White else AppColors.BottomNavBg.copy(alpha = 0.5f),
-                            modifier = Modifier.size(20.dp)
-                        )
+                        replyingToMessage?.let { replyMsg ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Nền nhẹ hơn
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Thanh dọc màu sắc
+                                Box(
+                                    modifier = Modifier
+                                        .width(4.dp)
+                                        .height(36.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(colorScheme.primary)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Đang trả lời ${if(replyMsg.isFromMe) "chính mình" else contactName}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = replyMsg.text.ifBlank { if (replyMsg.imageUri != null) "📷 [Hình ảnh]" else "" },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { replyingToMessage = null },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Rounded.Close, "Cancel Reply", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
                     }
+
+                    // 2. INPUT BAR
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val imagePickerLauncher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.PickMultipleVisualMedia()
+                        ) { uris: List<Uri> ->
+                            if (uris.isNotEmpty()) {
+                                scope.launch {
+                                    uris.forEach { uri ->
+                                        val imagePath = ImageHelper.saveChatImageToInternalStorage(context, uri)
+                                        if (imagePath != null) {
+                                            viewModel.sendChatMessage(messageId, "", imagePath)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        IconButton(onClick = {
+                            imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }) {
+                            Icon(Icons.Rounded.AccountBox, "Select Image", tint = colorScheme.primary)
+                        }
+
+                        OutlinedTextField(
+                            value = messageText,
+                            onValueChange = { messageText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Nhập tin nhắn...", color = colorScheme.onBackground.copy(0.5f)) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = colorScheme.onBackground,
+                                unfocusedTextColor = colorScheme.onBackground,
+                                focusedBorderColor = colorScheme.primary,
+                                unfocusedBorderColor = colorScheme.onBackground.copy(0.3f),
+                                cursorColor = colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            maxLines = 4
+                        )
+
+                        IconButton(
+                            onClick = {
+                                if (messageText.isNotBlank()) {
+                                    if (replyingToMessage != null) {
+                                        viewModel.replyToChatMessage(messageId, messageText, replyingToMessage!!)
+                                        replyingToMessage = null
+                                    } else {
+                                        viewModel.sendChatMessage(messageId, messageText, null)
+                                    }
+                                    messageText = ""
+                                }
+                            },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.3f)),
+                            enabled = messageText.isNotBlank()
+                        ) {
+                            Icon(
+                                Icons.Rounded.Send, "Send",
+                                tint = if (messageText.isNotBlank()) Color.White else colorScheme.onBackground.copy(0.5f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = sheetState
+        ) {
+            Column(modifier = Modifier.padding(bottom = 32.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        replyingToMessage = selectedMessageForMenu
+                        showBottomSheet = false
+                    }.padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(Icons.Default.Edit, null, tint = colorScheme.primary)
+                    Text("Trả lời", style = MaterialTheme.typography.bodyLarge)
+                }
+                Divider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        selectedMessageForMenu?.let { viewModel.deleteChatMessage(it.id, messageId) }
+                        showBottomSheet = false
+                    }.padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(Icons.Rounded.Delete, null, tint = colorScheme.error)
+                    Text("Xóa tin nhắn", style = MaterialTheme.typography.bodyLarge, color = colorScheme.error)
                 }
             }
         }
     }
 }
 
+// --- CHAT BUBBLE ĐÃ SỬA GIAO DIỆN PHẢN HỒI ---
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ChatBubble(message: ChatMessage) {
-    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    
+fun ChatBubble(
+    message: ChatMessage,
+    allMessages: List<ChatMessage>,
+    onLongClick: () -> Unit,
+    onReplyClick: (String) -> Unit = {},
+    isHighlighted: Boolean = false
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+
+    val originalMessage = message.replyToMessageId?.let { replyId ->
+        allMessages.find { it.id == replyId }
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isFromMe) Arrangement.End else Arrangement.Start
@@ -285,110 +375,149 @@ fun ChatBubble(message: ChatMessage) {
                 modifier = Modifier
                     .clip(
                         RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
+                            topStart = 16.dp, topEnd = 16.dp,
                             bottomStart = if (message.isFromMe) 16.dp else 4.dp,
                             bottomEnd = if (message.isFromMe) 4.dp else 16.dp
                         )
                     )
+                    .combinedClickable(onClick = {}, onLongClick = onLongClick)
                     .background(
-                        if (message.isFromMe) {
-                            AppColors.Accent
+                        if (isHighlighted) {
+                            colorScheme.primaryContainer.copy(alpha = 0.5f)
                         } else {
-                            Color.White.copy(alpha = 0.2f)
+                            if (message.isFromMe) colorScheme.primary else colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         }
                     )
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = message.text,
-                    color = if (message.isFromMe) Color.White else AppColors.BottomNavBg,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Column {
+                    // --- PHẦN HIỂN THỊ TIN NHẮN ĐƯỢC PHẢN HỒI (ĐÃ SỬA) ---
+                    originalMessage?.let { original ->
+                        Row(
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 8.dp) // Cách lề và top một chút
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min) // Để thanh dọc (Bar) dãn theo chiều cao nội dung
+                                .clip(RoundedCornerShape(8.dp)) // Bo tròn phần reply
+                                .background(
+                                    // Tạo màu nền tương phản nhẹ với màu bubble chính
+                                    if (message.isFromMe) Color.Black.copy(alpha = 0.15f)
+                                    else Color.White.copy(alpha = 0.4f)
+                                )
+                                .clickable { 
+                                    original.id.let { replyId -> onReplyClick(replyId) }
+                                }
+                        ) {
+                            // 1. Thanh dọc (Vertical Bar)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(4.dp)
+                                    .background(
+                                        if (message.isFromMe) Color.White.copy(alpha = 0.7f)
+                                        else colorScheme.primary
+                                    )
+                            )
+
+                            // 2. Nội dung reply
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = if (original.isFromMe) "Bạn" else "Người khác", // Có thể thay bằng contactName nếu có
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (message.isFromMe) Color.White.copy(alpha = 0.9f) else colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = when {
+                                        original.text.isNotBlank() -> original.text
+                                        original.imageUri != null -> "📷 Hình ảnh"
+                                        else -> "Tin nhắn đã xóa"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (message.isFromMe) Color.White.copy(alpha = 0.7f) else colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+
+                    // --- NỘI DUNG CHÍNH (ẢNH HOẶC TEXT) ---
+                    message.imageUri?.let { imageUri ->
+                        val imageData = try {
+                            if (imageUri.startsWith("/")) java.io.File(imageUri).takeIf { it.exists() } else Uri.parse(imageUri)
+                        } catch (e: Exception) { null }
+
+                        if (imageData != null) {
+                            // Nếu có reply, thêm khoảng cách phía trên ảnh
+                            if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
+
+                            Image(
+                                painter = rememberAsyncImagePainter(ImageRequest.Builder(context).data(imageData).build()),
+                                contentDescription = "Chat Image",
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+
+                    if (message.text.isNotBlank()) {
+                        Text(
+                            text = message.text,
+                            color = if (message.isFromMe) Color.White else colorScheme.onBackground,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+                    } else if (originalMessage != null && message.imageUri == null) {
+                        // Trường hợp hiếm: chỉ reply mà không có text/ảnh (thường không xảy ra nhưng cứ padding cho đẹp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
             }
-            
             Spacer(modifier = Modifier.height(4.dp))
-            
             Text(
-                text = timeFormat.format(message.timestamp),
+                text = DateUtils.formatMessageTime(message.timestamp),
                 style = MaterialTheme.typography.bodySmall,
-                color = AppColors.BottomNavBg.copy(alpha = 0.5f),
+                color = colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
     }
 }
 
+// Các hàm khác (TypingIndicatorBubble) giữ nguyên
 @Composable
 fun TypingIndicatorBubble() {
-    // Animation cho typing indicator
     val infiniteTransition = rememberInfiniteTransition(label = "typing_indicator")
     val animatedValue by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 100f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
+        initialValue = 0f, targetValue = 100f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
         label = "typing_animation"
     )
-    
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .padding(horizontal = 4.dp),
-            horizontalAlignment = Alignment.Start
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+        Box(
+            modifier = Modifier.padding(horizontal = 4.dp)
+                .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 16.dp,
-                            bottomStart = 4.dp,
-                            bottomEnd = 16.dp
-                        )
-                    )
-                    .background(Color.White.copy(alpha = 0.2f))
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                TypingIndicator(animatedValue = animatedValue)
-            }
+            TypingIndicator(animatedValue = animatedValue)
         }
     }
 }
 
 @Composable
 fun TypingIndicator(animatedValue: Float) {
-    val dotColor = Color(0xFF909090)
-    val dotRadius = 3.dp
-    val spacing = 5.dp
-    val jumpHeight = 3.dp
-
-    Canvas(
-        modifier = Modifier
-            .size(width = dotRadius * 2 * 3 + spacing * 2, height = dotRadius * 2 + jumpHeight * 2)
-    ) {
-        val centerY = size.height / 2
-        val startX = dotRadius.toPx()
-
-        // Vẽ 3 chấm tròn với animation
+    val dotColor = Color(0xFF909090); val dotRadius = 3.dp; val spacing = 5.dp; val jumpHeight = 3.dp
+    Canvas(modifier = Modifier.size(width = dotRadius * 6 + spacing * 2, height = dotRadius * 2 + jumpHeight * 2)) {
+        val centerY = size.height / 2; val startX = dotRadius.toPx()
         for (i in 0..2) {
             val phase = (animatedValue / 100f * 2 * kotlin.math.PI).toFloat() + (i * 2.5f)
             val yOffset = sin(phase) * jumpHeight.toPx()
-
-            val x = startX + (i * (dotRadius.toPx() * 2 + spacing.toPx()))
-            val y = centerY + yOffset
-
-            drawCircle(
-                color = dotColor,
-                radius = dotRadius.toPx(),
-                center = Offset(x, y)
-            )
+            drawCircle(color = dotColor, radius = dotRadius.toPx(), center = Offset(startX + (i * (dotRadius.toPx() * 2 + spacing.toPx())), centerY + yOffset))
         }
     }
 }
