@@ -167,7 +167,8 @@ fun ChatScreen(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.ime),
                 reverseLayout = true,
                 contentPadding = PaddingValues(
                     start = 16.dp,
@@ -205,7 +206,9 @@ fun ChatScreen(
                     .fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .windowInsetsPadding(WindowInsets.ime)
                 ) {
                     AnimatedVisibility(
                         visible = replyingToMessage != null,
