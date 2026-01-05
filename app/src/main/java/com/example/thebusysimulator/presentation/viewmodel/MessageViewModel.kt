@@ -9,6 +9,7 @@ import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.domain.model.Message
 import com.example.thebusysimulator.presentation.util.AutoReplyHelper
 import com.example.thebusysimulator.presentation.util.ChatTimeCalculator
+import com.example.thebusysimulator.presentation.util.CharacterType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,8 @@ class MessageViewModel(
             delay(1000)
             initializeDefaultMomMessages()
             initializeDefaultLoverMessages()
+            initializeDefaultDoctorMessages()
+            initializeDefaultScientistMessages()
         }
     }
     
@@ -48,9 +51,13 @@ class MessageViewModel(
                 return // Đã khởi tạo rồi, không tạo lại
             }
             
-            // Kiểm tra xem đã có tin nhắn mẹ trong database chưa
-            val currentMessages = _uiState.value.messages
-            val momMessage = currentMessages.find { AutoReplyHelper.isMomContact(it.contactName) }
+            // Kiểm tra xem đã có tin nhắn mẹ trong database chưa bằng messageId đã lưu
+            val momMessageId = prefs?.getString("mom_message_id", null)
+            val momMessage = if (momMessageId != null) {
+                _uiState.value.messages.find { it.id == momMessageId }
+            } else {
+                null
+            }
             
             if (momMessage == null) {
                 // Tạo tin nhắn "Mẹ" mặc định
@@ -83,11 +90,13 @@ class MessageViewModel(
                     messageRepository.insertChatMessage(chatMessage)
                 }
                 
-                // Khởi tạo reply index
-                prefs?.edit()?.putInt("reply_index_$momId", 0)?.apply()
-                
-                // Đánh dấu đã khởi tạo để không tạo lại lần sau
-                prefs?.edit()?.putBoolean("mom_messages_initialized", true)?.apply()
+                // Lưu messageId và loại contact
+                prefs?.edit()?.apply {
+                    putString("mom_message_id", momId)
+                    putString("contact_type_$momId", "mom")
+                    putInt("reply_index_$momId", 0)
+                    putBoolean("mom_messages_initialized", true)
+                }?.apply()
             } else {
                 // Nếu đã có tin nhắn mẹ trong database, cũng đánh dấu đã khởi tạo
                 prefs?.edit()?.putBoolean("mom_messages_initialized", true)?.apply()
@@ -105,9 +114,13 @@ class MessageViewModel(
                 return // Đã khởi tạo rồi, không tạo lại
             }
             
-            // Kiểm tra xem đã có tin nhắn người yêu trong database chưa
-            val currentMessages = _uiState.value.messages
-            val loverMessage = currentMessages.find { AutoReplyHelper.isLoverContact(it.contactName) }
+            // Kiểm tra xem đã có tin nhắn người yêu trong database chưa bằng messageId đã lưu
+            val loverMessageId = prefs?.getString("lover_message_id", null)
+            val loverMessage = if (loverMessageId != null) {
+                _uiState.value.messages.find { it.id == loverMessageId }
+            } else {
+                null
+            }
             
             if (loverMessage == null) {
                 // Tạo tin nhắn "Người yêu" mặc định
@@ -140,14 +153,142 @@ class MessageViewModel(
                     messageRepository.insertChatMessage(chatMessage)
                 }
                 
-                // Khởi tạo reply index
-                prefs?.edit()?.putInt("reply_index_$loverId", 0)?.apply()
-                
-                // Đánh dấu đã khởi tạo để không tạo lại lần sau
-                prefs?.edit()?.putBoolean("lover_messages_initialized", true)?.apply()
+                // Lưu messageId và loại contact
+                prefs?.edit()?.apply {
+                    putString("lover_message_id", loverId)
+                    putString("contact_type_$loverId", "lover")
+                    putInt("reply_index_$loverId", 0)
+                    putBoolean("lover_messages_initialized", true)
+                }?.apply()
             } else {
                 // Nếu đã có tin nhắn người yêu trong database, cũng đánh dấu đã khởi tạo
                 prefs?.edit()?.putBoolean("lover_messages_initialized", true)?.apply()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private suspend fun initializeDefaultDoctorMessages() {
+        try {
+            // Kiểm tra xem đã khởi tạo tin nhắn bác sĩ chưa bằng SharedPreferences
+            val isInitialized = prefs?.getBoolean("doctor_messages_initialized", false) ?: false
+            if (isInitialized) {
+                return // Đã khởi tạo rồi, không tạo lại
+            }
+            
+            // Kiểm tra xem đã có tin nhắn bác sĩ trong database chưa bằng messageId đã lưu
+            val doctorMessageId = prefs?.getString("doctor_message_id", null)
+            val doctorMessage = if (doctorMessageId != null) {
+                _uiState.value.messages.find { it.id == doctorMessageId }
+            } else {
+                null
+            }
+            
+            if (doctorMessage == null) {
+                // Tạo tin nhắn "Bác sĩ" mặc định
+                val doctorId = UUID.randomUUID().toString()
+                val defaultMessage = Message(
+                    id = doctorId,
+                    contactName = "Bác sĩ",
+                    lastMessage = AutoReplyHelper.defaultDoctorMessages.first(),
+                    timestamp = Date(),
+                    unreadCount = AutoReplyHelper.defaultDoctorMessages.size,
+                    avatarUri = null
+                )
+                messageRepository.insertMessage(defaultMessage)
+                
+                // Tạo các tin nhắn mặc định từ "Bác sĩ"
+                val calendar = Calendar.getInstance()
+                calendar.add(Calendar.HOUR, -1) // Tin nhắn đầu cách đây 1 giờ
+                
+                AutoReplyHelper.defaultDoctorMessages.forEachIndexed { index, text ->
+                    calendar.add(Calendar.MINUTE, 15) // Mỗi tin nhắn cách nhau 15 phút
+                    val chatMessage = ChatMessage(
+                        id = UUID.randomUUID().toString(),
+                        messageId = doctorId,
+                        text = text,
+                        timestamp = calendar.time,
+                        isFromMe = false,
+                        imageUri = null,
+                        replyToMessageId = null
+                    )
+                    messageRepository.insertChatMessage(chatMessage)
+                }
+                
+                // Lưu messageId và loại contact
+                prefs?.edit()?.apply {
+                    putString("doctor_message_id", doctorId)
+                    putString("contact_type_$doctorId", "doctor")
+                    putInt("reply_index_$doctorId", 0)
+                    putBoolean("doctor_messages_initialized", true)
+                }?.apply()
+            } else {
+                // Nếu đã có tin nhắn bác sĩ trong database, cũng đánh dấu đã khởi tạo
+                prefs?.edit()?.putBoolean("doctor_messages_initialized", true)?.apply()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private suspend fun initializeDefaultScientistMessages() {
+        try {
+            // Kiểm tra xem đã khởi tạo tin nhắn nhà khoa học chưa bằng SharedPreferences
+            val isInitialized = prefs?.getBoolean("scientist_messages_initialized", false) ?: false
+            if (isInitialized) {
+                return // Đã khởi tạo rồi, không tạo lại
+            }
+            
+            // Kiểm tra xem đã có tin nhắn nhà khoa học trong database chưa bằng messageId đã lưu
+            val scientistMessageId = prefs?.getString("scientist_message_id", null)
+            val scientistMessage = if (scientistMessageId != null) {
+                _uiState.value.messages.find { it.id == scientistMessageId }
+            } else {
+                null
+            }
+            
+            if (scientistMessage == null) {
+                // Tạo tin nhắn "Nhà khoa học" mặc định
+                val scientistId = UUID.randomUUID().toString()
+                val defaultMessage = Message(
+                    id = scientistId,
+                    contactName = "Nhà khoa học",
+                    lastMessage = AutoReplyHelper.defaultScientistMessages.first(),
+                    timestamp = Date(),
+                    unreadCount = AutoReplyHelper.defaultScientistMessages.size,
+                    avatarUri = null
+                )
+                messageRepository.insertMessage(defaultMessage)
+                
+                // Tạo các tin nhắn mặc định từ "Nhà khoa học"
+                val calendar = Calendar.getInstance()
+                calendar.add(Calendar.HOUR, -1) // Tin nhắn đầu cách đây 1 giờ
+                
+                AutoReplyHelper.defaultScientistMessages.forEachIndexed { index, text ->
+                    calendar.add(Calendar.MINUTE, 15) // Mỗi tin nhắn cách nhau 15 phút
+                    val chatMessage = ChatMessage(
+                        id = UUID.randomUUID().toString(),
+                        messageId = scientistId,
+                        text = text,
+                        timestamp = calendar.time,
+                        isFromMe = false,
+                        imageUri = null,
+                        replyToMessageId = null
+                    )
+                    messageRepository.insertChatMessage(chatMessage)
+                }
+                
+                // Lưu messageId và loại contact
+                prefs?.edit()?.apply {
+                    putString("scientist_message_id", scientistId)
+                    putString("contact_type_$scientistId", "scientist")
+                    putInt("reply_index_$scientistId", 0)
+                    putBoolean("scientist_messages_initialized", true)
+                }?.apply()
+            } else {
+                // Nếu đã có tin nhắn nhà khoa học trong database, cũng đánh dấu đã khởi tạo
+                prefs?.edit()?.putBoolean("scientist_messages_initialized", true)?.apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -248,24 +389,32 @@ class MessageViewModel(
                 )
                 messageRepository.insertChatMessage(chatMessage)
                 
-                // Tự động trả lời cho tất cả các contact (Mẹ, Người yêu, và các contact tự tạo)
+                // Tự động trả lời cho tất cả các contact
                 val message = messageRepository.getMessageById(messageId)
                 if (message != null) {
-                    val isMom = AutoReplyHelper.isMomContact(message.contactName)
-                    val isLover = AutoReplyHelper.isLoverContact(message.contactName)
+                    // Lấy loại contact từ SharedPreferences (không dựa vào tên)
+                    val contactType = prefs?.getString("contact_type_$messageId", null)
                     
                     // Lấy reply index hiện tại
                     val currentIndex = prefs?.getInt("reply_index_$messageId", 0) ?: 0
                     
-                    // Lấy tin nhắn trả lời tương ứng
-                    val replyText = when {
-                        isMom -> AutoReplyHelper.getNextReply(currentIndex)
-                        isLover -> AutoReplyHelper.getNextLoverReply(currentIndex)
+                    // Lấy tin nhắn trả lời tương ứng dựa trên contact type
+                    val replyText = when (contactType) {
+                        "mom" -> AutoReplyHelper.getNextReply(currentIndex)
+                        "lover" -> AutoReplyHelper.getNextLoverReply(currentIndex)
+                        "doctor" -> AutoReplyHelper.getNextDoctorReply(currentIndex)
+                        "scientist" -> AutoReplyHelper.getNextScientistReply(currentIndex)
                         else -> AutoReplyHelper.getNextGenericReply(currentIndex) // Contact tự tạo
                     }
                     
-                    // Xác định loại nhân vật và tính toán thời gian delay
-                    val characterType = AutoReplyHelper.getCharacterType(message.contactName)
+                    // Xác định loại nhân vật dựa trên contact type và tính toán thời gian delay
+                    val characterType = when (contactType) {
+                        "mom" -> CharacterType.PARENT
+                        "lover" -> CharacterType.LOVER
+                        "doctor" -> CharacterType.EXPERT
+                        "scientist" -> CharacterType.EXPERT
+                        else -> CharacterType.LOVER // Mặc định
+                    }
                     val delayTime = ChatTimeCalculator.calculateDelay(replyText, characterType)
                     
                     // Bật typing indicator
@@ -296,9 +445,11 @@ class MessageViewModel(
                     messageRepository.insertChatMessage(replyMessage)
                     
                     // Cập nhật reply index cho lần sau
-                    val totalReplies = when {
-                        isMom -> AutoReplyHelper.getTotalReplies()
-                        isLover -> AutoReplyHelper.getTotalLoverReplies()
+                    val totalReplies = when (contactType) {
+                        "mom" -> AutoReplyHelper.getTotalReplies()
+                        "lover" -> AutoReplyHelper.getTotalLoverReplies()
+                        "doctor" -> AutoReplyHelper.getTotalDoctorReplies()
+                        "scientist" -> AutoReplyHelper.getTotalScientistReplies()
                         else -> AutoReplyHelper.getTotalGenericReplies() // Contact tự tạo
                     }
                     val nextIndex = (currentIndex + 1) % totalReplies

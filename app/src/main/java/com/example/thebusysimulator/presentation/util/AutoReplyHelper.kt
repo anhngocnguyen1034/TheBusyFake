@@ -63,6 +63,66 @@ object AutoReplyHelper {
         "Mình yêu bạn nhiều lắm. Bạn biết không?"
     )
     
+    // Danh sách câu trả lời tự động cho "Bác sĩ"
+    private val doctorReplies = listOf(
+        "Bạn nhớ kiểm tra xem đã uống đủ nước chưa? Não bộ chứa khoảng 73% là nước, mất nước nhẹ cũng làm giảm trí nhớ và sự tập trung đấy.",
+        "Nếu bạn đang nhìn màn hình lâu, hãy áp dụng quy tắc 20-20-20: Cứ 20 phút, nhìn xa 6 mét trong 20 giây để giảm cận thị giả.",
+        "Thử bài tập thở này xem: Hít vào bằng mũi 4 giây, giữ hơi 7 giây, rồi thở ra bằng miệng 8 giây. Nó giúp hệ thần kinh thư giãn ngay lập tức.",
+        "Bạn có đang ngồi gù lưng không? Ngồi sai tư thế chèn ép phổi, giảm oxy lên não khiến bạn buồn ngủ. Hãy đứng dậy vươn vai đi nào!",
+        "Khi stress, cơ thể tiết ra Cortisol. Nếu nồng độ này cao quá lâu sẽ gây tích mỡ bụng và suy giảm miễn dịch. Hãy thả lỏng vai xuống.",
+        "Tối nay nhớ ngủ trước 11 giờ nhé. Khi ngủ, hệ thống Glymphatic của não sẽ mở ra để 'dọn rác' độc tố tích tụ trong ngày.",
+        "Bữa sáng khởi động quá trình trao đổi chất. Bỏ bữa sáng giống như bắt xe chạy mà không đổ xăng vậy.",
+        "Hạn chế đồ uống quá ngọt vào buổi chiều. Đường sẽ làm năng lượng tăng vọt rồi tụt dốc không phanh (Sugar crash), khiến bạn uể oải hơn.",
+        "Cơ thể con người được thiết kế để vận động. Hãy đi lại nhẹ nhàng mỗi 1 tiếng để giảm nguy cơ tim mạch.",
+        "Tối về nhà, hãy hạn chế nhìn điện thoại 1 tiếng trước khi ngủ. Ánh sáng xanh ức chế Melatonin, làm bạn khó đi vào giấc ngủ sâu.",
+        "Nếu có thể, hãy ra ngoài đón chút nắng sớm. Ánh nắng giúp tổng hợp Vitamin D và Serotonin giúp bạn cảm thấy hạnh phúc hơn.",
+        "Đường ruột là 'bộ não thứ hai' của cơ thể. Hãy ăn thêm sữa chua hoặc rau xanh. Bụng êm thì đầu óc mới sáng suốt được.",
+        "Đừng uống cà phê sau 3 giờ chiều. Caffeine cần tới 6-8 tiếng để đào thải một nửa lượng đã nạp, uống muộn sẽ làm hỏng giấc ngủ tối.",
+        "Đôi khi liều thuốc tốt nhất cho tâm trí là 'Off' thông báo điện thoại. Dành 15 phút không công nghệ để não bộ được nghỉ ngơi thực sự.",
+        "Đừng lờ đi những cơn đau nhỏ như mỏi cổ, tê tay. Đó là tín hiệu cầu cứu của cơ thể báo hiệu bạn cần nghỉ ngơi ngay.",
+        "Mỗi ngày hãy thử tìm một điều nhỏ bé làm bạn vui. Tư duy tích cực thực sự giúp tăng cường hệ miễn dịch đấy.",
+        "Mẹo ngủ ngon: Phòng ngủ nên hơi lạnh một chút (khoảng 20-22 độ C). Nhiệt độ cơ thể cần giảm xuống để bắt đầu giấc ngủ sâu.",
+        "Công việc thì làm cả đời, nhưng sức khỏe có hạn sử dụng. Đừng bán mạng kiếm tiền rồi lại dùng tiền mua sức khỏe.",
+        "Hãy chớp mắt thường xuyên hơn. Khi tập trung vào màn hình, tần số chớp mắt giảm 66% gây khô và mỏi mắt.",
+        "Một nụ cười giúp giãn cơ mặt và giảm hormone căng thẳng. Dù có đang bận, hãy thử cười một cái xem sao!"
+    )
+    
+    // Tin nhắn mặc định khi khởi động cho bác sĩ
+    val defaultDoctorMessages = listOf(
+        "Bạn nhớ kiểm tra xem đã uống đủ nước chưa? Não bộ chứa khoảng 73% là nước, mất nước nhẹ cũng làm giảm trí nhớ và sự tập trung đấy.",
+        "Nếu bạn đang nhìn màn hình lâu, hãy áp dụng quy tắc 20-20-20: Cứ 20 phút, nhìn xa 6 mét trong 20 giây để giảm cận thị giả."
+    )
+    
+    // Danh sách câu trả lời tự động cho "Nhà khoa học"
+    private val scientistReplies = listOf(
+        "Bạn thực chất là 'bụi sao'. Các nguyên tử Carbon, Nitơ trong cơ thể bạn được tạo ra từ lò phản ứng hạt nhân của các ngôi sao đã chết hàng tỷ năm trước.",
+        "Một ngày trên Sao Kim dài hơn cả một năm trên Sao Kim. Nó quay quanh trục mất 243 ngày Trái Đất, nhưng quay quanh Mặt Trời chỉ mất 225 ngày.",
+        "Khi nhìn lên bầu trời, bạn đang nhìn về quá khứ. Ánh sáng Mặt Trời mất 8 phút 20 giây để đến đây. Nếu Mặt Trời tắt, 8 phút sau chúng ta mới biết.",
+        "Nếu tháo xoắn toàn bộ DNA trong cơ thể một người và nối lại, nó sẽ dài khoảng 100 tỷ dặm. Đủ để đi từ Trái Đất đến sao Diêm Vương và quay lại hơn 10 lần.",
+        "Thế giới này cực kỳ rỗng. Nguyên tử chứa 99.9999% là khoảng trống. Nếu loại bỏ hết khoảng trống đó, 8 tỷ người sẽ bị nén vừa vào một viên đường.",
+        "Bạch tuộc có tới 3 quả tim, 9 bộ não và máu của chúng màu xanh lam do chứa đồng thay vì sắt như con người.",
+        "Cá mập đã tồn tại trên Trái Đất lâu hơn cả cây cối. Cá mập xuất hiện khoảng 400 triệu năm trước, còn cây cối thì khoảng 350 triệu năm thôi.",
+        "Nữ hoàng Cleopatra sống gần thời đại phát minh ra iPhone hơn là thời đại xây dựng Kim tự tháp Giza.",
+        "Một đám mây trắng xốp bình thường nặng trung bình khoảng 500 tấn (tương đương 100 con voi). Nó bay được là nhờ không khí nóng nâng đỡ.",
+        "Chuối là thực phẩm có tính phóng xạ nhẹ vì chứa Kali-40. Nhưng yên tâm, bạn phải ăn 10 triệu quả chuối cùng lúc mới bị ngộ độc.",
+        "Sao Neutron đặc đến mức: Một thìa cà phê vật chất của nó nặng khoảng 6 tỷ tấn - tương đương cân nặng của tất cả con người trên Trái Đất cộng lại.",
+        "Trong cơ thể bạn, số lượng vi khuẩn còn nhiều hơn cả số tế bào con người. Về mặt kỹ thuật, bạn là 'nhà trọ' khổng lồ cho vi khuẩn.",
+        "Cốc nước bạn đang uống có thể chứa các phân tử nước 'già' hơn cả Mặt Trời. Nước trên Trái Đất vốn trôi dạt trong không gian trước khi Hệ Mặt Trời hình thành.",
+        "Bộ não của bạn khi thức tạo ra khoảng 12-25 watt điện. Đủ để thắp sáng một bóng đèn LED nhỏ.",
+        "Trái Đất không thể tự tạo ra vàng. Hầu hết vàng chúng ta có là do các thiên thạch mang tới sau những vụ va chạm sao Neutron cực lớn.",
+        "Các phi hành gia kể rằng không gian có mùi đặc trưng. Nó giống mùi của kim loại nóng, thịt nướng cháy và thuốc súng trộn lại với nhau.",
+        "Đỉnh Everest vẫn đang cao thêm khoảng 4mm mỗi năm do mảng kiến tạo Ấn Độ vẫn đang húc vào mảng Á-Âu.",
+        "Sinh vật sống lớn nhất Trái Đất là một cây nấm ở Oregon (Mỹ). Hệ thống rễ của nó trải rộng 965 héc-ta và sống hơn 2.400 năm.",
+        "Trên Sao Hải Vương và Sao Thiên Vương, áp suất cực lớn có thể khiến carbon bị nén lại và tạo ra những cơn mưa kim cương thực sự.",
+        "Loài Gấu nước (Tardigrade) có thể sống sót trong chân không vũ trụ, chịu được phóng xạ và nhiệt độ sôi, là sinh vật 'bất tử' nhất Trái Đất."
+    )
+    
+    // Tin nhắn mặc định khi khởi động cho nhà khoa học
+    val defaultScientistMessages = listOf(
+        "Bạn thực chất là 'bụi sao'. Các nguyên tử Carbon, Nitơ trong cơ thể bạn được tạo ra từ lò phản ứng hạt nhân của các ngôi sao đã chết hàng tỷ năm trước.",
+        "Một ngày trên Sao Kim dài hơn cả một năm trên Sao Kim. Nó quay quanh trục mất 243 ngày Trái Đất, nhưng quay quanh Mặt Trời chỉ mất 225 ngày."
+    )
+    
     // Danh sách câu trả lời tự động cho các contact tự tạo (generic)
     private val genericReplies = listOf(
         "Ồ, mình vừa thấy tin nhắn của bạn. Bạn đang làm gì thế?",
@@ -114,76 +174,28 @@ object AutoReplyHelper {
     }
     
     /**
-     * Kiểm tra xem contact có phải là "Mẹ" không
+     * Lấy câu trả lời tiếp theo dựa trên index cho Bác sĩ
+     * Index sẽ được lưu trong database hoặc state
      */
-    fun isMomContact(contactName: String): Boolean {
-        return contactName.equals("Mẹ", ignoreCase = true) || 
-               contactName.equals("Me", ignoreCase = true) ||
-               contactName.equals("Mom", ignoreCase = true) ||
-               contactName.equals("Mother", ignoreCase = true)
-    }
-    
-    /**
-     * Kiểm tra xem contact có phải là "Người yêu" không
-     */
-    fun isLoverContact(contactName: String): Boolean {
-        val name = contactName.lowercase()
-        return name.contains("người yêu") || name.contains("nguoi yeu") ||
-               name.contains("lover") || name.contains("boyfriend") ||
-               name.contains("girlfriend") || name.contains("crush") ||
-               name.contains("bạn trai") || name.contains("ban trai") ||
-               name.contains("bạn gái") || name.contains("ban gai") ||
-               name.equals("ny", ignoreCase = true) ||
-               name.equals("người yêu", ignoreCase = true)
-    }
-    
-    /**
-     * Xác định loại nhân vật từ tên liên hệ
-     * @param contactName Tên liên hệ
-     * @return CharacterType tương ứng
-     */
-    fun getCharacterType(contactName: String): CharacterType {
-        val name = contactName.lowercase()
-        
-        // Bố, Mẹ
-        if (name.contains("mẹ") || name.contains("me") || 
-            name.contains("mom") || name.contains("mother") ||
-            name.contains("bố") || name.contains("bo") || 
-            name.contains("dad") || name.contains("father")) {
-            return CharacterType.PARENT
-        }
-        
-        // Người yêu
-        if (name.contains("người yêu") || name.contains("nguoi yeu") ||
-            name.contains("lover") || name.contains("boyfriend") ||
-            name.contains("girlfriend") || name.contains("crush") ||
-            name.contains("bạn trai") || name.contains("ban trai") ||
-            name.contains("bạn gái") || name.contains("ban gai")) {
-            return CharacterType.LOVER
-        }
-        
-        // Game thủ, Cầu thủ
-        if (name.contains("game thủ") || name.contains("game thu") ||
-            name.contains("gamer") || name.contains("player") ||
-            name.contains("cầu thủ") || name.contains("cau thu") ||
-            name.contains("footballer") || name.contains("athlete")) {
-            return CharacterType.YOUTH
-        }
-        
-        // Bác sĩ, Nha sĩ, Nhà khoa học
-        if (name.contains("bác sĩ") || name.contains("bac si") ||
-            name.contains("doctor") || name.contains("nha sĩ") ||
-            name.contains("nha si") || name.contains("dentist") ||
-            name.contains("nhà khoa học") || name.contains("nha khoa hoc") ||
-            name.contains("scientist") || name.contains("professor")) {
-            return CharacterType.EXPERT
-        }
-        
-        // Mặc định: Nếu là "Mẹ" thì PARENT, còn lại là LOVER
-        return if (isMomContact(contactName)) {
-            CharacterType.PARENT
+    fun getNextDoctorReply(replyIndex: Int): String {
+        return if (replyIndex < doctorReplies.size) {
+            doctorReplies[replyIndex]
         } else {
-            CharacterType.LOVER
+            // Nếu hết câu trả lời, quay lại từ đầu
+            doctorReplies[replyIndex % doctorReplies.size]
+        }
+    }
+    
+    /**
+     * Lấy câu trả lời tiếp theo dựa trên index cho Nhà khoa học
+     * Index sẽ được lưu trong database hoặc state
+     */
+    fun getNextScientistReply(replyIndex: Int): String {
+        return if (replyIndex < scientistReplies.size) {
+            scientistReplies[replyIndex]
+        } else {
+            // Nếu hết câu trả lời, quay lại từ đầu
+            scientistReplies[replyIndex % scientistReplies.size]
         }
     }
     
@@ -196,6 +208,16 @@ object AutoReplyHelper {
      * Lấy tổng số câu trả lời cho Người yêu
      */
     fun getTotalLoverReplies(): Int = loverReplies.size
+    
+    /**
+     * Lấy tổng số câu trả lời cho Bác sĩ
+     */
+    fun getTotalDoctorReplies(): Int = doctorReplies.size
+    
+    /**
+     * Lấy tổng số câu trả lời cho Nhà khoa học
+     */
+    fun getTotalScientistReplies(): Int = scientistReplies.size
     
     /**
      * Lấy câu trả lời tiếp theo dựa trên index cho các contact tự tạo (generic)

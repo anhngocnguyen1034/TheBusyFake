@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
@@ -48,12 +48,6 @@ import com.example.thebusysimulator.presentation.util.ImageHelper
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.sin
-
-// Sealed class để đại diện cho các item trong chat list
-sealed class ChatListItem {
-    data class DateHeader(val date: java.util.Date, val label: String) : ChatListItem()
-    data class MessageItem(val message: ChatMessage) : ChatListItem()
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,28 +84,6 @@ fun ChatScreen(
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
     val reversedMessages = remember(messages) { messages.reversed() }
-    
-    // Tạo list items với header theo ngày
-    // Vì reverseLayout = true, cần reverse lại để hiển thị đúng
-    val chatItems = remember(messages) {
-        val items = mutableListOf<ChatListItem>()
-        var lastDate: java.util.Date? = null
-        
-        // Duyệt từ tin cũ đến tin mới (thứ tự gốc)
-        messages.forEach { message ->
-            val messageDate = message.timestamp
-            // Kiểm tra nếu là ngày mới, thêm header
-            if (lastDate == null || !DateUtils.isSameDate(messageDate, lastDate)) {
-                items.add(ChatListItem.DateHeader(messageDate, DateUtils.getDateHeaderLabel(messageDate)))
-                lastDate = messageDate
-            }
-            items.add(ChatListItem.MessageItem(message))
-        }
-        // Reverse lại vì reverseLayout = true sẽ đảo ngược thứ tự hiển thị
-        // Sau khi reverse: [tin mới, header "Hôm nay", tin cũ, header "Hôm qua"]
-        // Với reverseLayout = true, hiển thị: [header "Hôm qua", tin cũ, header "Hôm nay", tin mới] - ĐÚNG!
-        items.reversed()
-    }
 
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
@@ -150,7 +122,7 @@ fun ChatScreen(
             .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- TOP BAR ---
+            // --- TOP BAR --- (Cố định, không bị đẩy - không nhận IME insets)
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
                 modifier = Modifier.fillMaxWidth().statusBarPadding()
@@ -187,47 +159,43 @@ fun ChatScreen(
                 }
             }
 
-            // --- MESSAGE LIST ---
+            // Phần chat - sẽ tự động co lại khi keyboard xuất hiện
             LazyColumn(
                 state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth().imePadding(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 reverseLayout = true,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = 8.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (isTyping) {
                     item { TypingIndicatorBubble() }
                 }
-                items(chatItems.size, key = { index ->
-                    when (val item = chatItems[index]) {
-                        is ChatListItem.DateHeader -> "header_${item.date.time}"
-                        is ChatListItem.MessageItem -> item.message.id
-                    }
-                }) { index ->
-                    when (val item = chatItems[index]) {
-                        is ChatListItem.DateHeader -> {
-                            DateHeader(label = item.label)
-                        }
-                        is ChatListItem.MessageItem -> {
-                            ChatBubble(
-                                message = item.message,
-                                allMessages = reversedMessages,
-                                onLongClick = { openMessageOptions(item.message) },
-                                onReplyClick = { replyId -> scrollToMessage(replyId) },
-                                isHighlighted = item.message.id == highlightedMessageId
-                            )
-                        }
-                    }
+                items(reversedMessages, key = { it.id }) { message ->
+                    ChatBubble(
+                        message = message,
+                        allMessages = reversedMessages,
+                        onLongClick = { openMessageOptions(message) },
+                        onReplyClick = { replyId -> scrollToMessage(replyId) },
+                        isHighlighted = message.id == highlightedMessageId
+                    )
                 }
             }
 
-            // --- INPUT AREA ---
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-                Column {
-                    // 1. THANH TRẠNG THÁI REPLY (ĐÃ SỬA GIAO DIỆN PREVIEW)
+                Column(
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                ) {
                     AnimatedVisibility(
                         visible = replyingToMessage != null,
                         enter = expandVertically(),
@@ -237,8 +205,7 @@ fun ChatScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Nền nhẹ hơn
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    .background(colorScheme.surfaceVariant.copy(alpha = 0.3f)),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // Thanh dọc màu sắc
@@ -491,38 +458,15 @@ fun ChatBubble(
                             if (imageUri.startsWith("/")) java.io.File(imageUri).takeIf { it.exists() } else Uri.parse(imageUri)
                         } catch (e: Exception) { null }
 
-                        // Nếu có reply thì thêm khoảng cách
-                        if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
+                        if (imageData != null) {
+                            // Nếu có reply, thêm khoảng cách phía trên ảnh
+                            if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
 
-                        // Nếu imageData là null (file không tồn tại ngay từ lúc check), hiện thông báo lỗi thủ công
-                        if (imageData == null) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(150.dp)
-                                    .background(colorScheme.errorContainer.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(Icons.Rounded.Refresh, null, tint = colorScheme.error)
-                                    Text("Ảnh không tồn tại", style = MaterialTheme.typography.bodySmall, color = colorScheme.error)
-                                }
-                            }
-                        } else {
-                            // SỬ DỤNG AsyncImage (Nhẹ hơn SubcomposeAsyncImage, phù hợp Offline)
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(imageData) 
-                                    .crossfade(true) // Quan trọng: Hiệu ứng hiện dần trong 0.x giây giúp mắt dễ chịu
-                                    .error(android.R.drawable.ic_menu_report_image) // Icon lỗi mặc định của Android nếu không tìm thấy file
-                                    .build(),
+                            Image(
+                                painter = rememberAsyncImagePainter(ImageRequest.Builder(context).data(imageData).build()),
                                 contentDescription = "Chat Image",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 300.dp) // Giới hạn chiều cao
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Màu nền xám nhẹ trong lúc chờ decode
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
+                                contentScale = ContentScale.Crop
                             )
                         }
                     }
@@ -546,35 +490,6 @@ fun ChatBubble(
                 style = MaterialTheme.typography.bodySmall,
                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-    }
-}
-
-// --- DATE HEADER ---
-@Composable
-fun DateHeader(label: String) {
-    val colorScheme = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
             )
         }
     }

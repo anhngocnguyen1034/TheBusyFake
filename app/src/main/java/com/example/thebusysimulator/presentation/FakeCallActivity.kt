@@ -58,11 +58,21 @@ import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
+import com.example.thebusysimulator.presentation.util.FlashHelper
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+
 class FakeCallActivity : ComponentActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var flashHelper: FlashHelper? = null
+    private val settingsScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,8 +104,14 @@ class FakeCallActivity : ComponentActivity() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
+        // Initialize flash helper
+        flashHelper = FlashHelper(this)
+
         // Start ringing
         startRinging()
+        
+        // Start flash if enabled
+        startFlashIfEnabled()
 
         setContent {
             TheBusySimulatorTheme(darkTheme = isSystemInDarkTheme()) {
@@ -151,8 +167,8 @@ class FakeCallActivity : ComponentActivity() {
             e.printStackTrace()
         }
 
-        // Start vibration
-        startVibration()
+        // Start vibration if enabled
+        startVibrationIfEnabled()
     }
 
     private fun requestAudioFocus() {
@@ -188,11 +204,42 @@ class FakeCallActivity : ComponentActivity() {
         }
     }
 
+    private fun startVibrationIfEnabled() {
+        settingsScope.launch {
+            try {
+                val settingsDataSource = FakeCallSettingsDataSource(applicationContext)
+                val vibrationEnabled = settingsDataSource.vibrationEnabled.first()
+                if (vibrationEnabled) {
+                    startVibration()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FakeCallActivity", "Error starting vibration", e)
+            }
+        }
+    }
+
+    private fun startFlashIfEnabled() {
+        settingsScope.launch {
+            try {
+                val settingsDataSource = FakeCallSettingsDataSource(applicationContext)
+                val flashEnabled = settingsDataSource.flashEnabled.first()
+                if (flashEnabled) {
+                    flashHelper?.startFlashing()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("FakeCallActivity", "Error starting flash", e)
+            }
+        }
+    }
+
     private fun stopRinging() {
         mediaPlayer?.release()
         mediaPlayer = null
         
         vibrator?.cancel()
+        
+        // Stop flash
+        flashHelper?.stopFlashing()
         
         // Release audio focus
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -208,6 +255,8 @@ class FakeCallActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopRinging()
+        flashHelper?.release()
+        settingsScope.cancel()
     }
 
     companion object {
