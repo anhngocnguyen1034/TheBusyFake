@@ -52,16 +52,12 @@ object DateUtils {
         return when {
             isSameDay(now, msgTime) -> "Hôm nay"
             isYesterday(now, msgTime) -> "Hôm qua"
-            isSameWeek(now, msgTime) -> {
-                // Thứ trong tuần
-                SimpleDateFormat("EEEE", Locale("vi", "VN")).format(date)
-            }
             isSameYear(now, msgTime) -> {
-                // Ngày/tháng
-                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
+                // Ngày/tháng (cùng năm)
+                SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
             }
             else -> {
-                // Ngày/tháng/năm
+                // Ngày/tháng/năm (khác năm)
                 SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
             }
         }

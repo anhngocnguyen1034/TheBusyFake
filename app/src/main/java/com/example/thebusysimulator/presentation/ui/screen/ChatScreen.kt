@@ -17,12 +17,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Edit
@@ -35,12 +38,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -64,6 +71,7 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // --- State quản lý Long Press & Reply ---
     var selectedMessageForMenu by remember { mutableStateOf<ChatMessage?>(null) }
@@ -126,13 +134,12 @@ fun ChatScreen(
             .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- TOP BAR --- (Cố định, không bị đẩy - không nhận IME insets)
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
                 modifier = Modifier.fillMaxWidth().statusBarPadding()
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -148,7 +155,7 @@ fun ChatScreen(
                         Text(contactName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(contactName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Text(contactName, style = MaterialTheme.typography.titleMedium, color = colorScheme.onBackground, modifier = Modifier.weight(1f))
 
                     IconButton(onClick = {
                         val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
@@ -162,13 +169,17 @@ fun ChatScreen(
                     }
                 }
             }
-
-            // Phần chat - không thêm padding IME, chỉ resize tự nhiên
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        keyboardController?.hide()
+                    },
                 reverseLayout = true,
                 contentPadding = PaddingValues(
                     start = 16.dp,
@@ -181,25 +192,44 @@ fun ChatScreen(
                 if (isTyping) {
                     item { TypingIndicatorBubble() }
                 }
-                items(reversedMessages, key = { it.id }) { message ->
-                    ChatBubble(
-                        message = message,
-                        allMessages = reversedMessages,
-                        onLongClick = { openMessageOptions(message) },
-                        onReplyClick = { replyId -> scrollToMessage(replyId) },
-                        isHighlighted = message.id == highlightedMessageId,
-                        showTimestamp = message.id == selectedMessageIdForTimestamp,
-                        onClick = {
-                            if (selectedMessageIdForTimestamp == message.id) {
-                                selectedMessageIdForTimestamp = null
-                            } else {
-                                selectedMessageIdForTimestamp = message.id
-                            }
+                itemsIndexed(reversedMessages, key = { _, message -> message.id }) { index, message ->
+                    // Hiển thị header ở tin nhắn đầu tiên của mỗi ngày
+                    // Vì list bị đảo ngược (tin mới nhất ở index 0), cần so sánh với tin nhắn cũ hơn (index + 1)
+                    val shouldShowHeader = remember(index, message.timestamp, reversedMessages) {
+                        val nextIndex = index + 1 // Tin nhắn cũ hơn liền kề
+                        if (nextIndex < reversedMessages.size) {
+                            val olderMessage = reversedMessages[nextIndex]
+                            // Nếu ngày của tin hiện tại KHÁC ngày của tin cũ hơn -> Hiện Header
+                            !DateUtils.isSameDate(message.timestamp, olderMessage.timestamp)
+                        } else {
+                            // Nếu đây là tin nhắn cuối cùng trong danh sách (tin già nhất) -> Luôn hiện Header
+                            true
                         }
-                    )
+                    }
+                    
+                    Column {
+                        if (shouldShowHeader) {
+                            DateHeader(date = message.timestamp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        ChatBubble(
+                            message = message,
+                            allMessages = reversedMessages,
+                            onLongClick = { openMessageOptions(message) },
+                            onReplyClick = { replyId -> scrollToMessage(replyId) },
+                            isHighlighted = message.id == highlightedMessageId,
+                            showTimestamp = message.id == selectedMessageIdForTimestamp,
+                            onClick = {
+                                if (selectedMessageIdForTimestamp == message.id) {
+                                    selectedMessageIdForTimestamp = null
+                                } else {
+                                    selectedMessageIdForTimestamp = message.id
+                                }
+                            }
+                        )
+                    }
                 }
             }
-
             Surface(
                 color = Color.White.copy(alpha = 0.1f),
                 modifier = Modifier
@@ -258,9 +288,8 @@ fun ChatScreen(
                         }
                     }
 
-                    // 2. INPUT BAR
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -284,23 +313,42 @@ fun ChatScreen(
                         }) {
                             Icon(Icons.Rounded.AccountBox, "Select Image", tint = colorScheme.primary)
                         }
-
-                        OutlinedTextField(
+                        BasicTextField(
                             value = messageText,
                             onValueChange = { messageText = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("Nhập tin nhắn...", color = colorScheme.onBackground.copy(0.5f)) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = colorScheme.onBackground,
-                                unfocusedTextColor = colorScheme.onBackground,
-                                focusedBorderColor = colorScheme.primary,
-                                unfocusedBorderColor = colorScheme.onBackground.copy(0.3f),
-                                cursorColor = colorScheme.primary
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f), // Màu nền xám nhẹ
+                                    shape = RoundedCornerShape(24.dp) // Bo tròn như viên thuốc
+                                ),
+                            textStyle = TextStyle(
+                                color = colorScheme.onBackground,
+                                fontSize = 16.sp
                             ),
-                            shape = RoundedCornerShape(24.dp),
-                            maxLines = 4
+                            singleLine = true,
+                            maxLines = 1,
+                            cursorBrush = SolidColor(colorScheme.primary), // Màu con trỏ chuột
+                            decorationBox = { innerTextField ->
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (messageText.isEmpty()) {
+                                            Text(
+                                                "Nhập tin nhắn...",
+                                                style = TextStyle(
+                                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                                    fontSize = 16.sp
+                                                )
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
+                            }
                         )
-
                         IconButton(
                             onClick = {
                                 if (messageText.isNotBlank()) {
@@ -313,15 +361,11 @@ fun ChatScreen(
                                     messageText = ""
                                 }
                             },
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.3f)),
-                            enabled = messageText.isNotBlank()
+                           enabled = messageText.isNotBlank()
                         ) {
                             Icon(
                                 Icons.Rounded.Send, "Send",
-                                tint = if (messageText.isNotBlank()) Color.White else colorScheme.onBackground.copy(0.5f),
+                                tint = if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.5f),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -365,7 +409,6 @@ fun ChatScreen(
     }
 }
 
-// --- CHAT BUBBLE ĐÃ SỬA GIAO DIỆN PHẢN HỒI ---
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatBubble(
@@ -413,14 +456,14 @@ fun ChatBubble(
                     )
             ) {
                 Column {
-                    // --- PHẦN HIỂN THỊ TIN NHẮN ĐƯỢC PHẢN HỒI (ĐÃ SỬA) ---
+
                     originalMessage?.let { original ->
                         Row(
                             modifier = Modifier
-                                .padding(start = 6.dp, end = 6.dp, top = 6.dp) // Cách lề và top một chút
+                                .padding(start = 6.dp, end = 6.dp, top = 6.dp)
                                 .fillMaxWidth()
-                                .height(IntrinsicSize.Min) // Để thanh dọc (Bar) dãn theo chiều cao nội dung
-                                .clip(RoundedCornerShape(8.dp)) // Bo tròn phần reply
+                                .height(IntrinsicSize.Min)
+                                .clip(RoundedCornerShape(8.dp))
                                 .background(
                                     // Tạo màu nền tương phản nhẹ với màu bubble chính
                                     if (message.isFromMe) Color.Black.copy(alpha = 0.15f)
@@ -468,7 +511,6 @@ fun ChatBubble(
                         }
                     }
 
-                    // --- NỘI DUNG CHÍNH (ẢNH HOẶC TEXT) ---
                     message.imageUri?.let { imageUri ->
                         val imageData = try {
                             if (imageUri.startsWith("/")) java.io.File(imageUri).takeIf { it.exists() } else Uri.parse(imageUri)
@@ -514,6 +556,30 @@ fun ChatBubble(
                 )
             }
         }
+    }
+}
+
+// Composable để hiển thị header ngày tháng
+@Composable
+fun DateHeader(date: java.util.Date) {
+    val colorScheme = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = DateUtils.getDateHeaderLabel(date),
+            style = MaterialTheme.typography.bodySmall,
+            color = colorScheme.onBackground.copy(alpha = 0.6f),
+            modifier = Modifier
+                .background(
+                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        )
     }
 }
 
