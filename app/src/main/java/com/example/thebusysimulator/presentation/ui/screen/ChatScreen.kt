@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -162,13 +163,12 @@ fun ChatScreen(
                 }
             }
 
-            // Phần chat - sẽ tự động co lại khi keyboard xuất hiện
+            // Phần chat - không thêm padding IME, chỉ resize tự nhiên
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.ime),
+                    .fillMaxWidth(),
                 reverseLayout = true,
                 contentPadding = PaddingValues(
                     start = 16.dp,
