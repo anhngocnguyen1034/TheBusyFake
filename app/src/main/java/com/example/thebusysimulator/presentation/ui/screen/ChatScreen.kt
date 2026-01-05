@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
@@ -491,15 +491,38 @@ fun ChatBubble(
                             if (imageUri.startsWith("/")) java.io.File(imageUri).takeIf { it.exists() } else Uri.parse(imageUri)
                         } catch (e: Exception) { null }
 
-                        if (imageData != null) {
-                            // Nếu có reply, thêm khoảng cách phía trên ảnh
-                            if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
+                        // Nếu có reply thì thêm khoảng cách
+                        if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
 
-                            Image(
-                                painter = rememberAsyncImagePainter(ImageRequest.Builder(context).data(imageData).build()),
+                        // Nếu imageData là null (file không tồn tại ngay từ lúc check), hiện thông báo lỗi thủ công
+                        if (imageData == null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(150.dp)
+                                    .background(colorScheme.errorContainer.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(Icons.Rounded.Refresh, null, tint = colorScheme.error)
+                                    Text("Ảnh không tồn tại", style = MaterialTheme.typography.bodySmall, color = colorScheme.error)
+                                }
+                            }
+                        } else {
+                            // SỬ DỤNG AsyncImage (Nhẹ hơn SubcomposeAsyncImage, phù hợp Offline)
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(imageData) 
+                                    .crossfade(true) // Quan trọng: Hiệu ứng hiện dần trong 0.x giây giúp mắt dễ chịu
+                                    .error(android.R.drawable.ic_menu_report_image) // Icon lỗi mặc định của Android nếu không tìm thấy file
+                                    .build(),
                                 contentDescription = "Chat Image",
-                                modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 300.dp) // Giới hạn chiều cao
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colorScheme.surfaceVariant.copy(alpha = 0.3f)) // Màu nền xám nhẹ trong lúc chờ decode
                             )
                         }
                     }
