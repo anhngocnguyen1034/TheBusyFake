@@ -35,12 +35,13 @@ fun SettingsScreen(navController: NavController) {
         }
     }
     
+    val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(AppColors.BackgroundStart, AppColors.BackgroundEnd)
+                    colors = listOf(colorScheme.background, colorScheme.surface)
                 )
             )
     ) {
@@ -59,14 +60,14 @@ fun SettingsScreen(navController: NavController) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBack,
                         contentDescription = "Back",
-                        tint = AppColors.BottomNavBg
+                        tint = colorScheme.onBackground
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Cài đặt",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = AppColors.BottomNavBg
+                    color = colorScheme.onBackground
                 )
             }
             
