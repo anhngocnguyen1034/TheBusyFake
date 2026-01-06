@@ -187,8 +187,8 @@ fun MainScreenUI(
         )
 
         val navigationButtons = listOf(
-            ButtonData("Trang chủ", Icons.Rounded.Home),
-            ButtonData("Hồ sơ", Icons.Rounded.Person)
+            ButtonData("Home", Icons.Rounded.Home),
+            ButtonData("Settings", Icons.Rounded.Settings)
         )
         
         AnimatedNavigationBar(

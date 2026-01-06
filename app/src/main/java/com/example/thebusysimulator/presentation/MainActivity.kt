@@ -108,11 +108,13 @@ class MainActivity : ComponentActivity() {
                 // Navigation setup
                 val navController = rememberNavController()
                 val fakeCallViewModel = remember { AppContainer.createFakeCallViewModel() }
+                val fakeMessageViewModel = remember { AppContainer.createFakeMessageViewModel() }
                 val messageViewModel = remember { AppContainer.createMessageViewModel() }
 
                 NavGraph(
                     navController = navController,
                     fakeCallViewModel = fakeCallViewModel,
+                    fakeMessageViewModel = fakeMessageViewModel,
                     messageViewModel = messageViewModel,
                     hasOverlayPermission = hasOverlayPermission,
                     hasCameraPermission = hasCameraPermission,

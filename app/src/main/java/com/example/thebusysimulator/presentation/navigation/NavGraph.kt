@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.thebusysimulator.presentation.ui.screen.*
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
+import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets
 fun NavGraph(
     navController: NavHostController,
     fakeCallViewModel: FakeCallViewModel? = null,
+    fakeMessageViewModel: FakeMessageViewModel? = null,
     messageViewModel: MessageViewModel? = null,
     hasOverlayPermission: Boolean = false,
     hasCameraPermission: Boolean = false,
@@ -40,6 +42,12 @@ fun NavGraph(
             }
         }
         
+        composable(Screen.FakeMessage.route) {
+            fakeMessageViewModel?.let { viewModel ->
+                FakeMessageScreen(viewModel = viewModel)
+            }
+        }
+        
         composable(Screen.Message.route) {
             messageViewModel?.let { viewModel ->
                 MessageScreen(
@@ -63,7 +71,10 @@ fun NavGraph(
         }
         
         composable(Screen.Profile.route) {
-            ProfileScreen(navController = navController)
+            ProfileScreen(
+                navController = navController,
+                fakeMessageViewModel = fakeMessageViewModel
+            )
         }
         
         composable(Screen.Settings.route) {

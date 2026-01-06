@@ -40,6 +40,9 @@ class MessageViewModel(
             initializeDefaultLoverMessages()
             initializeDefaultDoctorMessages()
             initializeDefaultScientistMessages()
+            // Reload messages sau khi khởi tạo xong để đảm bảo các contact mặc định được hiển thị
+            delay(500)
+            loadMessages()
         }
     }
     

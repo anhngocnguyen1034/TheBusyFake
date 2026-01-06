@@ -70,6 +70,20 @@
                 <action android:name="com.example.thebusysimulator.FAKE_CALL_ALARM" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".presentation.receiver.FakeMessageReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <intent-filter>
+                <!-- Action cụ thể cho alarm trigger -->
+                <action android:name="com.example.thebusysimulator.FAKE_MESSAGE_ALARM" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

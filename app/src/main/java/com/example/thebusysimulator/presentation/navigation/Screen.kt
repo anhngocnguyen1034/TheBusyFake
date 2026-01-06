@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object FakeCall : Screen("fake_call")
+    data object FakeMessage : Screen("fake_message")
     data object Message : Screen("message")
     data object Chat : Screen("chat/{contactName}/{messageId}") {
         fun createRoute(contactName: String, messageId: String): String {

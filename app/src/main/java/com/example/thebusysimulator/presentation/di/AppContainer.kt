@@ -15,6 +15,7 @@ import com.example.thebusysimulator.domain.usecase.ScheduleFakeCallUseCase
 import com.example.thebusysimulator.domain.util.CallScheduler
 import com.example.thebusysimulator.presentation.util.AlarmSchedulerImpl
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
+import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 
 /**
@@ -84,6 +85,11 @@ object AppContainer {
             messageRepository = messageRepository,
             context = context
         )
+    }
+    
+    fun createFakeMessageViewModel(): FakeMessageViewModel {
+        requireNotNull(context) { "AppContainer must be initialized with context" }
+        return FakeMessageViewModel(context = context!!)
     }
 }
 
