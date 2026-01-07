@@ -13,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import com.example.thebusysimulator.R
@@ -332,10 +331,9 @@ fun FloatingNavItem(
 
     Box(
         modifier = Modifier
-            .offset(y = animatedOffsetY) // Dịch chuyển vị trí lên xuống
+            .offset(y = animatedOffsetY)
             .size(animatedSize)
             .clip(CircleShape)
-            // Nếu chọn thì có màu nền Primary, không thì trong suốt
             .background(
                 if (isSelected) colorScheme.primary else Color.Transparent
             )
@@ -365,6 +363,10 @@ fun FeatureCard(
     gradientColors: List<Color>
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    // Kiểm tra theme dựa trên độ sáng của background
+    val isDarkTheme = colorScheme.background.red < 0.5f && 
+                      colorScheme.background.green < 0.5f && 
+                      colorScheme.background.blue < 0.5f
 
     Card(
         modifier = Modifier
@@ -372,9 +374,15 @@ fun FeatureCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.1f)
+            containerColor = if (isDarkTheme) {
+                Color.White.copy(alpha = 0.1f)
+            } else {
+                colorScheme.surface
+            }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isDarkTheme) 4.dp else 2.dp
+        )
     ) {
         Row(
             modifier = Modifier
