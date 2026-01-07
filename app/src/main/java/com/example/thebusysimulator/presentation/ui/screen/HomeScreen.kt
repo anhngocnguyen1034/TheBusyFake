@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import com.example.thebusysimulator.R
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -23,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,12 +37,14 @@ import com.example.thebusysimulator.presentation.ui.statusBarPadding
 
 @Composable
 fun MainScreen(navController: NavController) {
-    MainScreenUI(navController = navController)
+    MainContainer(navController = navController) {
+        MainScreenUI(navController = navController)
+    }
 }
 
 @Composable
-fun MainScreenUI(
-    navController: NavController
+fun MainContainer(
+    navController: NavController, content: @Composable () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Box(
@@ -54,91 +56,101 @@ fun MainScreenUI(
                 )
             )
     ) {
-        // Main content with feature cards
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarPadding()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            // Title
-            Text(
-                text = "The Busy Simulator",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+        // Main content
+        content()
 
-            FeatureCard(
-                title = "Fake Call",
-                description = "Tạo cuộc gọi giả với số điện thoại và tên người gọi tùy chỉnh",
-                iconId = R.drawable.ic_call,
-                onClick = { 
-                    navController.navigate(
-                        route = Screen.FakeCall.route,
-                        navOptions = NavOptions.Builder()
-                            .setPopUpTo(Screen.Home.route, inclusive = false)
-                            .setLaunchSingleTop(true)
-                            .build()
-                    )
-                },
-                gradientColors = listOf(
-                    colorScheme.primary,
-                    colorScheme.secondary
-                )
-            )
+        // Bottom navigation - only show on Home and Settings routes
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        val showBottomNav =
+            currentRoute == Screen.Home.route || currentRoute == Screen.Settings.route
 
-            FeatureCard(
-                title = "Fake Chat Message",
-                description = "Tạo tin nhắn chat giả với nội dung và thời gian tùy chỉnh",
-                iconId = R.drawable.ic_message,
-                onClick = { 
-                    navController.navigate(
-                        route = Screen.Message.route,
-                        navOptions = NavOptions.Builder()
-                            .setPopUpTo(Screen.Home.route, inclusive = false)
-                            .setLaunchSingleTop(true)
-                            .build()
-                    )
-                },
-                gradientColors = listOf(
-                    colorScheme.secondary,
-                    colorScheme.tertiary
-                )
-            )
-
-            FeatureCard(
-                title = "Fake Notification",
-                description = "Tạo thông báo tin nhắn giả hiển thị trên màn hình khóa",
-                iconId = R.drawable.ic_message,
-                onClick = {
-                    navController.navigate(
-                        route = Screen.FakeMessage.route,
-                        navOptions = NavOptions.Builder()
-                            .setPopUpTo(Screen.Home.route, inclusive = false)
-                            .setLaunchSingleTop(true)
-                            .build()
-                    )
-                },
-                gradientColors = listOf(
-                    colorScheme.tertiary,
-                    colorScheme.primary
-                )
+        if (showBottomNav) {
+            CustomBottomNavigation(
+                navController = navController,
+                colorScheme = colorScheme,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarPadding()
             )
         }
-
-        CustomBottomNavigation(
-            navController = navController,
-            colorScheme = colorScheme,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarPadding()
-        )
     }
 }
 
+@Composable
+fun MainScreenUI(
+    navController: NavController
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    // Main content with feature cards
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarPadding()
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Title
+        Text(
+            text = "The Busy Simulator",
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.Bold,
+            color = colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        FeatureCard(
+            title = "Fake Call",
+            description = "Tạo cuộc gọi giả với số điện thoại và tên người gọi tùy chỉnh",
+            iconId = R.drawable.ic_call,
+            onClick = {
+                navController.navigate(
+                    route = Screen.FakeCall.route,
+                    navOptions = NavOptions.Builder()
+                        .setPopUpTo(Screen.Home.route, inclusive = false).setLaunchSingleTop(true)
+                        .build()
+                )
+            },
+            gradientColors = listOf(
+                colorScheme.primary, colorScheme.secondary
+            )
+        )
+
+        FeatureCard(
+            title = "Fake Chat Message",
+            description = "Tạo tin nhắn chat giả với nội dung và thời gian tùy chỉnh",
+            iconId = R.drawable.ic_message,
+            onClick = {
+                navController.navigate(
+                    route = Screen.Message.route,
+                    navOptions = NavOptions.Builder()
+                        .setPopUpTo(Screen.Home.route, inclusive = false).setLaunchSingleTop(true)
+                        .build()
+                )
+            },
+            gradientColors = listOf(
+                colorScheme.secondary, colorScheme.tertiary
+            )
+        )
+
+        FeatureCard(
+            title = "Fake Notification",
+            description = "Tạo thông báo tin nhắn giả hiển thị trên màn hình khóa",
+            iconId = R.drawable.ic_message,
+            onClick = {
+                navController.navigate(
+                    route = Screen.FakeMessage.route,
+                    navOptions = NavOptions.Builder()
+                        .setPopUpTo(Screen.Home.route, inclusive = false).setLaunchSingleTop(true)
+                        .build()
+                )
+            },
+            gradientColors = listOf(
+                colorScheme.tertiary, colorScheme.primary
+            )
+        )
+    }
+}
 
 @Composable
 fun CustomBottomNavigation(
@@ -191,8 +203,6 @@ fun CustomBottomNavigation(
                     centerX + curveWidth / 3f, -curveHeight * 0.7f,
                     centerX + curveWidth / 2f + 15.dp.toPx(), 0f
                 )
-                
-                // Đường thẳng đến góc bên phải
                 val rightCurveStart = size.width - cornerRadius
                 lineTo(rightCurveStart, 0f)
                 
@@ -242,13 +252,15 @@ fun CustomBottomNavigation(
             ) {
                 IconButton(
                     onClick = { 
-                        navController.navigate(
-                            route = Screen.Home.route,
-                            navOptions = NavOptions.Builder()
-                                .setPopUpTo(Screen.Home.route, inclusive = true)
-                                .setLaunchSingleTop(true)
-                                .build()
-                        )
+                        if (!isHomeSelected) {
+                            navController.navigate(
+                                route = Screen.Home.route,
+                                navOptions = NavOptions.Builder()
+                                    .setPopUpTo(Screen.Home.route, inclusive = true)
+                                    .setLaunchSingleTop(true)
+                                    .build()
+                            )
+                        }
                     },
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -283,13 +295,15 @@ fun CustomBottomNavigation(
             ) {
                 IconButton(
                     onClick = { 
-                        navController.navigate(
-                            route = Screen.Settings.route,
-                            navOptions = NavOptions.Builder()
-                                .setPopUpTo(Screen.Home.route, inclusive = false)
-                                .setLaunchSingleTop(true)
-                                .build()
-                        )
+                        if (!isSettingsSelected) {
+                            navController.navigate(
+                                route = Screen.Settings.route,
+                                navOptions = NavOptions.Builder()
+                                    .setPopUpTo(Screen.Home.route, inclusive = false)
+                                    .setLaunchSingleTop(true)
+                                    .build()
+                            )
+                        }
                     },
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -317,6 +331,7 @@ fun CustomBottomNavigation(
         }
     }
 }
+
 @Composable
 fun FeatureCard(
     title: String,
@@ -351,8 +366,7 @@ fun FeatureCard(
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(gradientColors)
-                    ),
-                contentAlignment = Alignment.Center
+                    ), contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = iconId),
@@ -364,8 +378,7 @@ fun FeatureCard(
 
             // Text content
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = title,

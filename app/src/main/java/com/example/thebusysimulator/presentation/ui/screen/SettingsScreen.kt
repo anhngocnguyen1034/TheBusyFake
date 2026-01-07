@@ -22,6 +22,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(navController: NavController) {
+    MainContainer(navController = navController) {
+        SettingsScreenContent(navController = navController)
+    }
+}
+
+@Composable
+fun SettingsScreenContent(navController: NavController) {
     val context = LocalContext.current
     val settingsDataSource = remember { FakeCallSettingsDataSource(context) }
     val scope = rememberCoroutineScope()
@@ -36,102 +43,80 @@ fun SettingsScreen(navController: NavController) {
     }
     
     val colorScheme = MaterialTheme.colorScheme
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(colorScheme.background, colorScheme.surface)
-                )
-            )
+            .statusBarPadding()
+            .padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarPadding()
-                .padding(16.dp)
+        // Top bar with title
+        Text(
+            text = "Cài đặt",
+            style = MaterialTheme.typography.headlineMedium,
+            color = colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Theme Selection Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            // Top bar with back button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colorScheme.onBackground
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Cài đặt",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = colorScheme.onBackground
+                    text = "Giao diện",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Theme Selection Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "Giao diện",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    // Theme Options
-                    ThemeOption(
-                        icon = Icons.Filled.Settings,
-                        title = ThemeMode.SYSTEM.displayName,
-                        selected = themeMode == ThemeMode.SYSTEM.value,
-                        onClick = {
-                            if (themeMode != ThemeMode.SYSTEM.value) {
-                                scope.launch {
-                                    settingsDataSource.setThemeMode(ThemeMode.SYSTEM.value)
-                                }
+                
+                // Theme Options
+                ThemeOption(
+                    icon = Icons.Filled.Settings,
+                    title = ThemeMode.SYSTEM.displayName,
+                    selected = themeMode == ThemeMode.SYSTEM.value,
+                    onClick = {
+                        if (themeMode != ThemeMode.SYSTEM.value) {
+                            scope.launch {
+                                settingsDataSource.setThemeMode(ThemeMode.SYSTEM.value)
                             }
                         }
-                    )
-                    
-                    Divider()
-                    
-                    ThemeOption(
-                        icon = Icons.Filled.Menu,
-                        title = ThemeMode.LIGHT.displayName,
-                        selected = themeMode == ThemeMode.LIGHT.value,
-                        onClick = {
-                            if (themeMode != ThemeMode.LIGHT.value) {
-                                scope.launch {
-                                    settingsDataSource.setThemeMode(ThemeMode.LIGHT.value)
-                                }
+                    }
+                )
+                
+                Divider()
+                
+                ThemeOption(
+                    icon = Icons.Filled.Menu,
+                    title = ThemeMode.LIGHT.displayName,
+                    selected = themeMode == ThemeMode.LIGHT.value,
+                    onClick = {
+                        if (themeMode != ThemeMode.LIGHT.value) {
+                            scope.launch {
+                                settingsDataSource.setThemeMode(ThemeMode.LIGHT.value)
                             }
                         }
-                    )
-                    
-                    Divider()
-                    
-                    ThemeOption(
-                        icon = Icons.Filled.Person,
-                        title = ThemeMode.DARK.displayName,
-                        selected = themeMode == ThemeMode.DARK.value,
-                        onClick = {
-                            if (themeMode != ThemeMode.DARK.value) {
-                                scope.launch {
-                                    settingsDataSource.setThemeMode(ThemeMode.DARK.value)
-                                }
+                    }
+                )
+                
+                Divider()
+                
+                ThemeOption(
+                    icon = Icons.Filled.Person,
+                    title = ThemeMode.DARK.displayName,
+                    selected = themeMode == ThemeMode.DARK.value,
+                    onClick = {
+                        if (themeMode != ThemeMode.DARK.value) {
+                            scope.launch {
+                                settingsDataSource.setThemeMode(ThemeMode.DARK.value)
                             }
                         }
-                    )
-                }
+                    }
+                )
             }
         }
     }
