@@ -1,11 +1,19 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import com.example.thebusysimulator.R
@@ -24,6 +32,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +70,7 @@ fun MainContainer(
 
         // Bottom navigation - only show on Home and Settings routes
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+        val currentRoute = navBackStackEntry?.destination?.route ?: ""
         val showBottomNav =
             currentRoute == Screen.Home.route || currentRoute == Screen.Settings.route
 
@@ -151,7 +160,6 @@ fun MainScreenUI(
         )
     }
 }
-
 @Composable
 fun CustomBottomNavigation(
     navController: NavController,
@@ -161,174 +169,190 @@ fun CustomBottomNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isHomeSelected = currentRoute == Screen.Home.route
-    val isSettingsSelected = currentRoute == Screen.Settings.route
-    
-    Box(
+
+    // Dùng BoxWithConstraints để lấy chiều rộng màn hình, từ đó tính vị trí tâm icon
+    BoxWithConstraints(
         modifier = modifier
-            .height(80.dp)
+            .height(100.dp)
             .fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Curved bottom navigation background với Canvas
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val curveHeight = 25.dp.toPx()
-            val curveWidth = 80.dp.toPx()
+        val width = constraints.maxWidth.toFloat()
+
+        // Tính toán vị trí tâm của đường cong (Curve)
+        // Vì ta chia 2 nút đều nhau bằng weight(1f), nên tâm nút trái là 25% width, nút phải là 75% width
+        val homeCenter = width * 0.25f
+        val settingsCenter = width * 0.75f
+
+        // Animation dịch chuyển vị trí đường cong
+        val animatedCenter by animateFloatAsState(
+            targetValue = if (isHomeSelected) homeCenter else settingsCenter,
+            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            label = "curveAnimation"
+        )
+
+        // --- 1. LỚP CANVAS (VẼ THANH BAR CÓ ĐƯỜNG LÕM DI CHUYỂN) ---
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp) // Chiều cao của background
+                .align(Alignment.BottomCenter)
+        ) {
+            val curveDepth = 40.dp.toPx() // Độ sâu của lõm (phải sâu để chứa nút tròn)
+            val curveWidth = 90.dp.toPx() // Độ rộng miệng lõm
             val cornerRadius = 25.dp.toPx()
-            val centerX = size.width / 2f
-            
+
             val path = Path().apply {
-                // Bắt đầu từ góc dưới bên trái
                 moveTo(0f, size.height)
-                
-                // Đường thẳng lên đến điểm bắt đầu của curve bên trái
                 lineTo(0f, cornerRadius)
-                
-                // Góc tròn bên trái
                 quadraticBezierTo(0f, 0f, cornerRadius, 0f)
-                
-                // Đường thẳng đến điểm bắt đầu của curve giữa (bên trái)
-                val leftCurveStart = centerX - curveWidth / 2f - 15.dp.toPx()
-                lineTo(leftCurveStart, 0f)
-                
-                // Curve cong lên ở giữa (bên trái) - tạo đường cong mượt mà
+
+                // Vẽ đường cong lõm tại vị trí animatedCenter
+                val curveStart = animatedCenter - (curveWidth / 2)
+                val curveEnd = animatedCenter + (curveWidth / 2)
+
+                lineTo(curveStart, 0f)
+
+                // Vẽ lõm xuống (hình cái bát)
                 cubicTo(
-                    leftCurveStart + 15.dp.toPx(), 0f,
-                    centerX - curveWidth / 3f, -curveHeight * 0.7f,
-                    centerX - curveWidth / 6f, -curveHeight
+                    curveStart + (curveWidth * 0.25f), 0f,
+                    animatedCenter - (curveWidth * 0.15f), curveDepth,
+                    animatedCenter, curveDepth
                 )
-                
-                // Curve cong lên ở giữa (bên phải) - tạo đường cong đối xứng
                 cubicTo(
-                    centerX + curveWidth / 6f, -curveHeight,
-                    centerX + curveWidth / 3f, -curveHeight * 0.7f,
-                    centerX + curveWidth / 2f + 15.dp.toPx(), 0f
+                    animatedCenter + (curveWidth * 0.15f), curveDepth,
+                    curveEnd - (curveWidth * 0.25f), 0f,
+                    curveEnd, 0f
                 )
-                val rightCurveStart = size.width - cornerRadius
-                lineTo(rightCurveStart, 0f)
-                
-                // Góc tròn bên phải
+
+                lineTo(size.width - cornerRadius, 0f)
                 quadraticBezierTo(size.width, 0f, size.width, cornerRadius)
-                
-                // Đường thẳng xuống góc dưới bên phải
                 lineTo(size.width, size.height)
-                
-                // Đóng path
                 close()
             }
-            
-            // Vẽ background với gradient
+
             drawPath(
                 path = path,
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        colorScheme.surface.copy(alpha = 0.95f),
-                        colorScheme.surfaceVariant.copy(alpha = 0.9f)
+                        colorScheme.surface.copy(alpha = 0.98f),
+                        colorScheme.surfaceVariant.copy(alpha = 0.95f)
                     )
                 )
             )
-            
-            // Vẽ border mỏng ở trên để tạo độ sâu
+
+            // Vẽ viền mỏng
             drawPath(
                 path = path,
-                color = colorScheme.outline.copy(alpha = 0.15f),
+                color = colorScheme.outline.copy(alpha = 0.2f),
                 style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
             )
         }
 
-        // Icon Buttons trên thanh Navigation
+        // --- 2. CÁC NÚT BẤM (ICON) ---
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 50.dp)
-                .align(Alignment.Center)
-                .offset(y = (-8).dp)
+                .align(Alignment.BottomCenter)
+                .height(80.dp), // Khớp với chiều cao Canvas
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Home Button
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            // Nút Home (chiếm 50% diện tích để canh giữa chuẩn)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                IconButton(
-                    onClick = { 
+                FloatingNavItem(
+                    isSelected = isHomeSelected,
+                    icon = Icons.Rounded.Home,
+                    title = "Home",
+                    colorScheme = colorScheme,
+                    onClick = {
                         if (!isHomeSelected) {
-                            navController.navigate(
-                                route = Screen.Home.route,
-                                navOptions = NavOptions.Builder()
-                                    .setPopUpTo(Screen.Home.route, inclusive = true)
-                                    .setLaunchSingleTop(true)
-                                    .build()
-                            )
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
-                    },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Home,
-                        contentDescription = "Home",
-                        tint = if (isHomeSelected) {
-                            colorScheme.primary
-                        } else {
-                            colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        },
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                // Indicator dot
-                if (isHomeSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp)
-                            .clip(CircleShape)
-                            .background(colorScheme.primary)
-                    )
-                }
+                    }
+                )
             }
-            
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // Settings Button
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+
+            // Nút Settings (chiếm 50% diện tích)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                IconButton(
-                    onClick = { 
-                        if (!isSettingsSelected) {
-                            navController.navigate(
-                                route = Screen.Settings.route,
-                                navOptions = NavOptions.Builder()
-                                    .setPopUpTo(Screen.Home.route, inclusive = false)
-                                    .setLaunchSingleTop(true)
-                                    .build()
-                            )
+                FloatingNavItem(
+                    isSelected = !isHomeSelected, // Là settings
+                    icon = Icons.Rounded.Settings,
+                    title = "Settings",
+                    colorScheme = colorScheme,
+                    onClick = {
+                        val isSettings = currentRoute == Screen.Settings.route
+                        if (!isSettings) {
+                            try {
+                                navController.navigate(Screen.Settings.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = false }
+                                    launchSingleTop = true
+                                    // Thêm restoreState để tránh màn hình trắng
+                                    restoreState = true
+                                }
+                            } catch (e: Exception) {
+                                // Fallback nếu có lỗi navigation
+                                navController.navigate(Screen.Settings.route)
+                            }
                         }
-                    },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = "Settings",
-                        tint = if (isSettingsSelected) {
-                            colorScheme.primary
-                        } else {
-                            colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        },
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                // Indicator dot
-                if (isSettingsSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp)
-                            .clip(CircleShape)
-                            .background(colorScheme.primary)
-                    )
-                }
+                    }
+                )
             }
         }
+    }
+}
+
+@Composable
+fun FloatingNavItem(
+    isSelected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    colorScheme: androidx.compose.material3.ColorScheme,
+    onClick: () -> Unit
+) {
+    // Animation cho việc nổi lên (offset Y)
+    val animatedOffsetY by animateDpAsState(
+        targetValue = if (isSelected) (-30).dp else 0.dp, // Nếu chọn thì bay lên 30dp
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy) // Hiệu ứng nảy
+    )
+
+    // Animation cho kích thước nút tròn background
+    val animatedSize by animateDpAsState(
+        targetValue = if (isSelected) 56.dp else 48.dp,
+        animationSpec = tween(300)
+    )
+
+    Box(
+        modifier = Modifier
+            .offset(y = animatedOffsetY) // Dịch chuyển vị trí lên xuống
+            .size(animatedSize)
+            .clip(CircleShape)
+            // Nếu chọn thì có màu nền Primary, không thì trong suốt
+            .background(
+                if (isSelected) colorScheme.primary else Color.Transparent
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            // Nếu chọn -> màu trắng (nổi trên nền Primary), Không chọn -> màu xám
+            tint = if (isSelected) colorScheme.onPrimary else colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(28.dp)
+        )
     }
 }
 

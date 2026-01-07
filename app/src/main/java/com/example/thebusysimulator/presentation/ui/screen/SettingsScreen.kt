@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -18,6 +19,8 @@ import androidx.navigation.NavController
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.ui.theme.ThemeMode
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @Composable
@@ -34,13 +37,16 @@ fun SettingsScreenContent(navController: NavController) {
     val scope = rememberCoroutineScope()
     val systemIsDark = isSystemInDarkTheme()
     
-    var themeMode by remember { mutableStateOf("system") }
-    
-    LaunchedEffect(Unit) {
-        settingsDataSource.themeMode.collect { mode ->
-            themeMode = mode
-        }
+    // Convert Flow thành StateFlow với stateIn để tránh màn hình trắng
+    // StateFlow có giá trị initial ngay lập tức, không cần chờ Flow emit
+    val themeModeStateFlow: StateFlow<String> = remember(settingsDataSource) {
+        settingsDataSource.themeMode.stateIn(
+            scope = scope,
+            started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+            initialValue = "system"
+        )
     }
+    val themeMode by themeModeStateFlow.collectAsState()
     
     val colorScheme = MaterialTheme.colorScheme
     Column(
