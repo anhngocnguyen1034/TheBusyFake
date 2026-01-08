@@ -95,8 +95,8 @@ fun MainScreenUI(
         modifier = Modifier
             .fillMaxSize()
             .statusBarPadding()
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Title
         Text(
@@ -104,7 +104,7 @@ fun MainScreenUI(
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
             color = colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 4.dp)
         )
 
         FeatureCard(
@@ -169,58 +169,53 @@ fun CustomBottomNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
     val isHomeSelected = currentRoute == Screen.Home.route
 
-    // Dùng BoxWithConstraints để lấy chiều rộng màn hình, từ đó tính vị trí tâm icon
     BoxWithConstraints(
         modifier = modifier
-            .height(100.dp)
+            .height(80.dp) // Tăng chiều cao tổng thể một chút để nút bay lên không bị cắt
             .fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter
     ) {
         val width = constraints.maxWidth.toFloat()
 
-        // Tính toán vị trí tâm của đường cong (Curve)
-        // Vì ta chia 2 nút đều nhau bằng weight(1f), nên tâm nút trái là 25% width, nút phải là 75% width
         val homeCenter = width * 0.25f
         val settingsCenter = width * 0.75f
 
-        // Animation dịch chuyển vị trí đường cong
         val animatedCenter by animateFloatAsState(
             targetValue = if (isHomeSelected) homeCenter else settingsCenter,
             animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
             label = "curveAnimation"
         )
 
-        // --- 1. LỚP CANVAS (VẼ THANH BAR CÓ ĐƯỜNG LÕM DI CHUYỂN) ---
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp) // Chiều cao của background
+                .height(60.dp) // Chiều cao background
                 .align(Alignment.BottomCenter)
         ) {
-            val curveDepth = 40.dp.toPx() // Độ sâu của lõm (phải sâu để chứa nút tròn)
-            val curveWidth = 90.dp.toPx() // Độ rộng miệng lõm
-            val cornerRadius = 25.dp.toPx()
+            // --- THÔNG SỐ QUAN TRỌNG ĐỂ TẠO KHOẢNG HỞ ---
+            val curveDepth = 20.dp.toPx() // Sâu hơn một chút để chứa nút
+            val curveWidth = 90.dp.toPx() // RỘNG HƠN NÚT NHIỀU (khoảng hở 2 bên)
+            val cornerRadius = 20.dp.toPx()
 
             val path = Path().apply {
                 moveTo(0f, size.height)
                 lineTo(0f, cornerRadius)
                 quadraticBezierTo(0f, 0f, cornerRadius, 0f)
 
-                // Vẽ đường cong lõm tại vị trí animatedCenter
                 val curveStart = animatedCenter - (curveWidth / 2)
                 val curveEnd = animatedCenter + (curveWidth / 2)
 
                 lineTo(curveStart, 0f)
 
-                // Vẽ lõm xuống (hình cái bát)
+                // Vẽ đường cong mềm và rộng (U-Shape)
                 cubicTo(
-                    curveStart + (curveWidth * 0.25f), 0f,
-                    animatedCenter - (curveWidth * 0.15f), curveDepth,
-                    animatedCenter, curveDepth
+                    curveStart + (curveWidth * 0.2f), 0f,           // Control point 1 (giữ ngang lâu hơn)
+                    animatedCenter - (curveWidth * 0.1f), curveDepth, // Control point 2 (lao xuống dốc)
+                    animatedCenter, curveDepth                      // Đáy
                 )
                 cubicTo(
-                    animatedCenter + (curveWidth * 0.15f), curveDepth,
-                    curveEnd - (curveWidth * 0.25f), 0f,
+                    animatedCenter + (curveWidth * 0.1f), curveDepth,
+                    curveEnd - (curveWidth * 0.2f), 0f,
                     curveEnd, 0f
                 )
 
@@ -240,7 +235,6 @@ fun CustomBottomNavigation(
                 )
             )
 
-            // Vẽ viền mỏng
             drawPath(
                 path = path,
                 color = colorScheme.outline.copy(alpha = 0.2f),
@@ -248,15 +242,14 @@ fun CustomBottomNavigation(
             )
         }
 
-        // --- 2. CÁC NÚT BẤM (ICON) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .height(80.dp), // Khớp với chiều cao Canvas
+                .height(60.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Nút Home (chiếm 50% diện tích để canh giữa chuẩn)
+            // Home Button Container
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
@@ -277,29 +270,22 @@ fun CustomBottomNavigation(
                 )
             }
 
-            // Nút Settings (chiếm 50% diện tích)
+            // Settings Button Container
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 FloatingNavItem(
-                    isSelected = !isHomeSelected, // Là settings
+                    isSelected = !isHomeSelected,
                     icon = Icons.Rounded.Settings,
                     title = "Settings",
                     colorScheme = colorScheme,
                     onClick = {
                         val isSettings = currentRoute == Screen.Settings.route
                         if (!isSettings) {
-                            try {
-                                navController.navigate(Screen.Settings.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = false }
-                                    launchSingleTop = true
-                                    // Thêm restoreState để tránh màn hình trắng
-                                    restoreState = true
-                                }
-                            } catch (e: Exception) {
-                                // Fallback nếu có lỗi navigation
-                                navController.navigate(Screen.Settings.route)
+                            navController.navigate(Screen.Settings.route) {
+                                popUpTo(Screen.Home.route) { inclusive = false }
+                                launchSingleTop = true
                             }
                         }
                     }
@@ -317,40 +303,55 @@ fun FloatingNavItem(
     colorScheme: androidx.compose.material3.ColorScheme,
     onClick: () -> Unit
 ) {
-    // Animation cho việc nổi lên (offset Y)
+    // --- CHỈNH ĐỘ CAO BAY LÊN ---
+    // Bay lên -42dp để tạo cảm giác lơ lửng rõ ràng, không chạm vào phần lõm
     val animatedOffsetY by animateDpAsState(
-        targetValue = if (isSelected) (-30).dp else 0.dp, // Nếu chọn thì bay lên 30dp
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy) // Hiệu ứng nảy
+        targetValue = if (isSelected) (-42).dp else 0.dp,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
 
-    // Animation cho kích thước nút tròn background
+    // --- CHỈNH KÍCH THƯỚC NÚT ---
+    // Tăng lên 50dp cho tròn đẹp, dễ bấm (Vẫn nhỏ hơn curveWidth 90dp => Có khoảng hở 2 bên 20dp)
     val animatedSize by animateDpAsState(
-        targetValue = if (isSelected) 56.dp else 48.dp,
+        targetValue = if (isSelected) 50.dp else 40.dp,
         animationSpec = tween(300)
     )
 
-    Box(
+    // Hiệu ứng icon size
+    val animatedIconSize by animateDpAsState(
+        targetValue = if (isSelected) 26.dp else 24.dp,
+        animationSpec = tween(300)
+    )
+
+    Card(
         modifier = Modifier
             .offset(y = animatedOffsetY)
             .size(animatedSize)
-            .clip(CircleShape)
-            .background(
-                if (isSelected) colorScheme.primary else Color.Transparent
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            // Nếu chọn -> màu trắng (nổi trên nền Primary), Không chọn -> màu xám
-            tint = if (isSelected) colorScheme.onPrimary else colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.size(28.dp)
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) colorScheme.primary else Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 12.dp else 0.dp
         )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = if (isSelected) colorScheme.onPrimary else colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(animatedIconSize)
+            )
+        }
     }
 }
 
@@ -372,7 +373,7 @@ fun FeatureCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkTheme) {
                 Color.White.copy(alpha = 0.1f)
@@ -387,14 +388,14 @@ fun FeatureCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon with gradient background
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(gradientColors)
@@ -404,25 +405,25 @@ fun FeatureCard(
                     painter = painterResource(id = iconId),
                     contentDescription = title,
                     tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
             // Text content
             Column(
-                modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onBackground
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onBackground.copy(alpha = 0.7f),
-                    lineHeight = 20.sp
+                    lineHeight = 18.sp
                 )
             }
         }
