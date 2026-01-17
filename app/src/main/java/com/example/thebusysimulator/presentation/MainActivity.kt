@@ -20,6 +20,10 @@ import com.example.thebusysimulator.presentation.navigation.NavGraph
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
 import com.example.thebusysimulator.presentation.util.PermissionHelper
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
+import com.example.thebusysimulator.data.datasource.LanguageDataSource
+import com.example.thebusysimulator.presentation.util.LanguageManager
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -30,6 +34,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppContainer.init(this)
+        
+        // Apply saved language
+        val languageDataSource = LanguageDataSource(this)
+        runBlocking {
+            val languageCode = languageDataSource.languageCode.first()
+            LanguageManager.setLanguage(this@MainActivity, languageCode)
+        }
+        
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
@@ -80,7 +92,9 @@ class MainActivity : ComponentActivity() {
                         if (!hasCameraPermission) {
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         }
-                        // Request overlay permission if not granted
+                        // KHÔNG còn request overlay permission - app dùng Full Screen Intent thay thế
+                        // Code cũ (đã không dùng):
+                        /*
                         if (!hasOverlayPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             val intent = android.content.Intent(
                                 android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -88,6 +102,7 @@ class MainActivity : ComponentActivity() {
                             )
                             overlayPermissionLauncher.launch(intent)
                         }
+                        */
                     }
                 }
                 

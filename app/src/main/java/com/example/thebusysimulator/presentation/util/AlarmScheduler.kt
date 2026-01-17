@@ -58,7 +58,7 @@ class AlarmSchedulerImpl(private val context: Context) : CallScheduler {
             android.util.Log.d("AlarmScheduler", "   Alarm will trigger even when app is closed")
         } catch (e: SecurityException) {
             android.util.Log.e("AlarmScheduler", "❌ SecurityException: Cannot schedule exact alarm", e)
-            // Fallback nếu không có permission USE_EXACT_ALARM
+            // Fallback nếu không có permission SCHEDULE_EXACT_ALARM (hoặc user chưa cấp quyền)
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     alarmManager.setExact(

@@ -37,6 +37,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.thebusysimulator.domain.model.Message
 import com.example.thebusysimulator.presentation.navigation.Screen
+import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.util.ImageHelper
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import kotlinx.coroutines.launch
@@ -78,6 +79,7 @@ fun MessageScreen(
                     colors = listOf(colorScheme.background, colorScheme.surface)
                 )
             )
+            .hideKeyboardOnClick()
     ) {
         Column(
             modifier = Modifier

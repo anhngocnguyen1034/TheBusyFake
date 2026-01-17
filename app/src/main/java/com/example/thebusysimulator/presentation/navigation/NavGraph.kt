@@ -34,6 +34,7 @@ fun NavGraph(
             fakeCallViewModel?.let { viewModel ->
                 FakeCallScreen(
                     viewModel = viewModel,
+                    navController = navController,
                     hasOverlayPermission = hasOverlayPermission,
                     hasCameraPermission = hasCameraPermission,
                     onRequestOverlayPermission = onRequestOverlayPermission,
@@ -44,7 +45,10 @@ fun NavGraph(
         
         composable(Screen.FakeMessage.route) {
             fakeMessageViewModel?.let { viewModel ->
-                FakeMessageScreen(viewModel = viewModel)
+                FakeMessageScreen(
+                    viewModel = viewModel,
+                    navController = navController
+                )
             }
         }
         
@@ -79,6 +83,10 @@ fun NavGraph(
         
         composable(Screen.Settings.route) {
             SettingsScreen(navController = navController)
+        }
+        
+        composable(Screen.Language.route) {
+            LanguageSelectionScreen(navController = navController)
         }
     }
 }

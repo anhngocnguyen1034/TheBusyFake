@@ -12,12 +12,21 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object PermissionHelper {
+    /**
+     * @deprecated Không còn sử dụng overlay permission vì app dùng Full Screen Intent (an toàn với Google Play)
+     * Giữ lại function này để tương thích với code cũ, nhưng luôn trả về false
+     */
+    @Deprecated("App không còn sử dụng SYSTEM_ALERT_WINDOW permission")
     fun canDrawOverlays(context: Context): Boolean {
+        // App không còn sử dụng overlay - dùng Full Screen Intent thay thế
+        return false
+        /* Code cũ (đã không dùng):
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Settings.canDrawOverlays(context)
         } else {
             true // Pre-Marshmallow, permission is granted by default
         }
+        */
     }
 
     fun hasCameraPermission(context: Context): Boolean {
@@ -42,10 +51,19 @@ object PermissionHelper {
     }
 
     fun hasAllPermissions(context: Context): Boolean {
-        return canDrawOverlays(context) && hasCameraPermission(context)
+        // Chỉ cần camera permission, không cần overlay permission nữa
+        return hasCameraPermission(context)
+        // Code cũ: return canDrawOverlays(context) && hasCameraPermission(context)
     }
 
+    /**
+     * @deprecated Không còn cần request overlay permission vì app dùng Full Screen Intent
+     */
+    @Deprecated("App không còn sử dụng SYSTEM_ALERT_WINDOW permission")
     fun requestOverlayPermission(activity: Activity, requestCode: Int) {
+        // Không làm gì - app không còn sử dụng overlay permission
+        // Code cũ đã được comment để tham khảo:
+        /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -53,6 +71,7 @@ object PermissionHelper {
             )
             activity.startActivityForResult(intent, requestCode)
         }
+        */
     }
 
     fun requestCameraPermission(activity: Activity, requestCode: Int) {
@@ -82,9 +101,10 @@ object PermissionHelper {
         if (!hasCameraPermission(activity)) {
             requestCameraPermission(activity, cameraRequestCode)
         }
-        // Then request overlay permission (needs Settings)
-        if (!canDrawOverlays(activity)) {
-            requestOverlayPermission(activity, overlayRequestCode)
-        }
+        // Không còn request overlay permission - app dùng Full Screen Intent thay thế
+        // Code cũ:
+        // if (!canDrawOverlays(activity)) {
+        //     requestOverlayPermission(activity, overlayRequestCode)
+        // }
     }
 }

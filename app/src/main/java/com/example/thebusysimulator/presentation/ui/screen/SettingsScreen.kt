@@ -7,15 +7,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -40,8 +38,11 @@ import kotlin.math.cos
 import kotlin.math.sin
 import androidx.navigation.NavController
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
+import com.example.thebusysimulator.data.datasource.LanguageDataSource
+import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.ui.theme.ThemeMode
+import com.example.thebusysimulator.presentation.util.LanguageManager
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -57,6 +58,7 @@ fun SettingsScreen(navController: NavController) {
 fun SettingsScreenContent(navController: NavController) {
     val context = LocalContext.current
     val settingsDataSource = remember { FakeCallSettingsDataSource(context) }
+    val languageDataSource = remember { LanguageDataSource(context) }
     val scope = rememberCoroutineScope()
     val systemIsDark = isSystemInDarkTheme()
     
@@ -75,13 +77,23 @@ fun SettingsScreenContent(navController: NavController) {
         ThemeMode.LIGHT.value -> false
         else -> systemIsDark
     }
+    
+    // Get current language
+    var currentLanguageCode by remember { mutableStateOf("en") }
+    LaunchedEffect(Unit) {
+        languageDataSource.languageCode.collect { code ->
+            currentLanguageCode = code
+        }
+    }
+    val currentLanguage = LanguageManager.Language.fromCode(currentLanguageCode)
 
     val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarPadding()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Top bar with title
         Text(
@@ -90,7 +102,7 @@ fun SettingsScreenContent(navController: NavController) {
             color = colorScheme.onBackground,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Theme Selection Card + Canvas Switch
         Card(
@@ -132,6 +144,47 @@ fun SettingsScreenContent(navController: NavController) {
                         height = 36.dp
                     )
                 }
+            }
+        }
+        
+        // Language Selection Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { navController.navigate(Screen.Language.route) },
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Ngôn ngữ",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = currentLanguage?.displayName ?: "English",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

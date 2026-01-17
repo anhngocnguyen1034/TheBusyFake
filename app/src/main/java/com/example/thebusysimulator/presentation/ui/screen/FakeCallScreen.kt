@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MailOutline
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Phone
@@ -31,7 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.thebusysimulator.domain.model.FakeCall
+import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
 import java.text.SimpleDateFormat
@@ -41,6 +44,7 @@ import java.util.*
 @Composable
 fun FakeCallScreen(
     viewModel: FakeCallViewModel,
+    navController: NavController,
     hasOverlayPermission: Boolean,
     hasCameraPermission: Boolean,
     onRequestOverlayPermission: () -> Unit,
@@ -63,20 +67,35 @@ fun FakeCallScreen(
             .fillMaxSize()
             .background(bgBrush)
             .statusBarPadding()
+            .hideKeyboardOnClick()
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 100.dp, top = 20.dp, start = 20.dp, end = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp), // Tăng khoảng cách cho thoáng
+            contentPadding = PaddingValues(bottom = 80.dp, top = 12.dp, start = 16.dp, end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             // --- HEADER: To, đậm, phong cách ---
             item {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Fake Call 🎭",
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = (-1).sp
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold
                         ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -155,7 +174,7 @@ fun InputSection(
 
     // Card Input được thiết kế nổi khối, bo góc lớn
     Card(
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
@@ -163,18 +182,18 @@ fun InputSection(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Setup cuộc gọi",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
 
             // Input Name & Number - Style mới gọn gàng hơn
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ModernTextField(
                     value = callerName,
                     onValueChange = { callerName = it },
@@ -194,7 +213,7 @@ fun InputSection(
             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
 
             // Time Selection
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = "Bao lâu nữa thì gọi?",
                     style = MaterialTheme.typography.labelLarge,
@@ -265,7 +284,7 @@ fun InputSection(
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
-                                modifier = Modifier.padding(12.dp),
+                                modifier = Modifier.padding(8.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -368,7 +387,7 @@ fun ScheduledCallItem(
             .animateContentSize() // Animation mượt khi list thay đổi
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar sinh động
@@ -478,7 +497,7 @@ fun PermissionWarningCard(onClick: () -> Unit) {
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Rounded.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer) // Icon giữ nguyên
@@ -500,7 +519,7 @@ fun ErrorBanner(message: String, onDismiss: () -> Unit) {
         modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(16.dp))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -531,12 +550,12 @@ fun SettingsSection(viewModel: FakeCallViewModel) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Cài đặt cuộc gọi",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )

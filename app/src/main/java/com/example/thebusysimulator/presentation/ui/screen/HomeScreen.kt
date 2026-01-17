@@ -95,16 +95,16 @@ fun MainScreenUI(
         modifier = Modifier
             .fillMaxSize()
             .statusBarPadding()
-            .padding(horizontal = 16.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // Title
         Text(
             text = "The Busy Simulator",
-            style = MaterialTheme.typography.displayMedium,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(bottom = 2.dp)
         )
 
         FeatureCard(
@@ -388,14 +388,14 @@ fun FeatureCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon with gradient background
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(gradientColors)
@@ -405,17 +405,17 @@ fun FeatureCard(
                     painter = painterResource(id = iconId),
                     contentDescription = title,
                     tint = Color.White,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
             // Text content
             Column(
-                modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)
+                modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onBackground
                 )
@@ -423,7 +423,8 @@ fun FeatureCard(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onBackground.copy(alpha = 0.7f),
-                    lineHeight = 18.sp
+                    lineHeight = 16.sp,
+                    maxLines = 2
                 )
             }
         }

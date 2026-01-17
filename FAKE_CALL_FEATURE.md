@@ -33,11 +33,14 @@ Tính năng này cho phép bạn lên lịch các cuộc gọi giả sẽ xuất
 ## Quyền cần thiết
 
 Ứng dụng cần các quyền sau để hoạt động:
-- **SYSTEM_ALERT_WINDOW**: Để hiển thị overlay màn hình
-- **SCHEDULE_EXACT_ALARM**: Để lên lịch chính xác thời gian cuộc gọi
-- **USE_EXACT_ALARM**: Để sử dụng alarm chính xác
+- **SCHEDULE_EXACT_ALARM**: Để lên lịch chính xác thời gian cuộc gọi (tuân thủ Google Play Policy)
+- **USE_FULL_SCREEN_INTENT**: Để hiển thị cuộc gọi toàn màn hình khi màn hình tắt (tính năng cốt lõi, được Google Play chấp nhận)
 
-**Lưu ý**: Trên Android 6.0+ (API 23+), bạn cần cấp quyền "Display over other apps" thủ công trong Settings.
+**Lưu ý quan trọng về Google Play Policy:**
+- ❌ **KHÔNG sử dụng USE_EXACT_ALARM**: Chỉ dành cho ứng dụng Đồng hồ báo thức hoặc Lịch
+- ❌ **KHÔNG sử dụng SYSTEM_ALERT_WINDOW**: Không cần thiết vì app dùng Full Screen Intent thông qua Notification (an toàn hơn)
+- ✅ **SCHEDULE_EXACT_ALARM**: Được phép cho Fake Call app
+- ✅ **USE_FULL_SCREEN_INTENT**: Được phép vì đây là tính năng cốt lõi của app
 
 ## Kiến trúc
 
@@ -68,16 +71,19 @@ Tính năng này được xây dựng theo Clean Architecture:
 2. ViewModel gọi `ScheduleFakeCallUseCase` để lưu vào repository
 3. ViewModel gọi `CallScheduler.schedule()` để đặt alarm
 4. Khi đến thời gian, `AlarmManager` trigger `FakeCallReceiver`
-5. `FakeCallReceiver` start `FakeCallService`
-6. `FakeCallService` hiển thị overlay màn hình với Compose UI
-7. User nhấn Answer hoặc Decline để đóng overlay
+5. `FakeCallReceiver` kiểm tra trạng thái app:
+   - **Nếu app đang chạy**: Hiển thị Activity trực tiếp
+   - **Nếu app đã đóng**: Hiển thị Notification với Full Screen Intent (an toàn với Google Play)
+6. Full Screen Intent tự động mở `FakeCallActivity` khi màn hình tắt (giống cuộc gọi thật)
+7. User nhấn Answer hoặc Decline để đóng Activity
 
 ## Lưu ý kỹ thuật
 
 - Alarm được lưu trong memory (có thể thay bằng Room/SharedPreferences)
-- Overlay sử dụng `WindowManager` với `TYPE_APPLICATION_OVERLAY`
-- Service chạy foreground để đảm bảo overlay hiển thị
-- Cần cấp quyền overlay thủ công trên Android 6.0+
+- **Không sử dụng Overlay**: App sử dụng Full Screen Intent thông qua Notification (tuân thủ Google Play Policy)
+- Notification với Full Screen Intent tự động mở Activity khi màn hình tắt
+- Activity sử dụng `showWhenLocked` và `turnScreenOn` để hiển thị trên màn hình khóa
+- Không cần quyền SYSTEM_ALERT_WINDOW (đã loại bỏ để tránh bị Google Play từ chối)
 
 
 
