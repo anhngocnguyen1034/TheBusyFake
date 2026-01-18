@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -35,13 +38,27 @@ fun LanguageSelectionScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
 
     var currentLanguageCode by remember { mutableStateOf<String?>(null) }
+    var selectedLanguageCode by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         currentLanguageCode = languageDataSource.languageCode.first()
+        selectedLanguageCode = currentLanguageCode
     }
 
     val colorScheme = MaterialTheme.colorScheme
     val languages = LanguageManager.getSupportedLanguages()
+    
+    // Hàm xác nhận và áp dụng ngôn ngữ
+    val confirmLanguageSelection: () -> Unit = {
+        selectedLanguageCode?.let { code ->
+            scope.launch {
+                languageDataSource.setLanguageCode(code)
+                currentLanguageCode = code
+                LanguageManager.setLanguage(context, code)
+                (context as? android.app.Activity)?.recreate()
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -62,27 +79,55 @@ fun LanguageSelectionScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = colorScheme.surface.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                            tint = colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Select Language",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onBackground
+                    )
+                }
+                
+                // Icon xác nhận cố định ở header
                 IconButton(
-                    onClick = { navController.popBackStack() },
+                    onClick = confirmLanguageSelection,
+                    enabled = selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode,
                     colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = colorScheme.surface.copy(alpha = 0.5f)
+                        containerColor = if (selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode) {
+                            colorScheme.primary
+                        } else {
+                            colorScheme.surface.copy(alpha = 0.5f)
+                        }
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colorScheme.onSurface
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = "Confirm",
+                        tint = if (selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode) {
+                            colorScheme.onPrimary
+                        } else {
+                            colorScheme.onSurface.copy(alpha = 0.5f)
+                        }
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "Select Language",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onBackground
-                )
             }
 
             LazyColumn(
@@ -93,14 +138,9 @@ fun LanguageSelectionScreen(navController: NavController) {
                 items(languages) { language ->
                     LanguageItem(
                         language = language,
-                        isSelected = currentLanguageCode == language.code,
+                        isSelected = selectedLanguageCode == language.code,
                         onClick = {
-                            scope.launch {
-                                languageDataSource.setLanguageCode(language.code)
-                                currentLanguageCode = language.code
-                                LanguageManager.setLanguage(context, language.code)
-                                (context as? android.app.Activity)?.recreate()
-                            }
+                            selectedLanguageCode = language.code
                         }
                     )
                 }
@@ -160,45 +200,30 @@ fun LanguageItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = language.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold, // Đậm hơn khi chọn
-                    color = if (isSelected) {
-                        colorScheme.onPrimaryContainer
-                    } else {
-                        colorScheme.onSurface
-                    }
+                // Flag image
+                Image(
+                    painter = painterResource(id = language.flagResId),
+                    contentDescription = "${language.displayName} flag",
+                    modifier = Modifier.size(32.dp),
+                    contentScale = ContentScale.Fit
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = language.code, // Có thể format lại ví dụ: English (en)
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) {
-                        colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    } else {
-                        colorScheme.onSurfaceVariant
-                    }
-                )
-            }
-
-            // Icon checkmark
-            if (isSelected) {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = "Selected",
-                    tint = colorScheme.primary,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .background(
-                            color = colorScheme.background.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(50)
-                        ) // Thêm background tròn nhỏ sau icon check cho nổi
-                        .padding(4.dp)
-                )
+                Column {
+                    Text(
+                        text = language.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold, // Đậm hơn khi chọn
+                        color = if (isSelected) {
+                            colorScheme.onPrimaryContainer
+                        } else {
+                            colorScheme.onSurface
+                        }
+                    )
+                }
             }
         }
     }

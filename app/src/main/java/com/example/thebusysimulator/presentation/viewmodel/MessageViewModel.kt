@@ -349,7 +349,7 @@ class MessageViewModel(
         }
     }
     
-    fun addMessage(contactName: String, avatarUri: String?) {
+    fun addMessage(contactName: String, avatarUri: String?, isVerified: Boolean = false) {
         viewModelScope.launch {
             try {
                 val message = Message(
@@ -358,7 +358,8 @@ class MessageViewModel(
                     lastMessage = "",
                     timestamp = Date(),
                     unreadCount = 0,
-                    avatarUri = avatarUri
+                    avatarUri = avatarUri,
+                    isVerified = isVerified
                 )
                 messageRepository.insertMessage(message)
             } catch (e: Exception) {
@@ -391,78 +392,35 @@ class MessageViewModel(
                     replyToMessageId = null
                 )
                 messageRepository.insertChatMessage(chatMessage)
-                
-                // Tự động trả lời cho tất cả các contact
-                val message = messageRepository.getMessageById(messageId)
-                if (message != null) {
-                    // Lấy loại contact từ SharedPreferences (không dựa vào tên)
-                    val contactType = prefs?.getString("contact_type_$messageId", null)
-                    
-                    // Lấy reply index hiện tại
-                    val currentIndex = prefs?.getInt("reply_index_$messageId", 0) ?: 0
-                    
-                    // Lấy tin nhắn trả lời tương ứng dựa trên contact type
-                    val replyText = when (contactType) {
-                        "mom" -> AutoReplyHelper.getNextReply(currentIndex)
-                        "lover" -> AutoReplyHelper.getNextLoverReply(currentIndex)
-                        "doctor" -> AutoReplyHelper.getNextDoctorReply(currentIndex)
-                        "scientist" -> AutoReplyHelper.getNextScientistReply(currentIndex)
-                        else -> AutoReplyHelper.getNextGenericReply(currentIndex) // Contact tự tạo
-                    }
-                    
-                    // Xác định loại nhân vật dựa trên contact type và tính toán thời gian delay
-                    val characterType = when (contactType) {
-                        "mom" -> CharacterType.PARENT
-                        "lover" -> CharacterType.LOVER
-                        "doctor" -> CharacterType.EXPERT
-                        "scientist" -> CharacterType.EXPERT
-                        else -> CharacterType.LOVER // Mặc định
-                    }
-                    val delayTime = ChatTimeCalculator.calculateDelay(replyText, characterType)
-                    
-                    // Bật typing indicator
-                    val currentState = _chatUiState.value.toMutableMap()
-                    currentState[messageId] = currentState[messageId]?.copy(isTyping = true)
-                        ?: ChatUiState(isTyping = true)
-                    _chatUiState.value = currentState
-                    
-                    // Đợi thời gian được tính toán dựa trên độ dài tin nhắn và loại nhân vật
-                    delay(delayTime)
-                    
-                    // Tắt typing indicator
-                    val updatedState = _chatUiState.value.toMutableMap()
-                    updatedState[messageId] = updatedState[messageId]?.copy(isTyping = false)
-                        ?: ChatUiState(isTyping = false)
-                    _chatUiState.value = updatedState
-                    
-                    // Tạo tin nhắn trả lời tự động
-                    val replyMessage = ChatMessage(
-                        id = UUID.randomUUID().toString(),
-                        messageId = messageId,
-                        text = replyText,
-                        timestamp = Date(),
-                        isFromMe = false,
-                        imageUri = null,
-                        replyToMessageId = null // Tin nhắn tự động không phải là phản hồi
-                    )
-                    messageRepository.insertChatMessage(replyMessage)
-                    
-                    // Cập nhật reply index cho lần sau
-                    val totalReplies = when (contactType) {
-                        "mom" -> AutoReplyHelper.getTotalReplies()
-                        "lover" -> AutoReplyHelper.getTotalLoverReplies()
-                        "doctor" -> AutoReplyHelper.getTotalDoctorReplies()
-                        "scientist" -> AutoReplyHelper.getTotalScientistReplies()
-                        else -> AutoReplyHelper.getTotalGenericReplies() // Contact tự tạo
-                    }
-                    val nextIndex = (currentIndex + 1) % totalReplies
-                    prefs?.edit()?.putInt("reply_index_$messageId", nextIndex)?.apply()
-                }
             } catch (e: Exception) {
                 val currentState = _chatUiState.value.toMutableMap()
                 val existingState = currentState[messageId]
                 currentState[messageId] = existingState?.copy(errorMessage = e.message)
                     ?: ChatUiState(errorMessage = e.message, isTyping = false)
+                _chatUiState.value = currentState
+            }
+        }
+    }
+    
+    fun sendMessageFromContact(messageId: String, text: String, imageUri: String? = null) {
+        viewModelScope.launch {
+            try {
+                // Gửi tin nhắn từ contact (người khác)
+                val chatMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = text,
+                    timestamp = Date(),
+                    isFromMe = false,
+                    imageUri = imageUri,
+                    replyToMessageId = null
+                )
+                messageRepository.insertChatMessage(chatMessage)
+            } catch (e: Exception) {
+                val currentState = _chatUiState.value.toMutableMap()
+                val existingState = currentState[messageId]
+                currentState[messageId] = existingState?.copy(errorMessage = e.message)
+                    ?: ChatUiState(errorMessage = e.message)
                 _chatUiState.value = currentState
             }
         }

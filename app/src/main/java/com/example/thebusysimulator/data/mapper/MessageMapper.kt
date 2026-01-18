@@ -12,7 +12,8 @@ object MessageMapper {
             lastMessage = data.lastMessage,
             timestamp = Date(data.timestamp),
             unreadCount = data.unreadCount,
-            avatarUri = data.avatarUri
+            avatarUri = data.avatarUri,
+            isVerified = data.isVerified
         )
     }
     
@@ -23,7 +24,8 @@ object MessageMapper {
             lastMessage = entity.lastMessage,
             timestamp = entity.timestamp.time,
             unreadCount = entity.unreadCount,
-            avatarUri = entity.avatarUri
+            avatarUri = entity.avatarUri,
+            isVerified = entity.isVerified
         )
     }
 }

@@ -6,6 +6,7 @@ import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.domain.model.FakeCall
 import com.example.thebusysimulator.domain.usecase.CancelFakeCallUseCase
 import com.example.thebusysimulator.domain.usecase.GetScheduledCallsUseCase
+import com.example.thebusysimulator.domain.usecase.MarkCallAsCompletedUseCase
 import com.example.thebusysimulator.domain.usecase.ScheduleFakeCallUseCase
 import com.example.thebusysimulator.domain.util.CallScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ class FakeCallViewModel(
     private val scheduleFakeCallUseCase: ScheduleFakeCallUseCase,
     private val cancelFakeCallUseCase: CancelFakeCallUseCase,
     private val getScheduledCallsUseCase: GetScheduledCallsUseCase,
+    private val markCallAsCompletedUseCase: MarkCallAsCompletedUseCase,
     private val callScheduler: CallScheduler,
     private val settingsDataSource: FakeCallSettingsDataSource
 ) : ViewModel() {
@@ -76,8 +78,19 @@ class FakeCallViewModel(
             scheduleFakeCallUseCase.invoke(fakeCall).fold(
                 onSuccess = {
                     callScheduler.schedule(fakeCall)
-                    _uiState.value = _uiState.value.copy(isScheduling = false)
-                    loadScheduledCalls()
+                    // Mark call as completed ngay sau khi schedule để hiển thị trong lịch sử
+                    markCallAsCompletedUseCase.invoke(fakeCall.id).fold(
+                        onSuccess = {
+                            _uiState.value = _uiState.value.copy(isScheduling = false)
+                            loadScheduledCalls()
+                        },
+                        onFailure = { markException ->
+                            // Nếu mark failed, vẫn coi như schedule thành công
+                            android.util.Log.w("FakeCallViewModel", "Failed to mark call as completed: ${markException.message}")
+                            _uiState.value = _uiState.value.copy(isScheduling = false)
+                            loadScheduledCalls()
+                        }
+                    )
                 },
                 onFailure = { exception ->
                     _uiState.value = _uiState.value.copy(

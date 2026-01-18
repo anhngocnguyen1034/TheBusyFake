@@ -11,6 +11,7 @@ interface FakeCallRepository {
     suspend fun getScheduledCalls(): Result<List<FakeCall>>
     suspend fun getCallById(callId: String): Result<FakeCall>
     suspend fun markCallAsCompleted(callId: String): Result<Unit>
+    suspend fun getCompletedCalls(): Result<List<FakeCall>>
 }
 
 

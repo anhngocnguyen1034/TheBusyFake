@@ -3,36 +3,37 @@ package com.example.thebusysimulator.presentation.util
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
+import com.example.thebusysimulator.R
 import java.util.Locale
 
 object LanguageManager {
     
     // Supported languages
-    enum class Language(val code: String, val displayName: String) {
-        ENGLISH("en", "English"),
-        VIETNAMESE("vi", "Tiếng Việt"),
-        SPANISH("es", "Español"),
-        FRENCH("fr", "Français"),
-        GERMAN("de", "Deutsch"),
-        ITALIAN("it", "Italiano"),
-        PORTUGUESE("pt", "Português"),
-        RUSSIAN("ru", "Русский"),
-        JAPANESE("ja", "日本語"),
-        KOREAN("ko", "한국어"),
-        CHINESE_SIMPLIFIED("zh-CN", "简体中文"),
-        CHINESE_TRADITIONAL("zh-TW", "繁體中文"),
-        ARABIC("ar", "العربية"),
-        HINDI("hi", "हिन्दी"),
-        TURKISH("tr", "Türkçe"),
-        POLISH("pl", "Polski"),
-        DUTCH("nl", "Nederlands"),
-        INDONESIAN("id", "Bahasa Indonesia"),
-        THAI("th", "ไทย"),
-        GREEK("el", "Ελληνικά"),
-        CZECH("cs", "Čeština"),
-        SWEDISH("sv", "Svenska"),
-        NORWEGIAN("no", "Norsk"),
-        FINNISH("fi", "Suomi");
+    enum class Language(val code: String, val displayName: String, val flagResId: Int) {
+        ENGLISH("en", "English", R.drawable.eng),
+        VIETNAMESE("vi", "Tiếng Việt", R.drawable.vn),
+        SPANISH("es", "Español", R.drawable.es),
+        FRENCH("fr", "Français", R.drawable.fr),
+        GERMAN("de", "Deutsch", R.drawable.de),
+        ITALIAN("it", "Italiano", R.drawable.it),
+        PORTUGUESE("pt", "Português", R.drawable.pt),
+        RUSSIAN("ru", "Русский", R.drawable.ru),
+        JAPANESE("ja", "日本語", R.drawable.ja),
+        KOREAN("ko", "한국어", R.drawable.ko),
+        CHINESE_SIMPLIFIED("zh-CN", "简体中文", R.drawable.cn),
+        CHINESE_TRADITIONAL("zh-TW", "繁體中文", R.drawable.tw),
+        ARABIC("ar", "العربية", R.drawable.sa),
+        HINDI("hi", "हिन्दी", R.drawable.`in`),
+        TURKISH("tr", "Türkçe", R.drawable.tr),
+        POLISH("pl", "Polski", R.drawable.pl),
+        DUTCH("nl", "Nederlands", R.drawable.nl),
+        INDONESIAN("id", "Bahasa Indonesia", R.drawable.id),
+        THAI("th", "ไทย", R.drawable.th),
+        GREEK("el", "Ελληνικά", R.drawable.gr),
+        CZECH("cs", "Čeština", R.drawable.cz),
+        SWEDISH("sv", "Svenska", R.drawable.se),
+        NORWEGIAN("no", "Norsk", R.drawable.no),
+        FINNISH("fi", "Suomi", R.drawable.fi);
         
         companion object {
             fun fromCode(code: String): Language? {

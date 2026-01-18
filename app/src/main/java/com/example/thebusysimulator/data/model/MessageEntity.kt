@@ -11,6 +11,7 @@ data class MessageEntity(
     val lastMessage: String,
     val timestamp: Long,
     val unreadCount: Int = 0,
-    val avatarUri: String? = null
+    val avatarUri: String? = null,
+    val isVerified: Boolean = false
 )
 

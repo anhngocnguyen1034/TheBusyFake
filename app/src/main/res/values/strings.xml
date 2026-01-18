@@ -1,8 +1,6 @@
 <resources>
-    <!-- App Name -->
     <string name="app_name">The Busy Simulator</string>
-    
-    <!-- Home Screen -->
+
     <string name="home_title">The Busy Simulator</string>
     <string name="fake_call">Fake Call</string>
     <string name="fake_call_description">Create fake calls with custom phone number and caller name</string>
@@ -12,50 +10,47 @@
     <string name="fake_notification_description">Create fake message notifications displayed on lock screen</string>
     <string name="home">Home</string>
     <string name="settings">Settings</string>
-    
-    <!-- Fake Call Screen -->
+
     <string name="fake_call_title">Fake Call 🎭</string>
     <string name="back">Back</string>
-    <string name="setup_call">Setup cuộc gọi</string>
-    <string name="who_will_call_you">Ai sẽ gọi cho bạn?</string>
-    <string name="phone_number_optional">Số điện thoại (tùy chọn)</string>
-    <string name="how_long_until_call">Bao lâu nữa thì gọi?</string>
-    <string name="immediately">Ngay lập tức</string>
-    <string name="one_minute">1 phút</string>
-    <string name="five_minutes">5 phút</string>
-    <string name="thirty_minutes">30 phút</string>
-    <string name="seconds_placeholder">Số giây…</string>
-    <string name="schedule_now">Lên Lịch Ngay</string>
-    <string name="enter_name_and_time">Nhập tên và thời gian</string>
-    <string name="call_settings">Cài đặt cuộc gọi</string>
-    <string name="vibration_on_call">Rung khi gọi</string>
-    <string name="vibration_on_call_description">Bật rung khi có cuộc gọi đến</string>
-    <string name="flash_on_call">Nháy flash khi gọi</string>
-    <string name="flash_on_call_description">Bật đèn flash khi có cuộc gọi đến</string>
-    <string name="no_calls_yet">Chưa có cuộc gọi nào</string>
-    <string name="add_schedule_to_escape">Thêm lịch ngay để trốn họp nào! 🏃💨</string>
-    <string name="ringing_at">Đổ chuông lúc %1$s</string>
-    <string name="overdue">Đã quá hạn</string>
-    <string name="cancel">Hủy</string>
-    <string name="camera_permission_required">Yêu cầu quyền Camera</string>
-    <string name="camera_permission_description">Để kích hoạt tính năng Video Call</string>
-    <string name="grant_permission">CẤP QUYỀN</string>
-    
-    <!-- Fake Message Screen -->
-    <string name="fake_message_title">Fake Message 💬</string>
-    <string name="setup_message">Setup tin nhắn</string>
-    <string name="who_will_message_you">Ai sẽ nhắn cho bạn?</string>
-    <string name="message_content">Nội dung tin nhắn</string>
-    <string name="how_long_until_send">Bao lâu nữa thì gửi?</string>
-    <string name="send_now">Gửi ngay</string>
-    <string name="schedule">Lên lịch</string>
-    <string name="enter_all_fields">Nhập đầy đủ</string>
-    <string name="scheduled_messages">Tin nhắn đã lên lịch</string>
-    <string name="send_at">Gửi lúc %1$s</string>
-    <string name="no_messages_yet">Chưa có tin nhắn nào</string>
-    <string name="create_fake_message_to_escape">Tạo tin nhắn giả ngay để trốn họp nào! 🏃💨</string>
-    
-    <!-- Message Screen -->
+    <string name="setup_call">Setup Call</string>
+    <string name="who_will_call_you">Who will call you?</string>
+    <string name="phone_number_optional">Phone number (optional)</string>
+    <string name="how_long_until_call">How long until call?</string>
+    <string name="immediately">Immediately</string>
+    <string name="one_minute">1 minute</string>
+    <string name="five_minutes">5 minutes</string>
+    <string name="thirty_minutes">30 minutes</string>
+    <string name="seconds_placeholder">Seconds…</string>
+    <string name="schedule_now">Schedule Now</string>
+    <string name="enter_name_and_time">Enter name and time</string>
+    <string name="call_settings">Call Settings</string>
+    <string name="vibration_on_call">Vibrate on call</string>
+    <string name="vibration_on_call_description">Vibrate when receiving a call</string>
+    <string name="flash_on_call">Flash on call</string>
+    <string name="flash_on_call_description">Flash LED when receiving a call</string>
+    <string name="no_calls_yet">No calls yet</string>
+    <string name="add_schedule_to_escape">Schedule now to escape the meeting!</string>
+    <string name="ringing_at">Ringing at %1$s</string>
+    <string name="overdue">Overdue</string>
+    <string name="cancel">Cancel</string>
+    <string name="camera_permission_required">Camera permission required</string>
+    <string name="camera_permission_description">To enable Video Call feature</string>
+    <string name="grant_permission">GRANT PERMISSION</string>
+
+    <string name="fake_message_title">Fake Message</string>
+    <string name="setup_message">Setup Message</string>
+    <string name="who_will_message_you">Who will message you?</string>
+    <string name="message_content">Message content</string>
+    <string name="how_long_until_send">How long until sent?</string>
+    <string name="send_now">Send now</string>
+    <string name="schedule">Schedule</string>
+    <string name="enter_all_fields">Please fill all fields</string>
+    <string name="scheduled_messages">Scheduled messages</string>
+    <string name="send_at">Sending at %1$s</string>
+    <string name="no_messages_yet">No messages yet</string>
+    <string name="create_fake_message_to_escape">Create a fake message now to escape!</string>
+
     <string name="messages">Messages</string>
     <string name="add_message">Add Message</string>
     <string name="no_messages_yet_message">No messages yet</string>
@@ -67,40 +62,36 @@
     <string name="tap_to_select">Tap to select</string>
     <string name="create">Create</string>
     <string name="cancel_button">Cancel</string>
-    
-    <!-- Chat Screen -->
+
     <string name="video_call">Video Call</string>
-    <string name="typing_message">Nhập tin nhắn…</string>
+    <string name="typing_message">Type a message…</string>
     <string name="send">Send</string>
     <string name="select_image_chat">Select Image</string>
-    <string name="replying_to">Đang trả lời %1$s</string>
-    <string name="yourself">chính mình</string>
+    <string name="replying_to">Replying to %1$s</string>
+    <string name="yourself">yourself</string>
     <string name="cancel_reply">Cancel Reply</string>
-    <string name="reply">Trả lời</string>
-    <string name="delete_message">Xóa tin nhắn</string>
-    <string name="you">Bạn</string>
-    <string name="other_person">Người khác</string>
-    <string name="image">📷 Hình ảnh</string>
-    <string name="message_deleted">Tin nhắn đã xóa</string>
+    <string name="reply">Reply</string>
+    <string name="delete_message">Delete message</string>
+    <string name="you">You</string>
+    <string name="other_person">Other Person</string>
+    <string name="image">📷 Image</string>
+    <string name="message_deleted">Message deleted</string>
     <string name="chat_image">Chat Image</string>
-    
-    <!-- Settings Screen -->
-    <string name="settings_title">Cài đặt</string>
-    <string name="dark_mode">Giao diện tối</string>
-    <string name="dark_mode_enabled">Đang bật chế độ ban đêm</string>
-    <string name="dark_mode_disabled">Đang bật chế độ ban ngày</string>
-    
-    <!-- Fake Call Activity -->
+
+    <string name="settings_title">Settings</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_enabled">Dark mode enabled</string>
+    <string name="dark_mode_disabled">Dark mode disabled</string>
+
     <string name="incoming_call">Incoming call</string>
-    <string name="decline">Từ chối</string>
-    <string name="answer">Trả lời</string>
+    <string name="decline">Decline</string>
+    <string name="answer">Answer</string>
     <string name="end_call">End Call</string>
     <string name="call_ended">Call ended</string>
     <string name="swipe_up_to_answer">Swipe up to answer</string>
     <string name="swipe_down_to_decline">Swipe down to decline</string>
-    
-    <!-- Common -->
+
     <string name="seconds">s</string>
-    <string name="minutes">phút</string>
-    <string name="hours">giờ</string>
+    <string name="minutes">min</string>
+    <string name="hours">h</string>
 </resources>

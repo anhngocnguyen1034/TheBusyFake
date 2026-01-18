@@ -41,8 +41,11 @@ class FakeCallRepositoryImpl(
             val callsData = localDataSource.getAllCalls().getOrElse {
                 return Result.failure(it)
             }
-            val calls = callsData.map { mapper.mapToEntity(it) }
-            Result.success(calls)
+            // Chỉ lấy các cuộc gọi chưa completed
+            val scheduledCalls = callsData
+                .filter { !it.isCompleted }
+                .map { mapper.mapToEntity(it) }
+            Result.success(scheduledCalls)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -73,6 +76,21 @@ class FakeCallRepositoryImpl(
                 }
                 Result.success(Unit)
             } ?: Result.failure(IllegalArgumentException("Call not found"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCompletedCalls(): Result<List<FakeCall>> {
+        return try {
+            val callsData = localDataSource.getAllCalls().getOrElse {
+                return Result.failure(it)
+            }
+            val completedCalls = callsData
+                .filter { it.isCompleted }
+                .map { mapper.mapToEntity(it) }
+                .sortedByDescending { it.scheduledTime }
+            Result.success(completedCalls)
         } catch (e: Exception) {
             Result.failure(e)
         }

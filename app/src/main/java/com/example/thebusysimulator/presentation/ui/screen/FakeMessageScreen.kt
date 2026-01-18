@@ -102,10 +102,38 @@ fun FakeMessageScreen(
             // Error Message
             if (uiState.errorMessage != null) {
                 item {
-                    ErrorBanner(
-                        message = uiState.errorMessage ?: "",
-                        onDismiss = { viewModel.clearError() }
-                    )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = uiState.errorMessage ?: "",
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            IconButton(
+                                onClick = { viewModel.clearError() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    "Dismiss",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -190,19 +218,37 @@ fun MessageInputSection(
 
             // Input Sender Name & Message Text
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ModernTextField(
+                OutlinedTextField(
                     value = senderName,
                     onValueChange = { senderName = it },
-                    label = "Ai sẽ nhắn cho bạn?",
-                    icon = Icons.Rounded.Person
+                    label = { Text("Ai sẽ nhắn cho bạn?") },
+                    leadingIcon = {
+                        Icon(Icons.Rounded.Person, null, tint = MaterialTheme.colorScheme.primary)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    )
                 )
 
-                ModernTextField(
+                OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
-                    label = "Nội dung tin nhắn",
-                    icon = Icons.Rounded.AccountBox,
-                    keyboardType = KeyboardType.Text
+                    label = { Text("Nội dung tin nhắn") },
+                    leadingIcon = {
+                        Icon(Icons.Rounded.AccountBox, null, tint = MaterialTheme.colorScheme.primary)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    )
                 )
             }
 

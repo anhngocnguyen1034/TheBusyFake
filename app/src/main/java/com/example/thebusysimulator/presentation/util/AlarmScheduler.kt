@@ -36,6 +36,40 @@ class AlarmSchedulerImpl(private val context: Context) : CallScheduler {
         
         android.util.Log.d("AlarmScheduler", "   PendingIntent created with requestCode: $requestCode")
 
+        // Kiểm tra quyền SCHEDULE_EXACT_ALARM (từ Android 12+)
+        val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Android < 12 không cần kiểm tra
+        }
+
+        if (!canScheduleExact) {
+            android.util.Log.w("AlarmScheduler", "⚠️ Cannot schedule exact alarms - permission not granted")
+            android.util.Log.w("AlarmScheduler", "   User needs to grant SCHEDULE_EXACT_ALARM in Settings")
+            // Fallback sang inexact alarm
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        fakeCall.scheduledTime.time,
+                        pendingIntent
+                    )
+                    android.util.Log.w("AlarmScheduler", "⚠️ Using inexact alarm (may be delayed)")
+                } else {
+                    @Suppress("DEPRECATION")
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        fakeCall.scheduledTime.time,
+                        pendingIntent
+                    )
+                    android.util.Log.w("AlarmScheduler", "⚠️ Using deprecated set() method")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AlarmScheduler", "❌ CRITICAL: Cannot schedule alarm at all!", e)
+            }
+            return
+        }
+
         // Dùng setExactAndAllowWhileIdle để đảm bảo alarm vẫn hoạt động khi app đã đóng
         // và thiết bị ở chế độ Doze
         try {
@@ -61,12 +95,12 @@ class AlarmSchedulerImpl(private val context: Context) : CallScheduler {
             // Fallback nếu không có permission SCHEDULE_EXACT_ALARM (hoặc user chưa cấp quyền)
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExact(
+                    alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         fakeCall.scheduledTime.time,
                         pendingIntent
                     )
-                    android.util.Log.w("AlarmScheduler", "⚠️ Using setExact as fallback (may not work in Doze mode)")
+                    android.util.Log.w("AlarmScheduler", "⚠️ Using inexact alarm as fallback (may be delayed)")
                 } else {
                     @Suppress("DEPRECATION")
                     alarmManager.set(

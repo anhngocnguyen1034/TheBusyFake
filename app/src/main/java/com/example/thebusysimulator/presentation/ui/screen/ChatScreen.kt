@@ -35,6 +35,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.thebusysimulator.R
+import androidx.compose.ui.res.painterResource
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.util.DateUtils
@@ -82,6 +85,8 @@ fun ChatScreen(
     // Bottom Sheet State
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showSendOptionsSheet by remember { mutableStateOf(false) }
+    var pendingMessageText by remember { mutableStateOf("") }
 
     fun openMessageOptions(message: ChatMessage) {
         selectedMessageForMenu = message
@@ -93,9 +98,15 @@ fun ChatScreen(
     }
 
     val chatUiState by viewModel.chatUiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
     val reversedMessages = remember(messages) { messages.reversed() }
+    
+    // Lấy avatarUri và isVerified từ Message
+    val message = uiState.messages.find { it.id == messageId }
+    val avatarUri = message?.avatarUri
+    val isVerified = message?.isVerified ?: false
 
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
@@ -155,7 +166,21 @@ fun ChatScreen(
                         Text(contactName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(contactName, style = MaterialTheme.typography.titleMedium, color = colorScheme.onBackground, modifier = Modifier.weight(1f))
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(contactName, style = MaterialTheme.typography.titleMedium, color = colorScheme.onBackground)
+                        if (isVerified) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_verify),
+                                contentDescription = "Verified",
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
 
                     IconButton(onClick = {
                         val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
@@ -212,9 +237,15 @@ fun ChatScreen(
                             DateHeader(date = message.timestamp)
                             Spacer(modifier = Modifier.height(4.dp))
                         }
+                        // Xác định tin nhắn tiếp theo (index - 1 vì list bị reverse, tin mới hơn ở index nhỏ hơn)
+                        val nextMessage = if (index > 0) reversedMessages[index - 1] else null
+                        
                         ChatBubble(
                             message = message,
+                            nextMessage = nextMessage,
                             allMessages = reversedMessages,
+                            contactName = contactName,
+                            avatarUri = avatarUri,
                             onLongClick = { openMessageOptions(message) },
                             onReplyClick = { replyId -> scrollToMessage(replyId) },
                             isHighlighted = message.id == highlightedMessageId,
@@ -228,6 +259,21 @@ fun ChatScreen(
                             }
                         )
                     }
+                }
+                
+                // Header với avatar và tên người dùng (đặt ở cuối để hiển thị ở đầu vì reverseLayout)
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ContactHeader(
+                        contactName = contactName,
+                        avatarUri = avatarUri,
+                        isVerified = isVerified,
+                        colorScheme = colorScheme,
+                        context = context,
+                        onViewInfoClick = {
+                            // TODO: Mở màn hình xem thông tin contact
+                        }
+                    )
                 }
             }
             Surface(
@@ -355,10 +401,12 @@ fun ChatScreen(
                                     if (replyingToMessage != null) {
                                         viewModel.replyToChatMessage(messageId, messageText, replyingToMessage!!)
                                         replyingToMessage = null
+                                        messageText = ""
                                     } else {
-                                        viewModel.sendChatMessage(messageId, messageText, null)
+                                        // Mở bottom sheet để chọn gửi/nhận
+                                        pendingMessageText = messageText
+                                        showSendOptionsSheet = true
                                     }
-                                    messageText = ""
                                 }
                             },
                            enabled = messageText.isNotBlank()
@@ -370,6 +418,50 @@ fun ChatScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // Bottom Sheet cho lựa chọn gửi/nhận tin
+    if (showSendOptionsSheet) {
+        val sendOptionsSheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { 
+                showSendOptionsSheet = false
+                pendingMessageText = ""
+            },
+            sheetState = sendOptionsSheetState
+        ) {
+            Column(modifier = Modifier.padding(bottom = 32.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        // Gửi tin từ mình
+                        viewModel.sendChatMessage(messageId, pendingMessageText, null)
+                        messageText = ""
+                        showSendOptionsSheet = false
+                        pendingMessageText = ""
+                    }.padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(Icons.Rounded.Send, null, tint = colorScheme.primary)
+                    Text("Gửi tin", style = MaterialTheme.typography.bodyLarge)
+                }
+                Divider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        // Nhận tin từ contact
+                        viewModel.sendMessageFromContact(messageId, pendingMessageText, null)
+                        messageText = ""
+                        showSendOptionsSheet = false
+                        pendingMessageText = ""
+                    }.padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(Icons.Rounded.ArrowBack, null, tint = colorScheme.primary, modifier = Modifier.rotate(180f))
+                    Text("Nhận tin", style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
@@ -413,7 +505,10 @@ fun ChatScreen(
 @Composable
 fun ChatBubble(
     message: ChatMessage,
+    nextMessage: ChatMessage?,
     allMessages: List<ChatMessage>,
+    contactName: String,
+    avatarUri: String?,
     onLongClick: () -> Unit,
     onReplyClick: (String) -> Unit = {},
     isHighlighted: Boolean = false,
@@ -426,11 +521,101 @@ fun ChatBubble(
     val originalMessage = message.replyToMessageId?.let { replyId ->
         allMessages.find { it.id == replyId }
     }
+    
+    // Logic xác định khi nào hiển thị avatar
+    val shouldShowAvatar = remember(message.isFromMe, nextMessage) {
+        if (message.isFromMe) {
+            // Tin nhắn của "Mình": Không hiện avatar
+            false
+        } else {
+            // Tin nhắn của "Người khác"
+            when {
+                // Nếu không có tin nhắn tiếp theo (tin mới nhất) -> Hiện avatar
+                nextMessage == null -> true
+                // Nếu tin nhắn tiếp theo là của "Mình" -> Hiện avatar (kết thúc chuỗi)
+                nextMessage.isFromMe -> true
+                // Nếu tin nhắn tiếp theo vẫn là của "Người khác" -> Ẩn avatar
+                else -> false
+            }
+        }
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isFromMe) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (message.isFromMe) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
     ) {
+        if (!message.isFromMe) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+            ) {
+                if (shouldShowAvatar) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (avatarUri == null) {
+                                    Modifier.background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(colorScheme.primary, colorScheme.secondary)
+                                        ),
+                                        shape = CircleShape
+                                    )
+                                } else {
+                                    Modifier.background(
+                                        color = Color.Transparent,
+                                    )
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (avatarUri != null) {
+                            val imageData = try {
+                                if (avatarUri.startsWith("/")) {
+                                    val file = java.io.File(avatarUri)
+                                    if (file.exists()) file else null
+                                } else {
+                                    Uri.parse(avatarUri)
+                                }
+                            } catch (e: Exception) {
+                                null
+                            }
+                            
+                            if (imageData != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        ImageRequest.Builder(context)
+                                            .data(imageData)
+                                            .build()
+                                    ),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = contactName.take(1).uppercase(),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = contactName.take(1).uppercase(),
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .widthIn(max = 280.dp)
@@ -555,6 +740,124 @@ fun ChatBubble(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
+        }
+    }
+}
+
+// Composable để hiển thị header với avatar và tên người dùng
+@Composable
+fun ContactHeader(
+    contactName: String,
+    avatarUri: String?,
+    isVerified: Boolean,
+    colorScheme: ColorScheme,
+    context: android.content.Context,
+    onViewInfoClick: () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Avatar lớn
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .then(
+                    if (avatarUri == null) {
+                        Modifier.background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(colorScheme.primary, colorScheme.secondary)
+                            ),
+                            shape = CircleShape
+                        )
+                    } else {
+                        Modifier
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (avatarUri != null) {
+                val imageData = try {
+                    if (avatarUri.startsWith("/")) {
+                        val file = java.io.File(avatarUri)
+                        if (file.exists()) file else null
+                    } else {
+                        Uri.parse(avatarUri)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+                
+                if (imageData != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context)
+                                .data(imageData)
+                                .build()
+                        ),
+                        contentDescription = "Avatar",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = contactName.take(1).uppercase(),
+                        color = Color.White,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                Text(
+                    text = contactName.take(1).uppercase(),
+                    color = Color.White,
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        
+        // Tên người dùng với icon verify nếu có
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = contactName,
+                style = MaterialTheme.typography.headlineSmall,
+                color = colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
+            if (isVerified) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_verify),
+                    contentDescription = "Verified",
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        
+        // Button "Xem thông tin"
+        OutlinedButton(
+            onClick = onViewInfoClick,
+            shape = RoundedCornerShape(20.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colorScheme.primary
+            ),
+            modifier = Modifier.padding(top = 4.dp)
+        ) {
+            Text(
+                text = "Xem trang cá nhân",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

@@ -7,18 +7,21 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.thebusysimulator.data.dao.ChatMessageDao
+import com.example.thebusysimulator.data.dao.FakeCallDao
 import com.example.thebusysimulator.data.dao.MessageDao
 import com.example.thebusysimulator.data.model.ChatMessageEntity
+import com.example.thebusysimulator.data.model.FakeCallEntity
 import com.example.thebusysimulator.data.model.MessageEntity
 
 @Database(
-    entities = [MessageEntity::class, ChatMessageEntity::class],
-    version = 5,
+    entities = [MessageEntity::class, ChatMessageEntity::class, FakeCallEntity::class],
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun fakeCallDao(): FakeCallDao
     
     companion object {
         @Volatile
@@ -73,6 +76,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Thêm cột isVerified vào bảng messages với default value là 0 (false)
+                database.execSQL("ALTER TABLE messages ADD COLUMN isVerified INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+        
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Tạo bảng fake_calls
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS fake_calls (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        callerName TEXT NOT NULL,
+                        callerNumber TEXT NOT NULL,
+                        scheduledTime INTEGER NOT NULL,
+                        isCompleted INTEGER NOT NULL DEFAULT 0,
+                        isVideoCall INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val builder = Room.databaseBuilder(
@@ -80,7 +106,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 val instance = builder.build()
                 INSTANCE = instance
                 instance

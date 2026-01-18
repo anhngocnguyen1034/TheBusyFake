@@ -11,6 +11,7 @@ import com.example.thebusysimulator.data.repository.MessageRepository
 import com.example.thebusysimulator.domain.repository.FakeCallRepository
 import com.example.thebusysimulator.domain.usecase.CancelFakeCallUseCase
 import com.example.thebusysimulator.domain.usecase.GetScheduledCallsUseCase
+import com.example.thebusysimulator.domain.usecase.MarkCallAsCompletedUseCase
 import com.example.thebusysimulator.domain.usecase.ScheduleFakeCallUseCase
 import com.example.thebusysimulator.domain.util.CallScheduler
 import com.example.thebusysimulator.presentation.util.AlarmSchedulerImpl
@@ -30,17 +31,25 @@ object AppContainer {
         this.context = context.applicationContext
         database = AppDatabase.getDatabase(context.applicationContext)
     }
-    // Data Source
-    private val localDataSource: LocalFakeCallDataSource = LocalFakeCallDataSourceImpl()
-    
     // Mapper
     private val fakeCallMapper: FakeCallMapper = FakeCallMapper()
     
-    // Repository
-    private val fakeCallRepository: FakeCallRepository = FakeCallRepositoryImpl(
-        localDataSource = localDataSource,
-        mapper = fakeCallMapper
-    )
+    // Data Source (Room-based) - lazy để đảm bảo database đã được init
+    private val localDataSource: LocalFakeCallDataSource by lazy {
+        requireNotNull(database) { "AppContainer must be initialized with context" }
+        LocalFakeCallDataSourceImpl(
+            fakeCallDao = database!!.fakeCallDao(),
+            mapper = fakeCallMapper
+        )
+    }
+    
+    // Repository - lazy để đảm bảo localDataSource đã được init
+    val fakeCallRepository: FakeCallRepository by lazy {
+        FakeCallRepositoryImpl(
+            localDataSource = localDataSource,
+            mapper = fakeCallMapper
+        )
+    }
     
     // Message Repository
     private val messageRepository: MessageRepository by lazy {
@@ -51,10 +60,19 @@ object AppContainer {
         )
     }
     
-    // Use Cases
-    val scheduleFakeCallUseCase: ScheduleFakeCallUseCase = ScheduleFakeCallUseCase(fakeCallRepository)
-    val cancelFakeCallUseCase: CancelFakeCallUseCase = CancelFakeCallUseCase(fakeCallRepository)
-    val getScheduledCallsUseCase: GetScheduledCallsUseCase = GetScheduledCallsUseCase(fakeCallRepository)
+    // Use Cases - lazy để đảm bảo fakeCallRepository đã được init
+    val scheduleFakeCallUseCase: ScheduleFakeCallUseCase by lazy {
+        ScheduleFakeCallUseCase(fakeCallRepository)
+    }
+    val cancelFakeCallUseCase: CancelFakeCallUseCase by lazy {
+        CancelFakeCallUseCase(fakeCallRepository)
+    }
+    val getScheduledCallsUseCase: GetScheduledCallsUseCase by lazy {
+        GetScheduledCallsUseCase(fakeCallRepository)
+    }
+    val markCallAsCompletedUseCase: MarkCallAsCompletedUseCase by lazy {
+        MarkCallAsCompletedUseCase(fakeCallRepository)
+    }
     
     // Settings DataSource
     private val settingsDataSource: FakeCallSettingsDataSource by lazy {
@@ -74,6 +92,7 @@ object AppContainer {
             scheduleFakeCallUseCase = scheduleFakeCallUseCase,
             cancelFakeCallUseCase = cancelFakeCallUseCase,
             getScheduledCallsUseCase = getScheduledCallsUseCase,
+            markCallAsCompletedUseCase = markCallAsCompletedUseCase,
             callScheduler = callScheduler,
             settingsDataSource = settingsDataSource
         )

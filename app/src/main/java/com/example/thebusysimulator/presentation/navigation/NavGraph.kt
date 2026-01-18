@@ -88,6 +88,13 @@ fun NavGraph(
         composable(Screen.Language.route) {
             LanguageSelectionScreen(navController = navController)
         }
+        
+        composable(Screen.CallHistory.route) {
+            CallHistoryScreen(
+                navController = navController,
+                repository = com.example.thebusysimulator.presentation.di.AppContainer.fakeCallRepository
+            )
+        }
     }
 }
 
