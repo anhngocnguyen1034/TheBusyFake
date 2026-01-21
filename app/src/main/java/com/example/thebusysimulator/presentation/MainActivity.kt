@@ -34,26 +34,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppContainer.init(this)
-        
+
         // Apply saved language
         val languageDataSource = LanguageDataSource(this)
         runBlocking {
             val languageCode = languageDataSource.languageCode.first()
             LanguageManager.setLanguage(this@MainActivity, languageCode)
         }
-        
+
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             val settingsDataSource = remember { FakeCallSettingsDataSource(context) }
             var themeMode by remember { mutableStateOf("system") }
-            
+
             LaunchedEffect(Unit) {
                 settingsDataSource.themeMode.collect { mode ->
                     themeMode = mode
                 }
             }
-            
+
             TheBusySimulatorTheme(themeMode = themeMode) {
                 var permissionCheckKey by remember { mutableStateOf(0) }
                 var hasOverlayPermission by remember {
@@ -63,11 +63,20 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(PermissionHelper.hasCameraPermission(context))
                 }
 
+                // State to show settings dialog when permission is denied
+                var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+                var permissionDeniedCount by remember { mutableStateOf(0) }
+
                 // Camera permission launcher
                 val cameraPermissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission()
                 ) { isGranted ->
                     hasCameraPermission = isGranted
+                    if (!isGranted) {
+                        permissionDeniedCount++
+                        // Show dialog if permission is denied
+                        showPermissionDeniedDialog = true
+                    }
                     permissionCheckKey++
                 }
 
@@ -85,27 +94,10 @@ class MainActivity : ComponentActivity() {
                     hasCameraPermission = PermissionHelper.hasCameraPermission(context)
                 }
 
-                // Auto-request permissions on first launch
-                LaunchedEffect(Unit) {
-                    if (context is Activity) {
-                        // Request camera permission if not granted
-                        if (!hasCameraPermission) {
-                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                        }
-                        // KHÔNG còn request overlay permission - app dùng Full Screen Intent thay thế
-                        // Code cũ (đã không dùng):
-                        /*
-                        if (!hasOverlayPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            val intent = android.content.Intent(
-                                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                android.net.Uri.parse("package:${context.packageName}")
-                            )
-                            overlayPermissionLauncher.launch(intent)
-                        }
-                        */
-                    }
-                }
-                
+                // KHÔNG tự động request quyền camera khi khởi động
+                // Camera chỉ cần cho video call trong Fake Message
+                // Sẽ request khi user thực sự cần (trong FakeVideoCallActivity)
+
                 // Observe lifecycle to re-check permission on resume
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
@@ -146,8 +138,61 @@ class MainActivity : ComponentActivity() {
                         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     }
                 )
+
+                // Show Permission Denied Dialog
+                if (showPermissionDeniedDialog) {
+                    PermissionDeniedDialog(
+                        onDismiss = { showPermissionDeniedDialog = false },
+                        onOpenSettings = {
+                            showPermissionDeniedDialog = false
+                            val intent = android.content.Intent(
+                                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                android.net.Uri.parse("package:${context.packageName}")
+                            )
+                            context.startActivity(intent)
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun PermissionDeniedDialog(
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            androidx.compose.material3.Text(
+                text = "Cần quyền Camera",
+                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+        },
+        text = {
+            androidx.compose.material3.Text(
+                text = "Ứng dụng cần quyền truy cập Camera để thực hiện cuộc gọi video giả. " +
+                        "Vui lòng mở Cài đặt và cấp quyền Camera cho ứng dụng.",
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            androidx.compose.material3.Button(
+                onClick = onOpenSettings
+            ) {
+                androidx.compose.material3.Text("Mở Cài đặt")
+            }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(
+                onClick = onDismiss
+            ) {
+                androidx.compose.material3.Text("Để sau")
+            }
+        }
+    )
 }
 

@@ -95,7 +95,7 @@ class FakeVideoCallActivity : ComponentActivity() {
         startFlashIfEnabled()
 
         setContent {
-            TheBusySimulatorTheme(darkTheme = isSystemInDarkTheme()) {
+            TheBusySimulatorTheme(themeMode = "system") {
                 FakeVideoCallScreen(
                     callerName = callerName,
                     callerNumber = callerNumber,
@@ -492,6 +492,13 @@ fun InVideoCallScreen(
 
         // 3. DRAGGABLE SELF CAMERA PREVIEW
         var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val hasCameraPermission = remember {
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.CAMERA
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
 
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -509,29 +516,58 @@ fun InVideoCallScreen(
                 }
         ) {
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-                AndroidView(
-                    factory = { ctx ->
-                        val previewView = PreviewView(ctx)
-                        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                        cameraProviderFuture.addListener({
-                            val provider = cameraProviderFuture.get()
-                            cameraProvider = provider
-                            val preview = Preview.Builder().build().also {
-                                it.setSurfaceProvider(previewView.surfaceProvider)
-                            }
-                            try {
-                                provider.unbindAll()
-                                provider.bindToLifecycle(
-                                    lifecycleOwner,
-                                    CameraSelector.DEFAULT_FRONT_CAMERA,
-                                    preview
-                                )
-                            } catch (e: Exception) { e.printStackTrace() }
-                        }, ContextCompat.getMainExecutor(ctx))
-                        previewView
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (hasCameraPermission) {
+                    // Có quyền camera - hiển thị camera preview
+                    AndroidView(
+                        factory = { ctx ->
+                            val previewView = PreviewView(ctx)
+                            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                            cameraProviderFuture.addListener({
+                                val provider = cameraProviderFuture.get()
+                                cameraProvider = provider
+                                val preview = Preview.Builder().build().also {
+                                    it.setSurfaceProvider(previewView.surfaceProvider)
+                                }
+                                try {
+                                    provider.unbindAll()
+                                    provider.bindToLifecycle(
+                                        lifecycleOwner,
+                                        CameraSelector.DEFAULT_FRONT_CAMERA,
+                                        preview
+                                    )
+                                } catch (e: Exception) { e.printStackTrace() }
+                            }, ContextCompat.getMainExecutor(ctx))
+                            previewView
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    // Không có quyền camera - hiển thị placeholder với icon
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.AccountBox,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Camera\nOff",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
                 // Viền mỏng
                 Box(
                     modifier = Modifier

@@ -145,12 +145,8 @@ fun FakeCallScreen(
                 }
             }
 
-            // --- PERMISSION WARNING ---
-            if (!hasCameraPermission) {
-                item {
-                    PermissionWarningCard(onClick = onRequestCameraPermission)
-                }
-            }
+            // Fake Call không cần quyền camera - chỉ video call mới cần
+            // Camera permission warning đã được xóa
 
             // --- INPUT SECTION ---
             item {

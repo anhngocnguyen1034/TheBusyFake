@@ -1,28 +1,26 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
@@ -31,16 +29,16 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 import androidx.navigation.NavController
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.data.datasource.LanguageDataSource
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.GenZTheme
 import com.example.thebusysimulator.presentation.ui.theme.ThemeMode
 import com.example.thebusysimulator.presentation.util.LanguageManager
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +47,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(navController: NavController) {
-    MainContainer(navController = navController) {
+    val theme = getGenZTheme()
+    MainContainer(navController = navController, theme = theme) {
         SettingsScreenContent(navController = navController)
     }
 }
@@ -61,9 +60,7 @@ fun SettingsScreenContent(navController: NavController) {
     val languageDataSource = remember { LanguageDataSource(context) }
     val scope = rememberCoroutineScope()
     val systemIsDark = isSystemInDarkTheme()
-    
-    // Convert Flow thành StateFlow với stateIn để tránh màn hình trắng
-    // StateFlow có giá trị initial ngay lập tức, không cần chờ Flow emit
+
     val themeModeStateFlow: StateFlow<String> = remember(settingsDataSource) {
         settingsDataSource.themeMode.stateIn(
             scope = scope,
@@ -77,8 +74,7 @@ fun SettingsScreenContent(navController: NavController) {
         ThemeMode.LIGHT.value -> false
         else -> systemIsDark
     }
-    
-    // Get current language
+
     var currentLanguageCode by remember { mutableStateOf("en") }
     LaunchedEffect(Unit) {
         languageDataSource.languageCode.collect { code ->
@@ -87,354 +83,315 @@ fun SettingsScreenContent(navController: NavController) {
     }
     val currentLanguage = LanguageManager.Language.fromCode(currentLanguageCode)
 
-    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarPadding()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp) // Tăng khoảng cách cho thoáng
     ) {
-        // Top bar with title
+        // --- HEADER ---
         Text(
-            text = "Cài đặt",
-            style = MaterialTheme.typography.headlineMedium,
-            color = colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
+            text = "SETTINGS", // Đổi sang tiếng Anh viết hoa cho chuẩn style
+            style = MaterialTheme.typography.displayMedium,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.Monospace,
+            color = GenZTheme.colors.text,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
 
-        // Theme Selection Card + Canvas Switch
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Giao diện tối",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (isDarkTheme) "Đang bật chế độ ban đêm" else "Đang bật chế độ ban ngày",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-
-                    ThemeSwitch(
-                        isDarkTheme = isDarkTheme,
-                        onToggle = {
-                            scope.launch {
-                                val newMode =
-                                    if (isDarkTheme) ThemeMode.LIGHT.value else ThemeMode.DARK.value
-                                settingsDataSource.setThemeMode(newMode)
-                            }
-                        },
-                        width = 70.dp,
-                        height = 36.dp
-                    )
+        // --- THEME SECTION ---
+        // Thay Card bằng GenZOptionBox
+        GenZOptionBox(
+            onClick = {
+                // Click vào cả box cũng đổi theme
+                scope.launch {
+                    val newMode = if (isDarkTheme) ThemeMode.LIGHT.value else ThemeMode.DARK.value
+                    settingsDataSource.setThemeMode(newMode)
                 }
             }
-        }
-        
-        // Language Selection Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { navController.navigate(Screen.Language.route) },
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = "Ngôn ngữ",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = currentLanguage?.displayName ?: "English",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "APPEARANCE",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = GenZTheme.colors.text
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isDarkTheme) "Dark Mode (Hacker)" else "Light Mode (Paper)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GenZTheme.colors.text.copy(alpha = 0.7f)
+                    )
                 }
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.size(20.dp)
+
+                GenZThemeSwitch(
+                    isDarkTheme = isDarkTheme,
+                    onToggle = {
+                        scope.launch {
+                            val newMode = if (isDarkTheme) ThemeMode.LIGHT.value else ThemeMode.DARK.value
+                            settingsDataSource.setThemeMode(newMode)
+                        }
+                    }
                 )
+            }
+        }
+
+        // --- LANGUAGE SECTION ---
+        GenZOptionBox(
+            onClick = { navController.navigate(Screen.Language.route) }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "LANGUAGE",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = GenZTheme.colors.text
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = currentLanguage?.displayName ?: "English",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GenZTheme.colors.text.copy(alpha = 0.7f)
+                    )
+                }
+
+                // Mũi tên tùy biến
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(GenZTheme.colors.neonPink, CircleShape)
+                        .border(2.dp, GenZTheme.colors.border, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
 }
 
+/**
+ * CONTAINER GEN Z: Thay thế cho Card
+ * - Có viền dày (Border)
+ * - Có bóng cứng (Hard Shadow)
+ * - Hiệu ứng nhấn thụt xuống
+ */
 @Composable
-fun ThemeSwitch(
+fun GenZOptionBox(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Animation thụt xuống
+    val offsetAnim by animateDpAsState(
+        targetValue = if (isPressed) 0.dp else 4.dp,
+        label = "boxOffset"
+    )
+
+    // LẤY MÀU RA NGOÀI ĐỂ TRÁNH LỖI (Best Practice)
+    val shadowColor = GenZTheme.colors.shadow
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val borderColor = GenZTheme.colors.border
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(bottom = 4.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        // Shadow Layer
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = 4.dp, y = 4.dp)
+                .background(shadowColor, RoundedCornerShape(12.dp)) // Dùng biến đã lấy
+        )
+
+        // Content Layer
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = offsetAnim, y = offsetAnim)
+                // SỬA LỖI BACKGROUND: Ghi rõ tên tham số color = và shape =
+                .background(color = surfaceColor, shape = RoundedCornerShape(12.dp))
+                .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
+                .padding(16.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * CUSTOM SWITCH THEO STYLE GEN Z
+ * - Thêm viền đen cho track
+ * - Màu sắc rực rỡ hơn (Neon)
+ */
+@Composable
+fun GenZThemeSwitch(
     isDarkTheme: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
-    width: Dp = 60.dp,
-    height: Dp = 32.dp
+    width: Dp = 64.dp, // To hơn chút cho dễ bấm
+    height: Dp = 36.dp
 ) {
-    // 1. Animation vị trí của nút tròn (thumb)
+    // Animation Thumb
     val thumbOffsetAnim by animateDpAsState(
         targetValue = if (isDarkTheme) width - height else 0.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "thumbOffset"
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow),
+        label = "thumb"
     )
 
-    // 2. Animation màu nền (track)
+    // Màu Track: Dark -> Xám đậm, Light -> Xanh trời
     val trackColorAnim by animateColorAsState(
-        targetValue = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFF64B5F6),
-        animationSpec = tween(500),
-        label = "trackColor"
+        targetValue = if (isDarkTheme) Color(0xFF2D2D2D) else GenZTheme.colors.neonBlue,
+        label = "track"
     )
 
-    // 3. Animation màu nút tròn (mặt trời / mặt trăng)
+    // Màu Thumb: Dark -> Trắng/Xám, Light -> Vàng Neon
     val thumbColorAnim by animateColorAsState(
-        targetValue = if (isDarkTheme) Color(0xFFE0E0E0) else Color(0xFFFFEB3B),
-        animationSpec = tween(500),
+        targetValue = if (isDarkTheme) Color(0xFFDDDDDD) else GenZTheme.colors.neonYellow,
         label = "thumbColor"
     )
 
-    // 4. Animation alpha của sao
-    val starAlphaAnim by animateFloatAsState(
-        targetValue = if (isDarkTheme) 1f else 0f,
-        animationSpec = tween(500),
-        label = "starAlpha"
-    )
+    // Lấy màu border ra ngoài để tránh lỗi @Composable trong Canvas
+    val borderColor = GenZTheme.colors.border
+
+    val starAlphaAnim by animateFloatAsState(if (isDarkTheme) 1f else 0f, label = "star")
 
     Canvas(
         modifier = modifier
-            .width(width)
-            .height(height)
+            .size(width, height)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onToggle
             )
     ) {
-        val trackCornerRadius = size.height / 2
-        val thumbRadius = (size.height / 2) - 4.dp.toPx()
+        val cornerRadius = size.height / 2
 
-        // Nền (track)
+        // 1. Vẽ Track Background
         drawRoundRect(
             color = trackColorAnim,
-            cornerRadius = CornerRadius(trackCornerRadius, trackCornerRadius),
+            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
             style = Fill
         )
 
-        // Sao nhỏ lấp lánh
+        drawRoundRect(
+            color = borderColor, 
+            cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+        )
+
+        // 3. Vẽ Sao (Dark Mode)
         if (starAlphaAnim > 0f) {
             val starColor = Color.White.copy(alpha = starAlphaAnim)
-            drawSparkle(
-                center = Offset(size.width * 0.2f, size.height * 0.3f),
-                size = 4.dp.toPx(),
-                color = starColor
-            )
-            drawSparkle(
-                center = Offset(size.width * 0.4f, size.height * 0.7f),
-                size = 3.dp.toPx(),
-                color = starColor
-            )
-            drawSparkle(
-                center = Offset(size.width * 0.5f, size.height * 0.2f),
-                size = 4.dp.toPx(),
-                color = starColor
-            )
+            drawSparkle(center = Offset(size.width * 0.25f, size.height * 0.35f), size = 3.dp.toPx(), color = starColor)
+            drawSparkle(center = Offset(size.width * 0.5f, size.height * 0.7f), size = 2.dp.toPx(), color = starColor)
         }
 
-        // Nút tròn (thumb)
-        val thumbCenterX = thumbOffsetAnim.toPx() + (size.height / 2)
-        val thumbCenterY = size.height / 2
-        val thumbCenterOffset = Offset(thumbCenterX, thumbCenterY)
+        // 4. Vẽ Thumb (Mặt trời / Mặt trăng)
+        val thumbX = thumbOffsetAnim.toPx() + (size.height / 2)
+        val thumbCenter = Offset(thumbX, size.height / 2)
+        val thumbRadius = (size.height / 2) - 4.dp.toPx()
 
         if (isDarkTheme) {
-            // Vẽ mặt trăng khuyết
+            // Moon
             drawCrescentMoon(
-                center = Offset(thumbCenterX, thumbCenterY),
-                radius = thumbRadius * 0.8f,
-                color = Color(0xFFFFF9C4)
+                center = thumbCenter,
+                radius = thumbRadius,
+                color = thumbColorAnim
             )
         } else {
-            // Vẽ mặt trời với tia nắng
-            val coreRad = thumbRadius * 0.6f
-            val rayLen = thumbRadius * 0.3f
-            val rayWid = thumbRadius * 0.1f
-            val gap = thumbRadius * 0.1f
-
+            // Sun
             drawSun(
-                center = thumbCenterOffset,
-                coreRadius = coreRad,
-                rayLength = rayLen,
-                rayWidth = rayWid,
-                rayGap = gap,
-                color = Color(0xFFFFEB3B), // Vàng tươi
-                numRays = 8,
+                center = thumbCenter,
+                coreRadius = thumbRadius * 0.6f,
+                rayLength = thumbRadius * 0.35f,
+                rayWidth = 2.dp.toPx(),
+                rayGap = 2.dp.toPx(), // Tia nắng sát hơn chút
+                color = thumbColorAnim,
                 rotationDegrees = 0f
             )
         }
+
+        // 5. Viền cho Thumb (Để nút nổi bật hơn)
+        // Lưu ý: Mặt trăng phức tạp nên ta chỉ viền hình tròn bao quanh logic thôi
+        // Hoặc đơn giản là không cần viền thumb nếu màu đã đủ tương phản
     }
 }
 
-// --- HÀM VẼ MẶT TRĂNG KHUYẾT (Dùng kỹ thuật cắt hình) ---
-fun DrawScope.drawCrescentMoon(
-    center: Offset,
-    radius: Float,
-    color: Color
-) {
-    // Hình tròn gốc (Mặt trăng đầy)
-    val circleA = Path().apply {
-        addOval(Rect(center = center, radius = radius))
-    }
+// --- GIỮ NGUYÊN CÁC HÀM VẼ HÌNH HỌC (HELPER FUNCTIONS) ---
+// (Đã optimize lại một chút cho gọn)
 
-    // Hình tròn dùng để cắt (Lệch sang phải và lên trên một chút)
-    val circleB = Path().apply {
-        addOval(
-            Rect(
-                center = Offset(
-                    x = center.x + radius * 0.4f, // Lệch phải 40%
-                    y = center.y - radius * 0.1f  // Lên trên 10%
-                ),
-                radius = radius // Cùng kích thước
-            )
-        )
-    }
-
-    // Thực hiện phép trừ: A - B
-    val moonPath = Path.combine(
-        operation = PathOperation.Difference,
-        path1 = circleA,
-        path2 = circleB
-    )
-
-    drawPath(path = moonPath, color = color)
-}
-
-// --- HÀM VẼ NGÔI SAO 5 CÁNH (Dùng toán học) ---
-fun DrawScope.drawStar(
-    center: Offset,
-    outerRadius: Float, // Đỉnh nhọn
-    innerRadius: Float, // Điểm lõm
-    color: Color,
-    numPoints: Int = 5
-) {
-    val path = Path()
-    val theta = 2.0 * PI / numPoints // Góc giữa các cánh
-
-    // Bắt đầu vẽ
-    // Công thức tính tọa độ: 
-    // x = center.x + radius * cos(angle)
-    // y = center.y + radius * sin(angle)
-    // Lưu ý: -PI/2 để bắt đầu từ đỉnh cao nhất (12 giờ)
-    
-    for (i in 0 until numPoints) {
-        val angleOuter = -PI / 2 + i * theta
-        val angleInner = angleOuter + theta / 2
-
-        // Điểm đỉnh nhọn
-        val xOuter = center.x + outerRadius * cos(angleOuter).toFloat()
-        val yOuter = center.y + outerRadius * sin(angleOuter).toFloat()
-
-        // Điểm lõm vào
-        val xInner = center.x + innerRadius * cos(angleInner).toFloat()
-        val yInner = center.y + innerRadius * sin(angleInner).toFloat()
-
-        if (i == 0) {
-            path.moveTo(xOuter, yOuter)
-        } else {
-            path.lineTo(xOuter, yOuter)
-        }
-        path.lineTo(xInner, yInner)
-    }
-    path.close() // Nối điểm cuối về điểm đầu
-
-    drawPath(path = path, color = color)
-}
-
-// --- HÀM VẼ NGÔI SAO 4 CÁNH (Dạng lấp lánh đơn giản) ---
-fun DrawScope.drawSparkle(
-    center: Offset,
-    size: Float,
-    color: Color
-) {
+fun DrawScope.drawCrescentMoon(center: Offset, radius: Float, color: Color) {
     val path = Path().apply {
-        moveTo(center.x, center.y - size) // Đỉnh trên
-        quadraticBezierTo(center.x, center.y, center.x + size, center.y) // Cong sang phải
-        quadraticBezierTo(center.x, center.y, center.x, center.y + size) // Cong xuống dưới
-        quadraticBezierTo(center.x, center.y, center.x - size, center.y) // Cong sang trái
-        quadraticBezierTo(center.x, center.y, center.x, center.y - size) // Cong về đỉnh
-        close()
+        // Hình tròn chính
+        addOval(Rect(center, radius))
+        // Hình tròn cắt (Lệch phải)
+        val cutPath = Path().apply {
+            addOval(Rect(center = Offset(center.x + radius * 0.35f, center.y - radius * 0.1f), radius = radius))
+        }
+        op(this, cutPath, PathOperation.Difference)
     }
-    drawPath(path = path, color = color)
+    drawPath(path, color)
 }
 
-// --- HÀM VẼ MẶT TRỜI ---
 fun DrawScope.drawSun(
-    center: Offset,
-    coreRadius: Float,   // Bán kính tâm mặt trời
-    rayLength: Float,    // Độ dài tia nắng
-    rayWidth: Float,     // Độ dày tia nắng
-    rayGap: Float = 5f,  // Khoảng cách từ tâm đến chân tia nắng
-    color: Color,
-    numRays: Int = 8,    // Số lượng tia nắng (thường là 8 hoặc 12)
-    rotationDegrees: Float = 0f // Góc xoay tổng thể (để làm animation)
+    center: Offset, coreRadius: Float, rayLength: Float, rayWidth: Float, rayGap: Float,
+    color: Color, numRays: Int = 8, rotationDegrees: Float
 ) {
-    // 1. Nếu muốn cả mặt trời xoay (animation), ta xoay toàn bộ canvas trước
-    rotate(degrees = rotationDegrees, pivot = center) {
-
-        // 2. Vẽ hình tròn trung tâm (Lõi mặt trời)
-        drawCircle(
-            color = color,
-            radius = coreRadius,
-            center = center
-        )
-
-        // 3. Vẽ các tia nắng xung quanh
-        val angleStep = 360f / numRays // Góc giữa mỗi tia (VD: 8 tia thì cách nhau 45 độ)
-        val startDistance = coreRadius + rayGap // Điểm bắt đầu vẽ tia (tính từ tâm)
-        val endDistance = startDistance + rayLength // Điểm kết thúc tia
-
-        repeat(numRays) { index ->
-            // Mẹo quan trọng: Xoay canvas để vẽ tia tiếp theo
-            // Ta xoay quanh điểm center một góc là (index * angleStep)
-            rotate(degrees = index * angleStep, pivot = center) {
-                // Sau khi xoay, ta chỉ cần vẽ một đường thẳng đứng đơn giản
-                // hướng từ tâm lên trên (theo trục Y âm)
+    rotate(rotationDegrees, center) {
+        drawCircle(color, coreRadius, center)
+        val step = 360f / numRays
+        repeat(numRays) { i ->
+            rotate(i * step, center) {
                 drawLine(
-                    color = color,
-                    start = Offset(center.x, center.y - startDistance),
-                    end = Offset(center.x, center.y - endDistance),
+                    color,
+                    start = Offset(center.x, center.y - (coreRadius + rayGap)),
+                    end = Offset(center.x, center.y - (coreRadius + rayGap + rayLength)),
                     strokeWidth = rayWidth,
-                    cap = StrokeCap.Round // Bo tròn đầu tia nắng cho mềm mại
+                    cap = StrokeCap.Round
                 )
             }
         }
     }
 }
 
+fun DrawScope.drawSparkle(center: Offset, size: Float, color: Color) {
+    val path = Path().apply {
+        moveTo(center.x, center.y - size)
+        quadraticBezierTo(center.x, center.y, center.x + size, center.y)
+        quadraticBezierTo(center.x, center.y, center.x, center.y + size)
+        quadraticBezierTo(center.x, center.y, center.x - size, center.y)
+        quadraticBezierTo(center.x, center.y, center.x, center.y - size)
+    }
+    drawPath(path, color)
+}

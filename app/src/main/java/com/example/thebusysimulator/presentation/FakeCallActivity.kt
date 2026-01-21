@@ -114,7 +114,7 @@ class FakeCallActivity : ComponentActivity() {
         startFlashIfEnabled()
 
         setContent {
-            TheBusySimulatorTheme(darkTheme = isSystemInDarkTheme()) {
+            TheBusySimulatorTheme(themeMode = "system") {
                 FakeCallScreen(
                     callerName = callerName,
                     callerNumber = callerNumber,

@@ -11,35 +11,21 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// ===== CYBER GLITCH THEME - Dark Mode (Chế độ chính) =====
-// Phong cách Hacker/Gamer - Màu đen sâu với Neon rực rỡ
-val CyberDarkBackground = Color(0xFF050505)      // Nền đen gần như tuyệt đối
-val CyberDarkSurface = Color(0xFF151515)        // Nền các khối/Card (đen nhám)
-val CyberDarkPrimary = Color(0xFFD900FF)         // Tím Neon rực rỡ
-val CyberDarkAccent = Color(0xFF00FFC2)          // Xanh Cyan Neon
-val CyberDarkText = Color(0xFFFFFFFF)            // Trắng tinh
+val CyberDarkBackground = Color(0xFF050505)
+val CyberDarkSurface = Color(0xFF151515)
+val CyberDarkText = Color(0xFFFFFFFF)
 
-// Aliases for compatibility
-val DarkBackgroundStart = CyberDarkBackground
-val DarkBackgroundEnd = CyberDarkSurface
-val DarkAccent = CyberDarkPrimary
-val DarkAccentSecondary = CyberDarkAccent
-val DarkIconInactive = Color(0xFF888888)         // Xám cho icon không active
-val DarkBottomNavBg = CyberDarkText
+val DarkIconInactive = Color(0xFF888888)
+val CyberLightBackground = Color(0xFFF0F0F3)
+val CyberLightSurface = Color(0xFFFFFFFF)
+val CyberLightText = Color(0xFF2D3436)
 
-// ===== CYBER GLITCH THEME - Light Mode (Chế độ phụ) =====
-// Phong cách nhẹ nhàng hơn cho Light Mode
-val CyberLightBackground = Color(0xFFF0F0F3)     // Xám trắng nhẹ
-val CyberLightSurface = Color(0xFFFFFFFF)        // Trắng tinh
-val CyberLightPrimary = Color(0xFF6C5CE7)         // Tím đậm (dịu mắt trên nền trắng)
-val CyberLightAccent = Color(0xFF00CEC9)          // Xanh ngọc đậm
-val CyberLightText = Color(0xFF2D3436)            // Xám đen
-
-// Aliases for compatibility
-val LightBackgroundStart = CyberLightBackground
-val LightBackgroundEnd = CyberLightSurface
-val LightAccent = CyberLightPrimary
-val LightAccentSecondary = CyberLightAccent
-val LightIconInactive = Color(0xFF6E6E73)         // Xám cho icon không active
-val LightBottomNavBg = CyberLightText
-
+val LightIconInactive = Color(0xFF6E6E73)
+val CyberNeonPurple = Color(0xFFD900FF)
+val CyberNeonCyan = Color(0xFF00FFC2)
+val CyberNeonPink = Color(0xFFFF0099)
+val CyberNeonYellow = Color(0xFFFAFF00)
+val CyberLightBorder = Color(0xFF121212)
+val CyberLightShadow = Color(0xFF121212)
+val CyberDarkBorder = Color(0xFFFFFFFF)
+val CyberDarkShadow = Color(0xFFD900FF)
