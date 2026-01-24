@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import com.example.thebusysimulator.R
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,7 +50,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
@@ -65,6 +63,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import com.example.thebusysimulator.presentation.di.AppContainer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.thebusysimulator.R
+import kotlinx.coroutines.launch
 
 class FakeVideoCallActivity : ComponentActivity() {
     private var mediaPlayer: MediaPlayer? = null
@@ -332,11 +335,37 @@ fun IncomingVideoCallScreen(
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = callerName,
-                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
-                )
+                // Tên với icon verify nếu là người nổi tiếng
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = callerName,
+                        style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                    // Kiểm tra xem có phải người nổi tiếng không
+                    var isVerified by remember { mutableStateOf(false) }
+                    val context = LocalContext.current
+                    val scope = rememberCoroutineScope()
+                    
+                    LaunchedEffect(callerName) {
+                        scope.launch {
+                            isVerified = AppContainer.messageRepository.isContactVerified(callerName)
+                        }
+                    }
+                    
+                    if (isVerified) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_verify),
+                            contentDescription = "Verified",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Video Call...",

@@ -65,6 +65,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import com.example.thebusysimulator.presentation.di.AppContainer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.thebusysimulator.R
+import kotlinx.coroutines.launch
 
 class FakeCallActivity : ComponentActivity() {
     private var mediaPlayer: MediaPlayer? = null
@@ -339,13 +344,39 @@ fun IncomingCallScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = callerName,
-                    fontSize = 36.sp, // Font to hơn
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                // Tên với icon verify nếu là người nổi tiếng
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = callerName,
+                        fontSize = 36.sp, // Font to hơn
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    // Kiểm tra xem có phải người nổi tiếng không
+                    var isVerified by remember { mutableStateOf(false) }
+                    val context = LocalContext.current
+                    val scope = rememberCoroutineScope()
+                    
+                    LaunchedEffect(callerName) {
+                        scope.launch {
+                            isVerified = AppContainer.messageRepository.isContactVerified(callerName)
+                        }
+                    }
+                    
+                    if (isVerified) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_verify),
+                            contentDescription = "Verified",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
                 Text(
                     text = callerNumber,
                     fontSize = 20.sp,

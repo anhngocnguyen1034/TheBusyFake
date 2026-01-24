@@ -52,7 +52,7 @@ object AppContainer {
     }
     
     // Message Repository
-    private val messageRepository: MessageRepository by lazy {
+    val messageRepository: MessageRepository by lazy {
         requireNotNull(database) { "AppContainer must be initialized with context" }
         MessageRepository(
             messageDao = database!!.messageDao(),

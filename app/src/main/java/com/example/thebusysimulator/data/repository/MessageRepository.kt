@@ -65,5 +65,9 @@ class MessageRepository(
     suspend fun updateChatMessage(chatMessage: ChatMessage) {
         chatMessageDao.updateChatMessage(ChatMessageMapper.fromEntity(chatMessage))
     }
+    
+    suspend fun isContactVerified(contactName: String): Boolean {
+        return messageDao.getMessageByContactName(contactName)?.isVerified ?: false
+    }
 }
 

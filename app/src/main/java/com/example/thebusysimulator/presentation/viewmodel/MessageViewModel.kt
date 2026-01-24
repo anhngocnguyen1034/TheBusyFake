@@ -392,6 +392,65 @@ class MessageViewModel(
                     replyToMessageId = null
                 )
                 messageRepository.insertChatMessage(chatMessage)
+                
+                // Kiểm tra xem có phải preset message không và tự động phản hồi
+                val message = _uiState.value.messages.find { it.id == messageId }
+                val contactName = message?.contactName ?: ""
+                
+                if (contactName in listOf("Mẹ", "Người yêu", "Bác sĩ", "Nhà khoa học")) {
+                    // Lấy reply index hiện tại
+                    val currentIndex = prefs?.getInt("reply_index_$messageId", 0) ?: 0
+                    
+                    // Lấy câu trả lời phù hợp
+                    val replyText = when (contactName) {
+                        "Mẹ" -> AutoReplyHelper.getNextReply(currentIndex)
+                        "Người yêu" -> AutoReplyHelper.getNextLoverReply(currentIndex)
+                        "Bác sĩ" -> AutoReplyHelper.getNextDoctorReply(currentIndex)
+                        "Nhà khoa học" -> AutoReplyHelper.getNextScientistReply(currentIndex)
+                        else -> ""
+                    }
+                    
+                    if (replyText.isNotEmpty()) {
+                        // Hiển thị typing indicator (3 chấm đang nhập)
+                        val currentState = _chatUiState.value.toMutableMap()
+                        val existingState = currentState[messageId]
+                        currentState[messageId] = existingState?.copy(isTyping = true)
+                            ?: ChatUiState(isTyping = true)
+                        _chatUiState.value = currentState
+                        
+                        // Đợi 2-3 giây trước khi phản hồi (tạo cảm giác tự nhiên)
+                        delay((2000..3000).random().toLong())
+                        
+                        // Gửi tin nhắn phản hồi tự động
+                        val autoReplyMessage = ChatMessage(
+                            id = UUID.randomUUID().toString(),
+                            messageId = messageId,
+                            text = replyText,
+                            timestamp = Date(),
+                            isFromMe = false,
+                            imageUri = null,
+                            replyToMessageId = null
+                        )
+                        messageRepository.insertChatMessage(autoReplyMessage)
+                        
+                        // Tắt typing indicator sau khi gửi tin nhắn
+                        val updatedState = _chatUiState.value.toMutableMap()
+                        val updatedExistingState = updatedState[messageId]
+                        updatedState[messageId] = updatedExistingState?.copy(isTyping = false)
+                            ?: ChatUiState(isTyping = false)
+                        _chatUiState.value = updatedState
+                        
+                        // Tăng reply index và lưu lại
+                        val nextIndex = (currentIndex + 1) % when (contactName) {
+                            "Mẹ" -> AutoReplyHelper.getTotalReplies()
+                            "Người yêu" -> AutoReplyHelper.getTotalLoverReplies()
+                            "Bác sĩ" -> AutoReplyHelper.getTotalDoctorReplies()
+                            "Nhà khoa học" -> AutoReplyHelper.getTotalScientistReplies()
+                            else -> 1
+                        }
+                        prefs?.edit()?.putInt("reply_index_$messageId", nextIndex)?.apply()
+                    }
+                }
             } catch (e: Exception) {
                 val currentState = _chatUiState.value.toMutableMap()
                 val existingState = currentState[messageId]

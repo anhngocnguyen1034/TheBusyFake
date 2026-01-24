@@ -33,6 +33,14 @@ import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.ScheduledMessage
+import android.Manifest
+import android.content.Intent
+import android.provider.Settings
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.example.thebusysimulator.presentation.util.PermissionHelper
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -44,6 +52,21 @@ fun FakeMessageScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    
+    // Launcher cho notification permission (Android 13+)
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            // Nếu từ chối notification permission, không thể dùng được
+            viewModel.clearPermissionRequest()
+        } else {
+            // Có quyền notification rồi, kiểm tra lại schedule exact alarm
+            viewModel.clearPermissionRequest()
+        }
+    }
 
     // Background Gradient
     val bgBrush = Brush.verticalGradient(
@@ -159,6 +182,61 @@ fun FakeMessageScreen(
                     EmptyMessageStateCard()
                 }
             }
+        }
+        
+        // Dialog yêu cầu quyền Notification (BẮT BUỘC)
+        if (uiState.needsNotificationPermission && activity != null) {
+            LaunchedEffect(Unit) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+        
+        // Dialog yêu cầu quyền SCHEDULE_EXACT_ALARM (chỉ hiện nếu đã từ chối trước đó)
+        if (uiState.needsScheduleExactAlarmPermission && uiState.shouldShowPermissionDialog) {
+            AlertDialog(
+                onDismissRequest = { 
+                    viewModel.markPermissionDenied()
+                    viewModel.clearPermissionRequest()
+                },
+                title = {
+                    Text(
+                        text = "Cần quyền lên lịch chính xác",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Để lên lịch tin nhắn giả, ứng dụng cần quyền lên lịch chính xác. " +
+                                "Vui lòng mở Cài đặt và cấp quyền cho ứng dụng.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.markPermissionDenied()
+                            viewModel.clearPermissionRequest()
+                            // Mở settings để cấp quyền SCHEDULE_EXACT_ALARM
+                            viewModel.openScheduleExactAlarmSettings()
+                        }
+                    ) {
+                        Text("Mở Cài đặt")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { 
+                            viewModel.markPermissionDenied()
+                            viewModel.clearPermissionRequest()
+                        }
+                    ) {
+                        Text("Để sau")
+                    }
+                }
+            )
         }
     }
 }

@@ -164,18 +164,14 @@ fun LanguageItem(
         } else {
             colorScheme.surface.copy(alpha = 0.3f) // Trong suốt nhẹ khi chưa chọn (thay vì White cứng)
         },
+        animationSpec = tween(durationMillis = 300),
         label = "colorAnim"
-    )
-
-    // Animation cho độ cao (bóng) -> Quan trọng: Unselected = 0.dp
-    val elevation by animateDpAsState(
-        targetValue = if (isSelected) 6.dp else 0.dp,
-        label = "elevationAnim"
     )
 
     // Animation cho viền
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) Color.Transparent else colorScheme.outline.copy(alpha = 0.3f),
+        animationSpec = tween(durationMillis = 300),
         label = "borderAnim"
     )
 
@@ -186,9 +182,9 @@ fun LanguageItem(
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
-        // Chỉ hiện bóng khi được chọn, chưa chọn thì phẳng lì
+        // Không có đổ bóng (elevation = 0)
         elevation = CardDefaults.cardElevation(
-            defaultElevation = elevation
+            defaultElevation = 0.dp
         ),
         // Thêm viền (Border) khi chưa chọn để tạo hình khối rõ ràng mà không cần bóng
         border = if (!isSelected) BorderStroke(1.dp, borderColor) else null

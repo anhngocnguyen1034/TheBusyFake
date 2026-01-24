@@ -107,6 +107,9 @@ fun ChatScreen(
     val message = uiState.messages.find { it.id == messageId }
     val avatarUri = message?.avatarUri
     val isVerified = message?.isVerified ?: false
+    
+    // Kiểm tra xem có phải preset message không (Mẹ, Người yêu, Bác sĩ, Nhà khoa học)
+    val isPresetMessage = contactName in listOf("Mẹ", "Người yêu", "Bác sĩ", "Nhà khoa học")
 
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
@@ -403,9 +406,15 @@ fun ChatScreen(
                                         replyingToMessage = null
                                         messageText = ""
                                     } else {
-                                        // Mở bottom sheet để chọn gửi/nhận
-                                        pendingMessageText = messageText
-                                        showSendOptionsSheet = true
+                                        if (isPresetMessage) {
+                                            // Preset messages: Gửi luôn, không có chức năng nhận tin
+                                            viewModel.sendChatMessage(messageId, messageText, null)
+                                            messageText = ""
+                                        } else {
+                                            // Contact thường: Mở bottom sheet để chọn gửi/nhận
+                                            pendingMessageText = messageText
+                                            showSendOptionsSheet = true
+                                        }
                                     }
                                 }
                             },
@@ -423,8 +432,8 @@ fun ChatScreen(
         }
     }
 
-    // Bottom Sheet cho lựa chọn gửi/nhận tin
-    if (showSendOptionsSheet) {
+    // Bottom Sheet cho lựa chọn gửi/nhận tin (chỉ hiện cho contact thường, không phải preset)
+    if (showSendOptionsSheet && !isPresetMessage) {
         val sendOptionsSheetState = rememberModalBottomSheetState()
         ModalBottomSheet(
             onDismissRequest = { 

@@ -23,5 +23,8 @@ interface MessageDao {
     
     @Query("UPDATE messages SET lastMessage = :lastMessage, timestamp = :timestamp, unreadCount = :unreadCount WHERE id = :id")
     suspend fun updateLastMessage(id: String, lastMessage: String, timestamp: Long, unreadCount: Int)
+    
+    @Query("SELECT * FROM messages WHERE contactName = :contactName LIMIT 1")
+    suspend fun getMessageByContactName(contactName: String): MessageEntity?
 }
 
