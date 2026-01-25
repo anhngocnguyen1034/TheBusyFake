@@ -1,15 +1,10 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -19,11 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -32,16 +25,13 @@ import androidx.navigation.NavController
 import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
-import com.example.thebusysimulator.presentation.viewmodel.ScheduledMessage
 import android.Manifest
-import android.content.Intent
-import android.provider.Settings
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalContext
 import com.example.thebusysimulator.presentation.util.PermissionHelper
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,10 +50,11 @@ fun FakeMessageScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
-            // Nếu từ chối notification permission, không thể dùng được
+            // Nếu từ chối notification permission, đánh dấu để hiện dialog lần sau
+            viewModel.markNotificationPermissionDenied()
             viewModel.clearPermissionRequest()
         } else {
-            // Có quyền notification rồi, kiểm tra lại schedule exact alarm
+            // Có quyền notification rồi, clear tất cả request
             viewModel.clearPermissionRequest()
         }
     }
@@ -112,8 +103,20 @@ fun FakeMessageScreen(
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
                     )
+                    IconButton(
+                        onClick = { navController.navigate(com.example.thebusysimulator.presentation.navigation.Screen.NotificationHistory.route) },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(com.example.thebusysimulator.R.drawable.ic_history),
+                            contentDescription = "Lịch sử thông báo",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
@@ -159,38 +162,64 @@ fun FakeMessageScreen(
                     }
                 }
             }
-
-            // Scheduled Messages List
-            if (uiState.scheduledMessages.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "Tin nhắn đã lên lịch",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(uiState.scheduledMessages) { message ->
-                    ScheduledMessageItem(
-                        message = message,
-                        onCancel = { viewModel.cancelMessage(message.id) }
-                    )
-                }
-            } else {
-                item {
-                    EmptyMessageStateCard()
+        }
+        
+        // Xử lý quyền Notification (BẮT BUỘC)
+        if (uiState.needsNotificationPermission && activity != null) {
+            if (!uiState.shouldShowNotificationPermissionDialog) {
+                // Lần đầu: Launch permission request trực tiếp
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 }
             }
         }
         
-        // Dialog yêu cầu quyền Notification (BẮT BUỘC)
-        if (uiState.needsNotificationPermission && activity != null) {
-            LaunchedEffect(Unit) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        // Dialog yêu cầu quyền Notification (nếu đã từ chối trước đó)
+        if (uiState.needsNotificationPermission && uiState.shouldShowNotificationPermissionDialog) {
+            AlertDialog(
+                onDismissRequest = { 
+                    viewModel.markNotificationPermissionDenied()
+                    viewModel.clearPermissionRequest()
+                },
+                title = {
+                    Text(
+                        text = "Cần quyền thông báo",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Để hiển thị tin nhắn giả, ứng dụng cần quyền thông báo. " +
+                                "Vui lòng mở Cài đặt và bật thông báo cho ứng dụng.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.markNotificationPermissionDenied()
+                            viewModel.clearPermissionRequest()
+                            // Mở settings để cấp quyền thông báo
+                            viewModel.openNotificationSettings()
+                        }
+                    ) {
+                        Text("Mở Cài đặt")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { 
+                            viewModel.markNotificationPermissionDenied()
+                            viewModel.clearPermissionRequest()
+                        }
+                    ) {
+                        Text("Để sau")
+                    }
                 }
-            }
+            )
         }
         
         // Dialog yêu cầu quyền SCHEDULE_EXACT_ALARM (chỉ hiện nếu đã từ chối trước đó)
@@ -249,6 +278,7 @@ fun MessageInputSection(
 ) {
     var senderName by remember { mutableStateOf("") }
     var messageText by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
 
     val quickTimeOptions = listOf(
         "Ngay lập tức" to 5,
@@ -260,6 +290,18 @@ fun MessageInputSection(
     var selectedDelaySeconds by remember { mutableStateOf(60) }
     var customTimeInput by remember { mutableStateOf("") }
     var selectedQuickOption by remember { mutableStateOf<String?>("1 phút") }
+    
+    // Reset form khi schedule thành công
+    LaunchedEffect(uiState.messageScheduledSuccessfully) {
+        if (uiState.messageScheduledSuccessfully) {
+            senderName = ""
+            messageText = ""
+            selectedDelaySeconds = 60
+            customTimeInput = ""
+            selectedQuickOption = "1 phút"
+            viewModel.clearSuccessFlag()
+        }
+    }
 
     fun createDateWithDelay(seconds: Int): Date {
         val calendar = Calendar.getInstance()
@@ -462,12 +504,7 @@ fun MessageInputSection(
                                 messageText,
                                 createDateWithDelay(selectedDelaySeconds)
                             )
-                            // Reset
-                            senderName = ""
-                            messageText = ""
-                            selectedDelaySeconds = 60
-                            customTimeInput = ""
-                            selectedQuickOption = "1 phút"
+                            // Không reset ngay, đợi thông báo thành công từ ViewModel
                         }
                     },
                     modifier = Modifier
@@ -511,125 +548,6 @@ fun MessageInputSection(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun ScheduledMessageItem(
-    message: ScheduledMessage,
-    onCancel: () -> Unit
-) {
-    val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val timeUntilMessage = message.scheduledTime.time - System.currentTimeMillis()
-    val secondsUntil = (timeUntilMessage / 1000).toInt()
-
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-            .animateContentSize()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiaryContainer)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = message.senderName.take(1).uppercase(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = message.senderName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = message.messageText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (secondsUntil > 0) Icons.Default.Email else Icons.Default.Warning,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = if (secondsUntil > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    val statusText = if (secondsUntil > 0) "Gửi lúc ${dateFormat.format(message.scheduledTime)}" else "Đã quá hạn"
-                    Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Cancel Button
-            IconButton(
-                onClick = onCancel,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f), CircleShape)
-                    .size(36.dp)
-            ) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = "Hủy",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun EmptyMessageStateCard() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 60.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.DateRange,
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.surfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Chưa có tin nhắn nào",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = "Tạo tin nhắn giả ngay để trốn họp nào! 🏃💨",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
     }
 }
 

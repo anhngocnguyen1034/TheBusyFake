@@ -95,6 +95,13 @@ fun NavGraph(
                 repository = com.example.thebusysimulator.presentation.di.AppContainer.fakeCallRepository
             )
         }
+        
+        composable(Screen.NotificationHistory.route) {
+            NotificationHistoryScreen(
+                navController = navController,
+                repository = com.example.thebusysimulator.presentation.di.AppContainer.fakeNotificationRepository
+            )
+        }
     }
 }
 

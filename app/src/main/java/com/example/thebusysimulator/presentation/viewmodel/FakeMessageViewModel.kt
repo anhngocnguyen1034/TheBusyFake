@@ -8,6 +8,8 @@ import android.content.SharedPreferences
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.thebusysimulator.domain.model.FakeNotification
+import com.example.thebusysimulator.domain.repository.FakeNotificationRepository
 import com.example.thebusysimulator.presentation.receiver.FakeMessageReceiver
 import com.example.thebusysimulator.presentation.util.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,10 +30,15 @@ data class FakeMessageUiState(
     val errorMessage: String? = null,
     val needsScheduleExactAlarmPermission: Boolean = false,
     val needsNotificationPermission: Boolean = false,
-    val shouldShowPermissionDialog: Boolean = false // true nếu đã từ chối trước đó
+    val shouldShowPermissionDialog: Boolean = false, // true nếu đã từ chối schedule exact alarm trước đó
+    val shouldShowNotificationPermissionDialog: Boolean = false, // true nếu đã từ chối notification permission trước đó
+    val messageScheduledSuccessfully: Boolean = false // true khi schedule thành công, để reset form
 )
 
-class FakeMessageViewModel(private val context: Context) : ViewModel() {
+class FakeMessageViewModel(
+    private val context: Context,
+    private val notificationRepository: FakeNotificationRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(FakeMessageUiState())
     val uiState: StateFlow<FakeMessageUiState> = _uiState.asStateFlow()
 
@@ -51,9 +58,28 @@ class FakeMessageViewModel(private val context: Context) : ViewModel() {
                 val hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
                 if (!hasNotificationPermission) {
                     android.util.Log.w("FakeMessageViewModel", "⚠️ No notification permission")
-                    _uiState.value = _uiState.value.copy(needsNotificationPermission = true)
+                    
+                    // Kiểm tra xem đã từ chối quyền notification trước đó chưa
+                    val notificationPermissionDenied = prefs.getBoolean("notification_permission_denied", false)
+                    
+                    if (notificationPermissionDenied) {
+                        // Đã từ chối trước đó: Hiện dialog giải thích
+                        _uiState.value = _uiState.value.copy(
+                            needsNotificationPermission = true,
+                            shouldShowNotificationPermissionDialog = true
+                        )
+                    } else {
+                        // Lần đầu: Launch permission request trực tiếp
+                        _uiState.value = _uiState.value.copy(
+                            needsNotificationPermission = true,
+                            shouldShowNotificationPermissionDialog = false
+                        )
+                    }
                     return@launch
                 }
+                
+                // Nếu đã có quyền notification, reset flag "denied"
+                prefs.edit().putBoolean("notification_permission_denied", false).apply()
 
                 // 2. Kiểm tra quyền SCHEDULE_EXACT_ALARM (từ Android 12+)
                 val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -131,6 +157,9 @@ class FakeMessageViewModel(private val context: Context) : ViewModel() {
 
                 scheduledMessages.add(message)
                 updateUiState()
+                
+                // Đánh dấu schedule thành công để reset form
+                _uiState.value = _uiState.value.copy(messageScheduledSuccessfully = true)
                 android.util.Log.d("FakeMessageViewModel", "✅ Message scheduled: $senderName - $messageText")
             } catch (e: SecurityException) {
                 // Xử lý SecurityException khi không có quyền
@@ -147,13 +176,23 @@ class FakeMessageViewModel(private val context: Context) : ViewModel() {
         _uiState.value = _uiState.value.copy(
             needsScheduleExactAlarmPermission = false,
             needsNotificationPermission = false,
-            shouldShowPermissionDialog = false
+            shouldShowPermissionDialog = false,
+            shouldShowNotificationPermissionDialog = false
         )
     }
     
+    fun clearSuccessFlag() {
+        _uiState.value = _uiState.value.copy(messageScheduledSuccessfully = false)
+    }
+    
     fun markPermissionDenied() {
-        // Đánh dấu đã từ chối quyền
+        // Đánh dấu đã từ chối quyền schedule exact alarm
         prefs.edit().putBoolean("schedule_exact_alarm_denied", true).apply()
+    }
+    
+    fun markNotificationPermissionDenied() {
+        // Đánh dấu đã từ chối quyền notification
+        prefs.edit().putBoolean("notification_permission_denied", true).apply()
     }
     
     fun openScheduleExactAlarmSettings() {
@@ -164,6 +203,22 @@ class FakeMessageViewModel(private val context: Context) : ViewModel() {
             }
         } else {
             // Android < 12: Mở app settings
+            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = android.net.Uri.parse("package:${context.packageName}")
+            }
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+    
+    fun openNotificationSettings() {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ có thể mở trực tiếp notification settings
+            Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+            }
+        } else {
+            // Android < 13: Mở app settings
             Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = android.net.Uri.parse("package:${context.packageName}")
             }
@@ -209,9 +264,39 @@ class FakeMessageViewModel(private val context: Context) : ViewModel() {
                 val hasNotificationPermission = PermissionHelper.hasNotificationPermission(context)
                 if (!hasNotificationPermission) {
                     android.util.Log.w("FakeMessageViewModel", "⚠️ No notification permission")
-                    _uiState.value = _uiState.value.copy(needsNotificationPermission = true)
+                    
+                    // Kiểm tra xem đã từ chối quyền notification trước đó chưa
+                    val notificationPermissionDenied = prefs.getBoolean("notification_permission_denied", false)
+                    
+                    if (notificationPermissionDenied) {
+                        // Đã từ chối trước đó: Hiện dialog giải thích
+                        _uiState.value = _uiState.value.copy(
+                            needsNotificationPermission = true,
+                            shouldShowNotificationPermissionDialog = true
+                        )
+                    } else {
+                        // Lần đầu: Launch permission request trực tiếp
+                        _uiState.value = _uiState.value.copy(
+                            needsNotificationPermission = true,
+                            shouldShowNotificationPermissionDialog = false
+                        )
+                    }
                     return@launch
                 }
+                
+                // Nếu đã có quyền notification, reset flag "denied"
+                prefs.edit().putBoolean("notification_permission_denied", false).apply()
+                
+                // Lưu vào database
+                val notificationId = UUID.randomUUID().toString()
+                val notification = FakeNotification(
+                    id = notificationId,
+                    senderName = senderName,
+                    messageText = messageText,
+                    sentTime = Date(),
+                    isScheduled = false
+                )
+                notificationRepository.saveNotification(notification)
                 
                 com.example.thebusysimulator.presentation.service.FakeMessageNotificationService.createNotificationChannel(context)
                 com.example.thebusysimulator.presentation.service.FakeMessageNotificationService.showMessageNotification(

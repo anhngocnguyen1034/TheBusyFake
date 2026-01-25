@@ -4,11 +4,15 @@ import android.content.Context
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.data.datasource.LocalFakeCallDataSource
 import com.example.thebusysimulator.data.datasource.LocalFakeCallDataSourceImpl
+import com.example.thebusysimulator.data.datasource.LocalFakeNotificationDataSource
+import com.example.thebusysimulator.data.datasource.LocalFakeNotificationDataSourceImpl
 import com.example.thebusysimulator.data.database.AppDatabase
 import com.example.thebusysimulator.data.mapper.FakeCallMapper
 import com.example.thebusysimulator.data.repository.FakeCallRepositoryImpl
+import com.example.thebusysimulator.data.repository.FakeNotificationRepositoryImpl
 import com.example.thebusysimulator.data.repository.MessageRepository
 import com.example.thebusysimulator.domain.repository.FakeCallRepository
+import com.example.thebusysimulator.domain.repository.FakeNotificationRepository
 import com.example.thebusysimulator.domain.usecase.CancelFakeCallUseCase
 import com.example.thebusysimulator.domain.usecase.GetScheduledCallsUseCase
 import com.example.thebusysimulator.domain.usecase.MarkCallAsCompletedUseCase
@@ -60,6 +64,21 @@ object AppContainer {
         )
     }
     
+    // Notification Data Source
+    private val localNotificationDataSource: LocalFakeNotificationDataSource by lazy {
+        requireNotNull(database) { "AppContainer must be initialized with context" }
+        LocalFakeNotificationDataSourceImpl(
+            fakeNotificationDao = database!!.fakeNotificationDao()
+        )
+    }
+    
+    // Notification Repository
+    val fakeNotificationRepository: FakeNotificationRepository by lazy {
+        FakeNotificationRepositoryImpl(
+            localDataSource = localNotificationDataSource
+        )
+    }
+    
     // Use Cases - lazy để đảm bảo fakeCallRepository đã được init
     val scheduleFakeCallUseCase: ScheduleFakeCallUseCase by lazy {
         ScheduleFakeCallUseCase(fakeCallRepository)
@@ -108,7 +127,10 @@ object AppContainer {
     
     fun createFakeMessageViewModel(): FakeMessageViewModel {
         requireNotNull(context) { "AppContainer must be initialized with context" }
-        return FakeMessageViewModel(context = context!!)
+        return FakeMessageViewModel(
+            context = context!!,
+            notificationRepository = fakeNotificationRepository
+        )
     }
 }
 

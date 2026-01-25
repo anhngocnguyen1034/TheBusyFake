@@ -8,20 +8,23 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.thebusysimulator.data.dao.ChatMessageDao
 import com.example.thebusysimulator.data.dao.FakeCallDao
+import com.example.thebusysimulator.data.dao.FakeNotificationDao
 import com.example.thebusysimulator.data.dao.MessageDao
 import com.example.thebusysimulator.data.model.ChatMessageEntity
 import com.example.thebusysimulator.data.model.FakeCallEntity
+import com.example.thebusysimulator.data.model.FakeNotificationEntity
 import com.example.thebusysimulator.data.model.MessageEntity
 
 @Database(
-    entities = [MessageEntity::class, ChatMessageEntity::class, FakeCallEntity::class],
-    version = 7,
+    entities = [MessageEntity::class, ChatMessageEntity::class, FakeCallEntity::class, FakeNotificationEntity::class],
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun chatMessageDao(): ChatMessageDao
     abstract fun fakeCallDao(): FakeCallDao
+    abstract fun fakeNotificationDao(): FakeNotificationDao
     
     companion object {
         @Volatile
@@ -99,6 +102,21 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Tạo bảng fake_notifications
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS fake_notifications (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        senderName TEXT NOT NULL,
+                        messageText TEXT NOT NULL,
+                        sentTime INTEGER NOT NULL,
+                        isScheduled INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val builder = Room.databaseBuilder(
@@ -106,7 +124,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                builder.addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 val instance = builder.build()
                 INSTANCE = instance
                 instance

@@ -3,7 +3,13 @@ package com.example.thebusysimulator.presentation.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.example.thebusysimulator.domain.model.FakeNotification
+import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.presentation.service.FakeMessageNotificationService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.*
 
 /**
  * Receiver để nhận alarm và hiển thị fake message notification
@@ -23,6 +29,23 @@ class FakeMessageReceiver : BroadcastReceiver() {
         android.util.Log.d("FakeMessageReceiver", "🔔 Message alarm triggered: $senderName - $messageText")
 
         try {
+            // Lưu vào database
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val notification = FakeNotification(
+                        id = UUID.randomUUID().toString(),
+                        senderName = senderName,
+                        messageText = messageText,
+                        sentTime = Date(),
+                        isScheduled = true
+                    )
+                    AppContainer.fakeNotificationRepository.saveNotification(notification)
+                    android.util.Log.d("FakeMessageReceiver", "✅ Notification saved to database")
+                } catch (e: Exception) {
+                    android.util.Log.e("FakeMessageReceiver", "❌ Failed to save notification to database", e)
+                }
+            }
+            
             FakeMessageNotificationService.createNotificationChannel(context)
             FakeMessageNotificationService.showMessageNotification(
                 context = context,
@@ -36,6 +59,7 @@ class FakeMessageReceiver : BroadcastReceiver() {
         }
     }
 }
+
 
 
 
