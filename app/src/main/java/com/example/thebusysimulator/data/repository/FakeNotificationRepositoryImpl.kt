@@ -82,4 +82,15 @@ class FakeNotificationRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun deleteAllNotifications(): Result<Unit> {
+        return try {
+            localDataSource.deleteAllNotifications().getOrElse {
+                return Result.failure(it)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

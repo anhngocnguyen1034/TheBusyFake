@@ -3,6 +3,14 @@ package com.example.thebusysimulator.presentation.ui.screen
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.luminance
+import com.example.thebusysimulator.presentation.ui.theme.DarkBackground
+import com.example.thebusysimulator.presentation.ui.theme.DarkBorder
+import com.example.thebusysimulator.presentation.ui.theme.DarkSurface
+import com.example.thebusysimulator.presentation.ui.theme.DarkText
+import com.example.thebusysimulator.presentation.ui.theme.LightBackground
+import com.example.thebusysimulator.presentation.ui.theme.LightBorder
+import com.example.thebusysimulator.presentation.ui.theme.LightSurface
+import com.example.thebusysimulator.presentation.ui.theme.LightText
 
 @Composable
 fun getGenZTheme(): GenZThemeColors {

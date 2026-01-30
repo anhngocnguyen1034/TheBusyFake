@@ -10,4 +10,5 @@ interface FakeNotificationRepository {
     suspend fun getNotificationHistory(): Result<List<FakeNotification>>
     suspend fun getNotificationById(notificationId: String): Result<FakeNotification>
     suspend fun deleteNotification(notificationId: String): Result<Unit>
+    suspend fun deleteAllNotifications(): Result<Unit>
 }

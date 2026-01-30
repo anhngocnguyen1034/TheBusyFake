@@ -21,6 +21,9 @@ interface FakeNotificationDao {
     @Query("DELETE FROM fake_notifications WHERE id = :id")
     suspend fun deleteNotificationById(id: String)
     
+    @Query("DELETE FROM fake_notifications")
+    suspend fun deleteAllNotifications()
+    
     @Query("SELECT * FROM fake_notifications ORDER BY sentTime DESC")
     fun getNotificationHistory(): Flow<List<FakeNotificationEntity>>
 }

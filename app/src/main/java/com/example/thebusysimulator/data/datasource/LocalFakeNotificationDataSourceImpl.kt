@@ -37,6 +37,15 @@ class LocalFakeNotificationDataSourceImpl(
         }
     }
 
+    override suspend fun deleteAllNotifications(): Result<Unit> {
+        return try {
+            fakeNotificationDao.deleteAllNotifications()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getNotificationById(notificationId: String): Result<FakeNotificationData?> {
         return try {
             val entity = fakeNotificationDao.getNotificationById(notificationId)

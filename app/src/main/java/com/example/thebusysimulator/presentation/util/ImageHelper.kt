@@ -2,6 +2,7 @@ package com.example.thebusysimulator.presentation.util
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -69,11 +70,43 @@ object ImageHelper {
     }
     
     /**
-     * Get file URI from file path
+     * Get file URI from file path using FileProvider
      */
-    fun getFileUri(context: Context, filePath: String): Uri {
-        val file = File(filePath)
-        return Uri.fromFile(file)
+    fun getFileUri(context: Context, filePath: String): Uri? {
+        return try {
+            val file = File(filePath)
+            if (file.exists()) {
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    /**
+     * Get content URI from file path for image loading
+     */
+    fun getImageUri(context: Context, filePath: String?): Uri? {
+        if (filePath == null) return null
+        return try {
+            if (filePath.startsWith("/")) {
+                // Internal storage file path
+                getFileUri(context, filePath)
+            } else {
+                // Already a URI string
+                Uri.parse(filePath)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
     
     /**

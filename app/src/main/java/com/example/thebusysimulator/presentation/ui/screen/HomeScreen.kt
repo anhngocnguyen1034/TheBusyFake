@@ -35,26 +35,11 @@ import com.example.thebusysimulator.R
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.navigationBarPadding
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.GenZBlue
+import com.example.thebusysimulator.presentation.ui.theme.GenZPink
+import com.example.thebusysimulator.presentation.ui.theme.GenZPurple
+import com.example.thebusysimulator.presentation.ui.theme.GenZYellow
 
-val GenZYellow = Color(0xFFF4D738)
-val GenZPink = Color(0xFFFF90E8)
-val GenZBlue = Color(0xFF51E5FF)
-val GenZPurple = Color(0xFF9D65FF)
-val GenZGreen = Color(0xFF00E054)
-
-// --- LIGHT MODE COLORS ---
-val LightBackground = Color(0xFFFFFFFF)
-val LightSurface = Color(0xFFFFFFFF)
-val LightBorder = Color(0xFF000000)
-val LightText = Color(0xFF000000)
-
-// --- DARK MODE COLORS ---
-val DarkBackground = Color(0xFF121212)
-val DarkSurface = Color(0xFF1E1E1E)
-val DarkBorder = Color(0xFFFFFFFF)
-val DarkText = Color(0xFFFFFFFF)
-
-// --- THEME DATA CLASS ---
 data class GenZThemeColors(
     val background: Color,
     val surface: Color,
