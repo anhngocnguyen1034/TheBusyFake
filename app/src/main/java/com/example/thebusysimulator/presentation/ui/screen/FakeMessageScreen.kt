@@ -1,37 +1,51 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.thebusysimulator.R
+import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.GenZBlue
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.platform.LocalContext
-import com.example.thebusysimulator.presentation.util.PermissionHelper
+import com.example.thebusysimulator.presentation.viewmodel.FakeMessageUiState
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,43 +58,50 @@ fun FakeMessageScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
-    
-    // Launcher cho notification permission (Android 13+)
+    val theme = getGenZTheme()
+
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
-            // Nếu từ chối notification permission, đánh dấu để hiện dialog lần sau
             viewModel.markNotificationPermissionDenied()
             viewModel.clearPermissionRequest()
         } else {
-            // Có quyền notification rồi, clear tất cả request
             viewModel.clearPermissionRequest()
         }
     }
 
-    // Background Gradient
-    val bgBrush = Brush.verticalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.surface,
-            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-        )
-    )
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(bgBrush)
+            .background(theme.background)
             .statusBarPadding()
             .hideKeyboardOnClick()
     ) {
+        // Background Pattern (Dotted)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val step = 20.dp.toPx()
+            for (x in 0..size.width.toInt() step step.toInt()) {
+                for (y in 0..size.height.toInt() step step.toInt()) {
+                    drawCircle(
+                        color = theme.pattern,
+                        radius = 1.dp.toPx(),
+                        center = Offset(x.toFloat(), y.toFloat())
+                    )
+                }
+            }
+        }
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 80.dp, top = 12.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(
+                bottom = 100.dp,
+                top = 16.dp,
+                start = 16.dp,
+                end = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            // Header
+            // --- HEADER ---
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -88,41 +109,42 @@ fun FakeMessageScreen(
                 ) {
                     IconButton(
                         onClick = { navController.popBackStack() },
-                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
+                            painter = painterResource(R.drawable.ic_back),
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(20.dp)
+                            tint = theme.text
                         )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Fake Message 💬",
+                        text = "FAKE NOTIFICATION",
                         style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Black,
+                            fontFamily = FontFamily.Monospace
                         ),
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = theme.text,
                         modifier = Modifier.weight(1f)
                     )
                     IconButton(
-                        onClick = { navController.navigate(com.example.thebusysimulator.presentation.navigation.Screen.NotificationHistory.route) },
-                        modifier = Modifier.size(40.dp)
+                        onClick = { navController.navigate(Screen.NotificationHistory.route) },
                     ) {
                         Icon(
-                            painter = painterResource(com.example.thebusysimulator.R.drawable.ic_history),
+                            painter = painterResource(R.drawable.ic_history),
                             contentDescription = "Lịch sử thông báo",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = theme.text
                         )
                     }
                 }
             }
 
-            // Input Section
+            // --- INPUT SECTION ---
             item {
-                MessageInputSection(viewModel = viewModel)
+                MessageInputSection(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    theme = theme
+                )
             }
 
             // Error Message
@@ -133,12 +155,10 @@ fun FakeMessageScreen(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -147,15 +167,11 @@ fun FakeMessageScreen(
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            IconButton(
-                                onClick = { viewModel.clearError() },
-                                modifier = Modifier.size(24.dp)
-                            ) {
+                            IconButton(onClick = { viewModel.clearError() }) {
                                 Icon(
                                     Icons.Default.Close,
                                     "Dismiss",
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
                         }
@@ -163,11 +179,10 @@ fun FakeMessageScreen(
                 }
             }
         }
-        
-        // Xử lý quyền Notification (BẮT BUỘC)
+
+        // Permission Logic
         if (uiState.needsNotificationPermission && activity != null) {
             if (!uiState.shouldShowNotificationPermissionDialog) {
-                // Lần đầu: Launch permission request trực tiếp
                 LaunchedEffect(Unit) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -175,110 +190,102 @@ fun FakeMessageScreen(
                 }
             }
         }
-        
-        // Dialog yêu cầu quyền Notification (nếu đã từ chối trước đó)
+
         if (uiState.needsNotificationPermission && uiState.shouldShowNotificationPermissionDialog) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     viewModel.markNotificationPermissionDenied()
                     viewModel.clearPermissionRequest()
                 },
-                title = {
-                    Text(
-                        text = "Cần quyền thông báo",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = "Để hiển thị tin nhắn giả, ứng dụng cần quyền thông báo. " +
-                                "Vui lòng mở Cài đặt và bật thông báo cho ứng dụng.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
+                title = { Text("Cần quyền thông báo", fontWeight = FontWeight.Bold) },
+                text = { Text("Để hiển thị tin nhắn giả, ứng dụng cần quyền thông báo.") },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.markNotificationPermissionDenied()
-                            viewModel.clearPermissionRequest()
-                            // Mở settings để cấp quyền thông báo
-                            viewModel.openNotificationSettings()
-                        }
-                    ) {
-                        Text("Mở Cài đặt")
-                    }
+                    Button(onClick = {
+                        viewModel.markNotificationPermissionDenied()
+                        viewModel.clearPermissionRequest()
+                        viewModel.openNotificationSettings()
+                    }) { Text("Mở Cài đặt") }
                 },
                 dismissButton = {
-                    TextButton(
-                        onClick = { 
-                            viewModel.markNotificationPermissionDenied()
-                            viewModel.clearPermissionRequest()
-                        }
-                    ) {
-                        Text("Để sau")
-                    }
+                    TextButton(onClick = {
+                        viewModel.markNotificationPermissionDenied()
+                        viewModel.clearPermissionRequest()
+                    }) { Text("Để sau") }
                 }
             )
         }
-        
-        // Dialog yêu cầu quyền SCHEDULE_EXACT_ALARM (chỉ hiện nếu đã từ chối trước đó)
+
         if (uiState.needsScheduleExactAlarmPermission && uiState.shouldShowPermissionDialog) {
             AlertDialog(
-                onDismissRequest = { 
+                onDismissRequest = {
                     viewModel.markPermissionDenied()
                     viewModel.clearPermissionRequest()
                 },
-                title = {
-                    Text(
-                        text = "Cần quyền lên lịch chính xác",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                text = {
-                    Text(
-                        text = "Để lên lịch tin nhắn giả, ứng dụng cần quyền lên lịch chính xác. " +
-                                "Vui lòng mở Cài đặt và cấp quyền cho ứng dụng.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
+                title = { Text("Cần quyền lên lịch", fontWeight = FontWeight.Bold) },
+                text = { Text("Để lên lịch chính xác, ứng dụng cần quyền Alarm.") },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.markPermissionDenied()
-                            viewModel.clearPermissionRequest()
-                            // Mở settings để cấp quyền SCHEDULE_EXACT_ALARM
-                            viewModel.openScheduleExactAlarmSettings()
-                        }
-                    ) {
-                        Text("Mở Cài đặt")
-                    }
+                    Button(onClick = {
+                        viewModel.markPermissionDenied()
+                        viewModel.clearPermissionRequest()
+                        viewModel.openScheduleExactAlarmSettings()
+                    }) { Text("Mở Cài đặt") }
                 },
                 dismissButton = {
-                    TextButton(
-                        onClick = { 
-                            viewModel.markPermissionDenied()
-                            viewModel.clearPermissionRequest()
-                        }
-                    ) {
-                        Text("Để sau")
-                    }
+                    TextButton(onClick = {
+                        viewModel.markPermissionDenied()
+                        viewModel.clearPermissionRequest()
+                    }) { Text("Để sau") }
                 }
             )
         }
     }
 }
 
-@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MessageInputSection(
-    viewModel: FakeMessageViewModel
+fun PopTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: ImageVector,
+    theme: GenZThemeColors,
+    accentColor: Color = GenZBlue,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    var senderName by remember { mutableStateOf("") }
-    var messageText by remember { mutableStateOf("") }
-    val uiState by viewModel.uiState.collectAsState()
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text(label, color = theme.text.copy(alpha = 0.5f)) },
+        leadingIcon = {
+            Icon(icon, null, tint = accentColor)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(2.dp, theme.border, RoundedCornerShape(8.dp)),
+        singleLine = true,
+        shape = RoundedCornerShape(8.dp),
+        colors = TextFieldDefaults.colors(
+            unfocusedContainerColor = theme.surface,
+            focusedContainerColor = theme.surface,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            focusedTextColor = theme.text,
+            unfocusedTextColor = theme.text
+        ),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
+    )
+}
+
+@SuppressLint("DefaultLocale")
+@Composable
+fun MessageInputSection(
+    uiState: FakeMessageUiState,
+    viewModel: FakeMessageViewModel,
+    theme: GenZThemeColors
+) {
+    var senderName by rememberSaveable { mutableStateOf("") }
+    var messageText by rememberSaveable { mutableStateOf("") }
 
     val quickTimeOptions = listOf(
         "Ngay lập tức" to 5,
@@ -287,267 +294,228 @@ fun MessageInputSection(
         "30 phút" to 1800
     )
 
-    var selectedDelaySeconds by remember { mutableStateOf(60) }
-    var customTimeInput by remember { mutableStateOf("") }
-    var selectedQuickOption by remember { mutableStateOf<String?>("1 phút") }
-    
-    // Reset form khi schedule thành công
+    var selectedDelaySeconds by rememberSaveable { mutableStateOf(5) }
+    var customTimeInput by rememberSaveable { mutableStateOf("") }
+    var selectedQuickOption by rememberSaveable { mutableStateOf<String?>("Ngay lập tức") }
+
     LaunchedEffect(uiState.messageScheduledSuccessfully) {
         if (uiState.messageScheduledSuccessfully) {
             senderName = ""
             messageText = ""
-            selectedDelaySeconds = 60
+            selectedDelaySeconds = 5
             customTimeInput = ""
-            selectedQuickOption = "1 phút"
+            selectedQuickOption = "Ngay lập tức"
             viewModel.clearSuccessFlag()
         }
     }
 
-    fun createDateWithDelay(seconds: Int): Date {
+    fun createDateWithDelay(seconds: Int): java.util.Date {
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.SECOND, seconds)
         return calendar.time
     }
 
-    fun formatDelay(seconds: Int): String {
-        return when {
-            seconds < 60 -> "${seconds}s"
-            seconds < 3600 -> "${seconds / 60} phút ${(seconds % 60).let { if (it > 0) "$it s" else "" }}"
-            else -> "${seconds / 3600} giờ"
-        }
-    }
-
-    Card(
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
+    GenZContainer(
+        title = "SETUP TIN NHẮN",
+        theme = theme,
+        accentColor = GenZBlue
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+
+        PopTextField(
+            value = senderName,
+            onValueChange = { senderName = it },
+            label = "Ai sẽ nhắn? (VD: Sếp, Crush...)",
+            icon = Icons.Rounded.Person,
+            theme = theme,
+            accentColor = GenZBlue
+        )
+
+        PopTextField(
+            value = messageText,
+            onValueChange = { messageText = it },
+            label = "Nội dung tin nhắn",
+            icon = Icons.Rounded.Email,
+            theme = theme,
+            accentColor = GenZBlue
+        )
+
+        HorizontalDivider(color = theme.border.copy(alpha = 0.3f))
+
+        Text(
+            text = "BAO LÂU NỮA?",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.Monospace,
+            color = theme.text
+        )
+
+        // Quick Chips Style Neo-Brutalism
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "Setup tin nhắn",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+            items(quickTimeOptions) { (label, seconds) ->
+                val isSelected = selectedQuickOption == label
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val offsetState by animateDpAsState(
+                    targetValue = if (isPressed) 0.dp else 2.dp,
+                    label = "chipOffset"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .padding(bottom = 2.dp)
+                        .clickable(interactionSource = interactionSource, indication = null) {
+                            selectedQuickOption = label
+                            selectedDelaySeconds = seconds
+                            customTimeInput = ""
+                        }
+                ) {
+                    // Shadow
+                    Box(
+                        modifier = Modifier
+                            .offset(x = 2.dp, y = 2.dp)
+                            .background(theme.shadow, RoundedCornerShape(50))
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                    // Content
+                    Box(
+                        modifier = Modifier
+                            .offset(x = offsetState, y = offsetState)
+                            .background(
+                                if (isSelected) GenZBlue else theme.surface,
+                                RoundedCornerShape(50)
+                            )
+                            .border(
+                                2.dp,
+                                theme.border,
+                                RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (isSelected) Color.Black else theme.text,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Custom Time Input
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PopTextField(
+                value = customTimeInput,
+                onValueChange = { newValue ->
+                    if (newValue.all { it.isDigit() }) {
+                        customTimeInput = newValue
+                        selectedQuickOption = null
+                        if (newValue.isNotBlank()) selectedDelaySeconds =
+                            newValue.toIntOrNull() ?: 0
+                    }
+                },
+                label = "Số giây tùy chỉnh...",
+                icon = Icons.Rounded.Edit,
+                theme = theme,
+                accentColor = GenZBlue,
+                keyboardType = KeyboardType.Number
             )
+        }
 
-            // Input Sender Name & Message Text
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = senderName,
-                    onValueChange = { senderName = it },
-                    label = { Text("Ai sẽ nhắn cho bạn?") },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.Person, null, tint = MaterialTheme.colorScheme.primary)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
-                )
+        // BIG ACTION BUTTON (Neo-Brutalism style)
+        val isEnabled = senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0
+        val buttonInteractionSource = remember { MutableInteractionSource() }
+        val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+        val buttonOffset by animateDpAsState(
+            targetValue = if (isButtonPressed) 0.dp else 4.dp,
+            label = "buttonOffset"
+        )
 
-                OutlinedTextField(
-                    value = messageText,
-                    onValueChange = { messageText = it },
-                    label = { Text("Nội dung tin nhắn") },
-                    leadingIcon = {
-                        Icon(Icons.Rounded.AccountBox, null, tint = MaterialTheme.colorScheme.primary)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
-                )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-
-            // Time Selection
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Bao lâu nữa thì gửi?",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Quick Chips
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(quickTimeOptions) { (label, seconds) ->
-                        val isSelected = selectedQuickOption == label
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedQuickOption = label
-                                selectedDelaySeconds = seconds
-                                customTimeInput = ""
-                            },
-                            label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
-                            shape = RoundedCornerShape(50),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            ),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        )
-                    }
-                }
-
-                // Custom Input + Summary
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = customTimeInput,
-                        onValueChange = { newValue ->
-                            if (newValue.all { it.isDigit() }) {
-                                customTimeInput = newValue
-                                selectedQuickOption = null
-                                if (newValue.isNotBlank()) {
-                                    selectedDelaySeconds = newValue.toIntOrNull() ?: 0
-                                }
-                            }
-                        },
-                        placeholder = { Text("Số giây...") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                    )
-
-                    if (selectedDelaySeconds > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Email,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = formatDelay(selectedDelaySeconds),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Action Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Show Now Button
-                OutlinedButton(
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .padding(bottom = 4.dp)
+                .clickable(
+                    interactionSource = buttonInteractionSource,
+                    indication = null,
+                    enabled = isEnabled,
                     onClick = {
-                        if (senderName.isNotBlank() && messageText.isNotBlank()) {
-                            viewModel.showMessageNow(senderName, messageText)
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    enabled = senderName.isNotBlank() && messageText.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Send,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Gửi ngay", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                }
-
-                // Schedule Button
-                Button(
-                    onClick = {
-                        if (senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0) {
-                            viewModel.scheduleMessage(
-                                senderName,
-                                messageText,
-                                createDateWithDelay(selectedDelaySeconds)
-                            )
-                            // Không reset ngay, đợi thông báo thành công từ ViewModel
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .then(
-                            if (senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0) {
-                                Modifier.shadow(8.dp, RoundedCornerShape(16.dp))
+                        if (isEnabled) {
+                            if (selectedDelaySeconds <= 10) {
+                                // Gửi ngay
+                                viewModel.showMessageNow(senderName, messageText)
                             } else {
-                                Modifier
+                                // Lên lịch
+                                viewModel.scheduleMessage(
+                                    senderName,
+                                    messageText,
+                                    createDateWithDelay(selectedDelaySeconds)
+                                )
                             }
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    enabled = senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        },
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        },
-                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            senderName = ""
+                            messageText = ""
+                            selectedDelaySeconds = 5
+                            customTimeInput = ""
+                            selectedQuickOption = "Ngay lập tức"
+                        }
+                    }
+                )
+        ) {
+            // Shadow
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(x = 4.dp, y = 4.dp)
+                    .background(theme.shadow, RoundedCornerShape(12.dp))
+            )
+            // Content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(x = buttonOffset, y = buttonOffset)
+                    .background(
+                        if (isEnabled) GenZBlue else theme.surface,
+                        RoundedCornerShape(12.dp)
                     )
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Notifications,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    .border(2.dp, theme.border, RoundedCornerShape(12.dp))
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isEnabled && selectedDelaySeconds <= 10) {
+                        Icon(
+                            Icons.Rounded.Send,
+                            null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    } else if (isEnabled) {
+                        Icon(
+                            Icons.Rounded.Notifications,
+                            null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     Text(
-                        text = if (senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0) "Lên lịch" else "Nhập đầy đủ",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        text = if (isEnabled) {
+                            if (selectedDelaySeconds <= 10) "GỬI NGAY 🚀" else "LÊN LỊCH GỬI"
+                        } else "NHẬP THÔNG TIN",
+                        color = if (isEnabled) Color.Black else theme.text.copy(alpha = 0.5f),
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 16.sp,
+                        letterSpacing = 1.sp
                     )
                 }
             }
         }
     }
 }
-

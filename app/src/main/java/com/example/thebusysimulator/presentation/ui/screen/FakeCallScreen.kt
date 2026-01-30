@@ -1,81 +1,92 @@
 package com.example.thebusysimulator.presentation.ui.screen
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.thebusysimulator.domain.model.FakeCall
+import com.example.thebusysimulator.R
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.DarkBackground
+import com.example.thebusysimulator.presentation.ui.theme.DarkBorder
+import com.example.thebusysimulator.presentation.ui.theme.DarkSurface
+import com.example.thebusysimulator.presentation.ui.theme.DarkText
+import com.example.thebusysimulator.presentation.ui.theme.GenZBlue
+import com.example.thebusysimulator.presentation.ui.theme.GenZGreen
+import com.example.thebusysimulator.presentation.ui.theme.GenZPink
+import com.example.thebusysimulator.presentation.ui.theme.GenZYellow
+import com.example.thebusysimulator.presentation.ui.theme.LightBackground
+import com.example.thebusysimulator.presentation.ui.theme.LightBorder
+import com.example.thebusysimulator.presentation.ui.theme.LightSurface
+import com.example.thebusysimulator.presentation.ui.theme.LightText
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
-import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.painterResource
-import com.example.thebusysimulator.R
 
-private val PopPurple = Color(0xFF8F00FF)
-private val PopPink = Color(0xFFFF006E)
-private val PopCyan = Color(0xFF00F0FF)
-private val PopYellow = Color(0xFFFFD600)
 
-// Nền: Sử dụng MaterialTheme colorScheme
 @Composable
-fun getPopBackgroundBrush(): Brush {
-    val colorScheme = MaterialTheme.colorScheme
-    return Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface))
+fun getLocalTheme(): GenZThemeColors {
+    val isDark = isSystemInDarkTheme()
+    return if (isDark) {
+        GenZThemeColors(
+            background = DarkBackground,
+            surface = DarkSurface,
+            border = DarkBorder,
+            text = DarkText,
+            shadow = Color.White, // Shadow trắng nổi bật trên nền đen
+            pattern = Color.White.copy(alpha = 0.1f)
+        )
+    } else {
+        GenZThemeColors(
+            background = LightBackground,
+            surface = LightSurface,
+            border = LightBorder,
+            text = LightText,
+            shadow = Color.Black,
+            pattern = Color.Black.copy(alpha = 0.1f)
+        )
+    }
 }
-
-// Màu chữ chính: Sử dụng MaterialTheme colorScheme
-@Composable
-fun getPopTextColor(): Color = MaterialTheme.colorScheme.onBackground
-
-// Màu nền Card: Sử dụng MaterialTheme colorScheme
-@Composable
-fun getCardBackgroundColor(): Color = MaterialTheme.colorScheme.surface
-
-// Màu chữ phụ (Label): Sử dụng MaterialTheme colorScheme
-@Composable
-fun getLabelColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant
-
-// Shadow color
-@Composable
-fun getNeonCardShadow(): Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,22 +100,37 @@ fun FakeCallScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val theme = getLocalTheme()
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(getPopBackgroundBrush())
+            .background(theme.background)
             .statusBarPadding()
             .hideKeyboardOnClick()
     ) {
+        // 1. Background Pattern (Chấm bi)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val step = 20.dp.toPx()
+            for (x in 0..size.width.toInt() step step.toInt()) {
+                for (y in 0..size.height.toInt() step step.toInt()) {
+                    drawCircle(
+                        color = theme.pattern,
+                        radius = 1.dp.toPx(),
+                        center = Offset(x.toFloat(), y.toFloat())
+                    )
+                }
+            }
+        }
+
         LazyColumn(
             contentPadding = PaddingValues(
                 bottom = 100.dp,
                 top = 16.dp,
-                start = 16.dp,
-                end = 16.dp
+                start = 20.dp, // Padding rộng hơn chút cho style này
+                end = 20.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp), // Khoảng cách thưa hơn
             modifier = Modifier.fillMaxSize()
         ) {
             // --- HEADER ---
@@ -113,168 +139,218 @@ fun FakeCallScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "Back",
-                            tint = getPopTextColor()
-                        )
-                    }
+                    // Back Button (Vuông vức)
+                    GenZIconButton(
+                        icon = Icons.Rounded.ArrowBack,
+                        theme = theme,
+                        onClick = { navController.popBackStack() }
+                    )
+
                     Spacer(modifier = Modifier.width(16.dp))
+
                     Text(
-                        text = "Fake Call 🎭",
+                        text = "FAKE CALL",
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Black,
-                            brush = Brush.linearGradient(
-                                colors = listOf(PopPurple, PopPink)
-                            )
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = (-1).sp
                         ),
+                        color = theme.text,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(
+
+                    // History Button
+                    GenZIconButton(
+                        iconRes = R.drawable.ic_history,
+                        theme = theme,
                         onClick = { navController.navigate(Screen.CallHistory.route) },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_history),
-                            contentDescription = "Lịch sử cuộc gọi",
-                            tint = getPopTextColor()
-                        )
-                    }
+                        backgroundColor = GenZBlue // Điểm nhấn màu xanh
+                    )
                 }
             }
-
-            // Fake Call không cần quyền camera - chỉ video call mới cần
-            // Camera permission warning đã được xóa
 
             // --- INPUT SECTION ---
             item {
                 InputSection(
                     uiState = uiState,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    theme = theme
                 )
             }
 
+            // --- SETTINGS SECTION ---
             item {
-                SettingsSection(viewModel = viewModel)
+                SettingsSection(viewModel = viewModel, theme = theme)
             }
         }
     }
 }
 
+// --- COMPONENTS STYLE NEO-BRUTALISM ---
+
 @Composable
-fun FunGradientButton(
-    text: String,
+fun GenZIconButton(
     icon: ImageVector? = null,
+    iconRes: Int? = null,
+    theme: GenZThemeColors,
     onClick: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    backgroundColor: Color = theme.surface
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "buttonScale"
-    )
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val offset by animateDpAsState(targetValue = if (isPressed) 0.dp else 4.dp)
 
     Box(
-        modifier = modifier
-            .scale(scale)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        if (enabled) {
-                            isPressed = true
-                            tryAwaitRelease()
-                            isPressed = false
-                            onClick()
-                        }
-                    }
-                )
-            }
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (enabled) Brush.horizontalGradient(colors = listOf(PopPink, PopPurple))
-                else Brush.horizontalGradient(colors = listOf(getLabelColor(), getLabelColor()))
-            )
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
+        modifier = Modifier
+            .size(48.dp)
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Shadow
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = 4.dp, y = 4.dp)
+                .background(theme.shadow, RoundedCornerShape(8.dp))
+        )
+        // Content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = offset, y = offset)
+                .background(backgroundColor, RoundedCornerShape(8.dp))
+                .border(2.dp, theme.border, RoundedCornerShape(8.dp)),
+            contentAlignment = Alignment.Center
+        ) {
             if (icon != null) {
-                Icon(icon, null, tint = Color.White, modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(8.dp))
+                Icon(icon, null, tint = theme.text, modifier = Modifier.size(24.dp))
+            } else if (iconRes != null) {
+                Icon(painterResource(iconRes), null, tint = theme.text, modifier = Modifier.size(24.dp))
             }
-            Text(
-                text = text.uppercase(),
-                color = Color.White.copy(alpha = if (enabled) 1f else 0.6f),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                letterSpacing = 1.sp
-            )
         }
     }
 }
 
 @Composable
-fun NeoCard(
-    modifier: Modifier = Modifier,
+fun GenZContainer(
+    title: String,
+    theme: GenZThemeColors,
+    accentColor: Color = GenZYellow,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = getCardBackgroundColor()),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            content = content
-        )
+    Column {
+        // Label Tag trên đầu
+        Box(
+            modifier = Modifier
+                .background(theme.text, RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                color = theme.background // Text màu nền (đảo ngược)
+            )
+        }
+
+        // Main Box
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Shadow
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .matchParentSize() // Shadow full size
+                    .offset(x = 6.dp, y = 6.dp)
+                    .background(theme.shadow, RoundedCornerShape(0.dp, 12.dp, 12.dp, 12.dp))
+            )
+            // Content
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(theme.surface, RoundedCornerShape(0.dp, 12.dp, 12.dp, 12.dp))
+                    .border(2.dp, theme.border, RoundedCornerShape(0.dp, 12.dp, 12.dp, 12.dp))
+                    .padding(20.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    content = content
+                )
+            }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PopTextField(
+fun GenZTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     icon: ImageVector,
+    theme: GenZThemeColors,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = { Text(label, color = getLabelColor()) },
-        leadingIcon = {
-            Icon(icon, null, tint = PopPurple)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, getLabelColor().copy(alpha = 0.5f), RoundedCornerShape(16.dp)),
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedContainerColor = getCardBackgroundColor(),
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            focusedTextColor = getPopTextColor(),
-            unfocusedTextColor = getPopTextColor()
-        ),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = theme.text
+        )
+
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = theme.text,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(theme.surface)
+                        .border(2.dp, theme.border, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = theme.text,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = "Nhập vào đây...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = theme.text.copy(alpha = 0.4f),
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
+            }
+        )
+    }
 }
 
 @SuppressLint("DefaultLocale")
 @Composable
 fun InputSection(
     uiState: Any,
-    viewModel: FakeCallViewModel
+    viewModel: FakeCallViewModel,
+    theme: GenZThemeColors
 ) {
     var callerName by rememberSaveable { mutableStateOf("") }
     var callerNumber by rememberSaveable { mutableStateOf("") }
@@ -296,96 +372,96 @@ fun InputSection(
         return calendar.time
     }
 
-    NeoCard {
-        Text(
-            text = "SETUP CUỘC GỌI",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = getLabelColor()
-        )
-
-        PopTextField(
+    GenZContainer(
+        title = "THÔNG TIN NGƯỜI GỌI",
+        theme = theme
+    ) {
+        GenZTextField(
             value = callerName,
             onValueChange = { callerName = it },
-            label = "Ai sẽ gọi? (VD: Sếp, Crush...)",
-            icon = Icons.Rounded.Person
+            label = "Ai gọi thế?",
+            icon = Icons.Rounded.Person,
+            theme = theme
         )
 
-        PopTextField(
+        GenZTextField(
             value = callerNumber,
             onValueChange = { callerNumber = it },
-            label = "Số điện thoại (Tùy chọn)",
+            label = "Số điện thoại",
             icon = Icons.Rounded.Phone,
+            theme = theme,
             keyboardType = KeyboardType.Phone
         )
 
-        HorizontalDivider(color = getLabelColor().copy(alpha = 0.3f))
+        Spacer(modifier = Modifier.height(8.dp))
 
+        // --- TIME SELECTION ---
         Text(
-            text = "BAO LÂU NỮA?",
-            style = MaterialTheme.typography.titleSmall,
+            text = "BAO LÂU NỮA THÌ GỌI?",
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = getLabelColor()
+            color = theme.text
         )
 
-        // Quick Chips Style mới (Pill colorful)
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             items(quickTimeOptions) { (label, seconds) ->
                 val isSelected = selectedQuickOption == label
+
+                // Gen Z Chip
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(50))
                         .clickable {
                             selectedQuickOption = label
                             selectedDelaySeconds = seconds
                             customTimeInput = ""
                         }
                         .background(
-                            if (isSelected) Brush.linearGradient(listOf(PopPurple, PopPink))
-                            else Brush.linearGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            )
+                            if (isSelected) GenZYellow else theme.surface,
+                            RoundedCornerShape(8.dp)
                         )
+                        .border(2.dp, theme.border, RoundedCornerShape(8.dp))
                         .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = label,
-                        color = if (isSelected) Color.White else getPopTextColor(),
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 13.sp
+                        color = theme.text,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp
                     )
                 }
             }
         }
 
-        // Custom Time Input
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PopTextField(
-                value = customTimeInput,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() }) {
-                        customTimeInput = newValue
-                        selectedQuickOption = null
-                        if (newValue.isNotBlank()) selectedDelaySeconds =
-                            newValue.toIntOrNull() ?: 0
-                    }
-                },
-                label = "Số giây tùy chỉnh...",
-                icon = Icons.Rounded.Edit,
-                keyboardType = KeyboardType.Number
-            )
-        }
+        // Custom Time
+        GenZTextField(
+            value = customTimeInput,
+            onValueChange = { newValue ->
+                if (newValue.all { it.isDigit() }) {
+                    customTimeInput = newValue
+                    selectedQuickOption = null
+                    if (newValue.isNotBlank()) selectedDelaySeconds = newValue.toIntOrNull() ?: 0
+                }
+            },
+            label = "Hoặc nhập số giây",
+            icon = Icons.Rounded.Edit,
+            theme = theme,
+            keyboardType = KeyboardType.Number
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // BIG ACTION BUTTON
         val isEnabled = callerName.isNotBlank() && selectedDelaySeconds > 0
-        FunGradientButton(
-            text = if (isEnabled) "Lên Lịch Ngay 🚀" else "Nhập thông tin",
+
+        GenZButton(
+            text = if (isEnabled) "LÊN LỊCH NGAY \uD83D\uDE80" else "NHẬP ĐỦ ĐI BẠN ƠI",
+            theme = theme,
+            color = if (isEnabled) GenZGreen else theme.surface,
+            enabled = isEnabled,
             onClick = {
                 if (isEnabled) {
                     viewModel.scheduleCall(
@@ -393,207 +469,150 @@ fun InputSection(
                         callerNumber,
                         createDateWithDelay(selectedDelaySeconds)
                     )
+                    // Reset Logic
                     callerName = ""
                     callerNumber = ""
                     selectedDelaySeconds = 5
                     customTimeInput = ""
                     selectedQuickOption = "Ngay lập tức"
                 }
-            },
-            enabled = isEnabled,
-            modifier = Modifier.fillMaxWidth()
+            }
         )
     }
 }
 
 @Composable
-fun SettingsSection(viewModel: FakeCallViewModel) {
+fun SettingsSection(viewModel: FakeCallViewModel, theme: GenZThemeColors) {
     val uiState by viewModel.uiState.collectAsState()
 
-    NeoCard {
-        Text(
-            text = "TÙY CHỈNH",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = getLabelColor()
-        )
-
+    GenZContainer(
+        title = "TÙY CHỈNH NÂNG CAO",
+        theme = theme
+    ) {
         // Row Rung
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(PopYellow.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Phone, null, tint = Color(0xFFFFA000))
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("Rung khi gọi", fontWeight = FontWeight.Bold)
-            }
-            Switch(
-                checked = uiState.vibrationEnabled,
-                onCheckedChange = { viewModel.setVibrationEnabled(it) },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = PopPink,
-                    checkedTrackColor = PopPink.copy(alpha = 0.2f)
-                )
-            )
-        }
+        GenZSwitchRow(
+            label = "Rung khi gọi",
+            icon = Icons.Default.Phone,
+            checked = uiState.vibrationEnabled,
+            onCheckedChange = { viewModel.setVibrationEnabled(it) },
+            theme = theme,
+            accentColor = GenZPink
+        )
 
         // Row Flash
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(PopCyan.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Star, null, tint = Color(0xFF00B0FF))
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("Đèn Flash", fontWeight = FontWeight.Bold)
-            }
-            Switch(
-                checked = uiState.flashEnabled,
-                onCheckedChange = { viewModel.setFlashEnabled(it) },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = PopCyan,
-                    checkedTrackColor = PopCyan.copy(alpha = 0.2f)
-                )
-            )
-        }
+        GenZSwitchRow(
+            label = "Nháy đèn Flash",
+            icon = Icons.Default.Star,
+            checked = uiState.flashEnabled,
+            onCheckedChange = { viewModel.setFlashEnabled(it) },
+            theme = theme,
+            accentColor = GenZBlue
+        )
     }
 }
 
 @Composable
-fun ScheduledCallItem(call: FakeCall, onCancel: () -> Unit) {
-    val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val timeUntilCall = call.scheduledTime.time - System.currentTimeMillis()
-    val secondsUntil = (timeUntilCall / 1000).toInt()
-
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = getCardBackgroundColor()),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+fun GenZSwitchRow(
+    label: String,
+    icon: ImageVector,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    theme: GenZThemeColors,
+    accentColor: Color
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize()
+            .border(2.dp, theme.border, RoundedCornerShape(8.dp))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Avatar Gradient
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(PopPurple, PopCyan))),
+                    .size(36.dp)
+                    .background(accentColor, RoundedCornerShape(6.dp))
+                    .border(2.dp, theme.border, RoundedCornerShape(6.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = call.callerName.take(1).uppercase(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp
-                )
+                Icon(icon, null, tint = Color.Black, modifier = Modifier.size(20.dp))
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = call.callerName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = getPopTextColor()
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(
-                                if (secondsUntil > 0) Color.Green else Color.Red,
-                                CircleShape
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (secondsUntil > 0) "Đổ chuông lúc ${dateFormat.format(call.scheduledTime)}" else "Đã quá hạn",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = getLabelColor()
-                    )
-                }
-            }
-
-            IconButton(onClick = onCancel) {
-                Icon(Icons.Default.Close, null, tint = Color.Red.copy(alpha = 0.5f))
-            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = label,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
+                color = theme.text
+            )
         }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = theme.surface,
+                checkedTrackColor = theme.text,
+                checkedBorderColor = theme.border,
+                uncheckedThumbColor = theme.text,
+                uncheckedTrackColor = theme.surface,
+                uncheckedBorderColor = theme.border
+            )
+        )
     }
 }
 
-// Giữ lại EmptyStateCard và PermissionWarningCard nhưng style lại chút cho khớp
 @Composable
-fun EmptyStateCard() {
-    Column(
+fun GenZButton(
+    text: String,
+    theme: GenZThemeColors,
+    color: Color,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Nút xẹp xuống khi ấn
+    val offset by animateDpAsState(targetValue = if (isPressed || !enabled) 0.dp else 6.dp)
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .height(60.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            )
     ) {
-        Icon(
-            imageVector = Icons.Rounded.Notifications,
-            contentDescription = null,
+        // Shadow (chỉ hiện khi enabled)
+        if (enabled) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(x = 6.dp, y = 6.dp)
+                    .background(theme.shadow, RoundedCornerShape(12.dp))
+            )
+        }
+
+        // Button Surface
+        Box(
             modifier = Modifier
-                .size(80.dp)
-                .background(getCardBackgroundColor().copy(alpha = 0.5f), CircleShape)
-                .padding(16.dp),
-            tint = PopPurple.copy(alpha = 0.5f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Chưa có lịch nào!",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = getLabelColor()
-        )
-        Text("Trốn họp ngay thôi 🏃💨", color = getLabelColor().copy(alpha = 0.6f))
-    }
-}
-
-@Composable
-fun PermissionWarningCard(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .offset(x = offset, y = offset)
+                .background(if (enabled) color else theme.surface.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                .border(2.dp, theme.border, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Rounded.Warning, null, tint = Color.Red)
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text("Cần quyền Camera", fontWeight = FontWeight.Bold, color = Color.Red)
-                Text("Để Video Call hoạt động", fontSize = 12.sp, color = Color.Red.copy(0.7f))
-            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Monospace,
+                color = if (enabled) Color.Black else theme.text.copy(alpha = 0.5f)
+            )
         }
     }
 }

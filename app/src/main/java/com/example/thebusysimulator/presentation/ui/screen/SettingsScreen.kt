@@ -12,8 +12,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import com.example.thebusysimulator.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -92,7 +92,7 @@ fun SettingsScreenContent(navController: NavController) {
     ) {
         // --- HEADER ---
         Text(
-            text = "SETTINGS", // Đổi sang tiếng Anh viết hoa cho chuẩn style
+            text = "SETTINGS",
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Black,
             fontFamily = FontFamily.Monospace,
@@ -100,11 +100,8 @@ fun SettingsScreenContent(navController: NavController) {
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // --- THEME SECTION ---
-        // Thay Card bằng GenZOptionBox
         GenZOptionBox(
             onClick = {
-                // Click vào cả box cũng đổi theme
                 scope.launch {
                     val newMode = if (isDarkTheme) ThemeMode.LIGHT.value else ThemeMode.DARK.value
                     settingsDataSource.setThemeMode(newMode)
@@ -126,7 +123,7 @@ fun SettingsScreenContent(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (isDarkTheme) "Dark Mode (Hacker)" else "Light Mode (Paper)",
+                        text = if (isDarkTheme) "Dark Mode" else "Light Mode",
                         style = MaterialTheme.typography.bodySmall,
                         color = GenZTheme.colors.text.copy(alpha = 0.7f)
                     )
@@ -174,11 +171,11 @@ fun SettingsScreenContent(navController: NavController) {
                     modifier = Modifier
                         .size(32.dp)
                         .background(GenZTheme.colors.neonPink, CircleShape)
-                        .border(2.dp, GenZTheme.colors.border, CircleShape),
+                        .border(1.dp, GenZTheme.colors.border, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.KeyboardArrowRight,
+                        painter= painterResource(R.drawable.ic_forward),
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = Modifier.size(20.dp)
@@ -209,8 +206,6 @@ fun GenZOptionBox(
         targetValue = if (isPressed) 0.dp else 4.dp,
         label = "boxOffset"
     )
-
-    // LẤY MÀU RA NGOÀI ĐỂ TRÁNH LỖI (Best Practice)
     val shadowColor = GenZTheme.colors.shadow
     val surfaceColor = MaterialTheme.colorScheme.surface
     val borderColor = GenZTheme.colors.border
@@ -231,7 +226,7 @@ fun GenZOptionBox(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(x = 4.dp, y = 4.dp)
-                .background(shadowColor, RoundedCornerShape(12.dp)) // Dùng biến đã lấy
+                .background(shadowColor, RoundedCornerShape(12.dp))
         )
 
         // Content Layer
@@ -239,7 +234,6 @@ fun GenZOptionBox(
             modifier = Modifier
                 .fillMaxSize()
                 .offset(x = offsetAnim, y = offsetAnim)
-                // SỬA LỖI BACKGROUND: Ghi rõ tên tham số color = và shape =
                 .background(color = surfaceColor, shape = RoundedCornerShape(12.dp))
                 .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
                 .padding(16.dp)
@@ -249,17 +243,12 @@ fun GenZOptionBox(
     }
 }
 
-/**
- * CUSTOM SWITCH THEO STYLE GEN Z
- * - Thêm viền đen cho track
- * - Màu sắc rực rỡ hơn (Neon)
- */
 @Composable
 fun GenZThemeSwitch(
     isDarkTheme: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
-    width: Dp = 64.dp, // To hơn chút cho dễ bấm
+    width: Dp = 64.dp,
     height: Dp = 36.dp
 ) {
     // Animation Thumb
@@ -307,7 +296,7 @@ fun GenZThemeSwitch(
         drawRoundRect(
             color = borderColor, 
             cornerRadius = CornerRadius(cornerRadius, cornerRadius),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
         )
 
         // 3. Vẽ Sao (Dark Mode)
@@ -341,15 +330,8 @@ fun GenZThemeSwitch(
                 rotationDegrees = 0f
             )
         }
-
-        // 5. Viền cho Thumb (Để nút nổi bật hơn)
-        // Lưu ý: Mặt trăng phức tạp nên ta chỉ viền hình tròn bao quanh logic thôi
-        // Hoặc đơn giản là không cần viền thumb nếu màu đã đủ tương phản
     }
 }
-
-// --- GIỮ NGUYÊN CÁC HÀM VẼ HÌNH HỌC (HELPER FUNCTIONS) ---
-// (Đã optimize lại một chút cho gọn)
 
 fun DrawScope.drawCrescentMoon(center: Offset, radius: Float, color: Color) {
     val path = Path().apply {

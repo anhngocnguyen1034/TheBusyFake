@@ -102,6 +102,17 @@ fun NavGraph(
                 repository = com.example.thebusysimulator.presentation.di.AppContainer.fakeNotificationRepository
             )
         }
+        
+        composable(Screen.CreateMessage.route) {
+            messageViewModel?.let { viewModel ->
+                CreateMessageScreen(
+                    navController = navController,
+                    onConfirm = { name, uri, isVerified ->
+                        viewModel.addMessage(name, uri, isVerified)
+                    }
+                )
+            }
+        }
     }
 }
 

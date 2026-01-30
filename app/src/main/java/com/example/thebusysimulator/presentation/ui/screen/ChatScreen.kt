@@ -161,12 +161,53 @@ fun ChatScreen(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
-                        modifier = Modifier.size(40.dp).clip(CircleShape).background(
-                            Brush.linearGradient(listOf(colorScheme.primary, colorScheme.secondary))
-                        ),
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .then(
+                                if (avatarUri == null) {
+                                    Modifier.background(
+                                        Brush.linearGradient(listOf(colorScheme.primary, colorScheme.secondary))
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(contactName.take(1).uppercase(), color = Color.White, fontWeight = FontWeight.Bold)
+                        if (avatarUri != null) {
+                            val imageUri = remember(avatarUri) {
+                                com.example.thebusysimulator.presentation.util.ImageHelper.getImageUri(
+                                    context,
+                                    avatarUri
+                                )
+                            }
+                            
+                            if (imageUri != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        ImageRequest.Builder(context)
+                                            .data(imageUri)
+                                            .build()
+                                    ),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = contactName.take(1).uppercase(),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = contactName.take(1).uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Row(
@@ -581,22 +622,18 @@ fun ChatBubble(
                         contentAlignment = Alignment.Center
                     ) {
                         if (avatarUri != null) {
-                            val imageData = try {
-                                if (avatarUri.startsWith("/")) {
-                                    val file = java.io.File(avatarUri)
-                                    if (file.exists()) file else null
-                                } else {
-                                    Uri.parse(avatarUri)
-                                }
-                            } catch (e: Exception) {
-                                null
+                            val imageUri = remember(avatarUri) {
+                                com.example.thebusysimulator.presentation.util.ImageHelper.getImageUri(
+                                    context,
+                                    avatarUri
+                                )
                             }
                             
-                            if (imageData != null) {
+                            if (imageUri != null) {
                                 Image(
                                     painter = rememberAsyncImagePainter(
                                         ImageRequest.Builder(context)
-                                            .data(imageData)
+                                            .data(imageUri)
                                             .build()
                                     ),
                                     contentDescription = "Avatar",
@@ -790,22 +827,18 @@ fun ContactHeader(
             contentAlignment = Alignment.Center
         ) {
             if (avatarUri != null) {
-                val imageData = try {
-                    if (avatarUri.startsWith("/")) {
-                        val file = java.io.File(avatarUri)
-                        if (file.exists()) file else null
-                    } else {
-                        Uri.parse(avatarUri)
-                    }
-                } catch (e: Exception) {
-                    null
+                val imageUri = remember(avatarUri) {
+                    com.example.thebusysimulator.presentation.util.ImageHelper.getImageUri(
+                        context,
+                        avatarUri
+                    )
                 }
                 
-                if (imageData != null) {
+                if (imageUri != null) {
                     Image(
                         painter = rememberAsyncImagePainter(
                             ImageRequest.Builder(context)
-                                .data(imageData)
+                                .data(imageUri)
                                 .build()
                         ),
                         contentDescription = "Avatar",
