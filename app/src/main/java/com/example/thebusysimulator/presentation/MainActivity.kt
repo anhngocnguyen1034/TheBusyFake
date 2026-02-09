@@ -2,6 +2,7 @@ package com.example.thebusysimulator.presentation
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,6 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import com.example.thebusysimulator.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.rememberNavController
@@ -31,16 +34,16 @@ class MainActivity : ComponentActivity() {
         const val REQUEST_CAMERA_PERMISSION = 1002
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        val languageCode = runBlocking {
+            LanguageDataSource(newBase).languageCode.first()
+        }
+        super.attachBaseContext(LanguageManager.setLanguage(newBase, languageCode))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppContainer.init(this)
-
-        // Apply saved language
-        val languageDataSource = LanguageDataSource(this)
-        runBlocking {
-            val languageCode = languageDataSource.languageCode.first()
-            LanguageManager.setLanguage(this@MainActivity, languageCode)
-        }
 
         enableEdgeToEdge()
         setContent {
@@ -167,15 +170,14 @@ fun PermissionDeniedDialog(
         onDismissRequest = onDismiss,
         title = {
             androidx.compose.material3.Text(
-                text = "Cần quyền Camera",
+                text = stringResource(R.string.camera_permission_required_title),
                 style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
         },
         text = {
             androidx.compose.material3.Text(
-                text = "Ứng dụng cần quyền truy cập Camera để thực hiện cuộc gọi video giả. " +
-                        "Vui lòng mở Cài đặt và cấp quyền Camera cho ứng dụng.",
+                text = stringResource(R.string.camera_permission_body),
                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
             )
         },
@@ -183,14 +185,14 @@ fun PermissionDeniedDialog(
             androidx.compose.material3.Button(
                 onClick = onOpenSettings
             ) {
-                androidx.compose.material3.Text("Mở Cài đặt")
+                androidx.compose.material3.Text(stringResource(R.string.open_settings))
             }
         },
         dismissButton = {
             androidx.compose.material3.TextButton(
                 onClick = onDismiss
             ) {
-                androidx.compose.material3.Text("Để sau")
+                androidx.compose.material3.Text(stringResource(R.string.later))
             }
         }
     )

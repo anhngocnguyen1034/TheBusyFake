@@ -1,33 +1,52 @@
 <resources>
     <string name="app_name">The Busy Simulator</string>
 
+    <!-- Home -->
     <string name="home_title">The Busy Simulator</string>
-    <string name="fake_call">Fake Call</string>
-    <string name="fake_call_description">Create fake calls with custom phone number and caller name</string>
-    <string name="fake_chat_message">Fake Chat Message</string>
-    <string name="fake_chat_message_description">Create fake chat messages with custom content and time</string>
-    <string name="fake_notification">Fake Notification</string>
-    <string name="fake_notification_description">Create fake message notifications displayed on lock screen</string>
     <string name="home">Home</string>
     <string name="settings">Settings</string>
+    <string name="busy_simulator">BUSY\nSIMULATOR</string>
+    <string name="fake_it_till_you_make_it">Fake it till you make it 😎</string>
+    <string name="fake_call">Fake Call</string>
+    <string name="fake_call_description">Create fake calls with custom phone number and caller name</string>
+    <string name="fake_chat">FAKE CHAT</string>
+    <string name="fake_call_card_description">Create fake calls with custom number and name</string>
+    <string name="fake_chat_card_description">Fake chat messages with custom content</string>
+    <string name="notifications_card_description">Fake notifications on lock screen</string>
+    <string name="fake_chat_message">Fake Chat Message</string>
+    <string name="fake_chat_message_description">Create fake chat messages with custom content and time</string>
+    <string name="notifications">NOTIFICATIONS</string>
+    <string name="fake_notification">Fake Notification</string>
+    <string name="fake_notification_description">Create fake message notifications displayed on lock screen</string>
 
-    <string name="fake_call_title">Fake Call 🎭</string>
+    <!-- Fake Call -->
+    <string name="fake_call_title">FAKE CALL</string>
     <string name="back">Back</string>
     <string name="setup_call">Setup Call</string>
     <string name="who_will_call_you">Who will call you?</string>
+    <string name="who_is_calling">Who is calling?</string>
     <string name="phone_number_optional">Phone number (optional)</string>
+    <string name="phone_number">Phone number</string>
     <string name="how_long_until_call">How long until call?</string>
+    <string name="how_long_until_call_uppercase">HOW LONG UNTIL CALL?</string>
     <string name="immediately">Immediately</string>
     <string name="one_minute">1 minute</string>
     <string name="five_minutes">5 minutes</string>
     <string name="thirty_minutes">30 minutes</string>
     <string name="seconds_placeholder">Seconds…</string>
+    <string name="or_enter_seconds">Or enter seconds</string>
     <string name="schedule_now">Schedule Now</string>
+    <string name="schedule_now_uppercase">SCHEDULE NOW 🚀</string>
     <string name="enter_name_and_time">Enter name and time</string>
+    <string name="fill_in_all_fields">FILL IN ALL FIELDS</string>
+    <string name="enter_here">Enter here…</string>
+    <string name="caller_info">CALLER INFO</string>
+    <string name="advanced_options">ADVANCED OPTIONS</string>
+    <string name="vibrate_on_call">Vibrate on call</string>
+    <string name="flash_on_call">Flash on call</string>
     <string name="call_settings">Call Settings</string>
     <string name="vibration_on_call">Vibrate on call</string>
     <string name="vibration_on_call_description">Vibrate when receiving a call</string>
-    <string name="flash_on_call">Flash on call</string>
     <string name="flash_on_call_description">Flash LED when receiving a call</string>
     <string name="no_calls_yet">No calls yet</string>
     <string name="add_schedule_to_escape">Schedule now to escape the meeting!</string>
@@ -36,53 +55,126 @@
     <string name="cancel">Cancel</string>
     <string name="camera_permission_required">Camera permission required</string>
     <string name="camera_permission_description">To enable Video Call feature</string>
+    <string name="camera_permission_required_title">Camera permission required</string>
+    <string name="camera_permission_body">The app needs camera access for fake video calls. Please open Settings and grant Camera permission.</string>
     <string name="grant_permission">GRANT PERMISSION</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="later">Later</string>
 
+    <!-- Fake Notification / Fake Message -->
     <string name="fake_message_title">Fake Message</string>
+    <string name="fake_notification_uppercase">FAKE NOTIFICATION</string>
+    <string name="notification_history">Notification history</string>
     <string name="setup_message">Setup Message</string>
+    <string name="setup_message_uppercase">SETUP MESSAGE</string>
     <string name="who_will_message_you">Who will message you?</string>
+    <string name="who_will_message_placeholder">Who will message? (e.g. Boss, Crush…)</string>
     <string name="message_content">Message content</string>
+    <string name="message_content_placeholder">Message content</string>
     <string name="how_long_until_send">How long until sent?</string>
+    <string name="how_long_uppercase">HOW LONG?</string>
     <string name="send_now">Send now</string>
     <string name="schedule">Schedule</string>
     <string name="enter_all_fields">Please fill all fields</string>
+    <string name="custom_seconds_placeholder">Custom seconds…</string>
+    <string name="send_now_uppercase">SEND NOW 🚀</string>
+    <string name="schedule_send">SCHEDULE SEND</string>
+    <string name="enter_info">ENTER INFO</string>
     <string name="scheduled_messages">Scheduled messages</string>
     <string name="send_at">Sending at %1$s</string>
     <string name="no_messages_yet">No messages yet</string>
     <string name="create_fake_message_to_escape">Create a fake message now to escape!</string>
+    <string name="notification_permission_required">Notification permission required</string>
+    <string name="notification_permission_body">To show fake messages, the app needs notification permission.</string>
+    <string name="schedule_permission_required">Schedule permission required</string>
+    <string name="schedule_permission_body">To schedule exactly, the app needs Alarm permission.</string>
 
+    <!-- Messages / Chat -->
+    <string name="preset_contact_mom">Mom</string>
+    <string name="preset_contact_lover">Partner</string>
+    <string name="preset_contact_doctor">Doctor</string>
+    <string name="preset_contact_scientist">Scientist</string>
     <string name="messages">Messages</string>
     <string name="add_message">Add Message</string>
     <string name="no_messages_yet_message">No messages yet</string>
-    <string name="tap_to_create_fake_message">Tap + to create a fake message</string>
+    <string name="tap_to_create_fake_message">Tap + to create a fake message from a celebrity or crush!</string>
     <string name="create_fake_message">Create Fake Message</string>
+    <string name="create_new_sender">CREATE NEW SENDER</string>
+    <string name="info">INFO</string>
     <string name="contact_name">Contact Name</string>
+    <string name="display_name_placeholder">Display name (e.g. Elon Musk)</string>
+    <string name="celebrity">CELEBRITY</string>
+    <string name="create_now">CREATE NOW 🚀</string>
+    <string name="enter_name">ENTER NAME</string>
     <string name="avatar">Avatar</string>
-    <string name="select_image">Select Image</string>
-    <string name="tap_to_select">Tap to select</string>
+    <string name="select_image">Select image</string>
+    <string name="verified">Verified</string>
     <string name="create">Create</string>
     <string name="cancel_button">Cancel</string>
-
     <string name="video_call">Video Call</string>
     <string name="typing_message">Type a message…</string>
     <string name="send">Send</string>
     <string name="select_image_chat">Select Image</string>
     <string name="replying_to">Replying to %1$s</string>
+    <string name="replying_to_self">Replying to yourself</string>
     <string name="yourself">yourself</string>
     <string name="cancel_reply">Cancel Reply</string>
     <string name="reply">Reply</string>
     <string name="delete_message">Delete message</string>
     <string name="you">You</string>
-    <string name="other_person">Other Person</string>
+    <string name="other_person">Other</string>
     <string name="image">📷 Image</string>
+    <string name="image_bracket">📷 [Image]</string>
     <string name="message_deleted">Message deleted</string>
     <string name="chat_image">Chat Image</string>
+    <string name="send_message">Send</string>
+    <string name="receive_message">Receive</string>
+    <string name="reply_message">Reply</string>
+    <string name="delete_message_action">Delete message</string>
+    <string name="view_profile">View profile</string>
+    <string name="image_label">Image</string>
 
+    <!-- Date / Time -->
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <!-- Notification History -->
+    <string name="fake_notification_log">FAKE NOTIFICATION LOG</string>
+    <string name="delete_all">DELETE ALL</string>
+    <string name="delete_all_history_title">Delete all history?</string>
+    <string name="delete_all_history_message">Are you sure you want to delete all notification history? This cannot be undone.</string>
+    <string name="delete_all_button">Delete all</string>
+    <string name="scheduled">SCHEDULED</string>
+    <string name="no_notification_history">No notification history</string>
+    <string name="no_notification_history_hint">Fake notifications you send will appear here.</string>
+
+    <!-- Call History -->
+    <string name="call_history">Call history</string>
+    <string name="no_call_history">No call history yet</string>
+    <string name="no_call_history_hint">Completed calls will appear here.</string>
+
+    <!-- Profile -->
+    <string name="profile">Profile</string>
+    <string name="fake_messages">Fake messages</string>
+    <string name="create_fake_notification">Create fake message notification</string>
+    <string name="more_features_coming">More features coming soon.</string>
+
+    <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_uppercase">SETTINGS</string>
+    <string name="appearance">APPEARANCE</string>
+    <string name="language">LANGUAGE</string>
     <string name="dark_mode">Dark Mode</string>
+    <string name="light_mode">Light Mode</string>
     <string name="dark_mode_enabled">Dark mode enabled</string>
     <string name="dark_mode_disabled">Dark mode disabled</string>
+    <string name="english">English</string>
 
+    <!-- Language -->
+    <string name="select_language">Select Language</string>
+    <string name="confirm">Confirm</string>
+
+    <!-- Incoming call / Video call -->
     <string name="incoming_call">Incoming call</string>
     <string name="decline">Decline</string>
     <string name="answer">Answer</string>
@@ -90,8 +182,20 @@
     <string name="call_ended">Call ended</string>
     <string name="swipe_up_to_answer">Swipe up to answer</string>
     <string name="swipe_down_to_decline">Swipe down to decline</string>
+    <string name="video_call_ellipsis">Video Call…</string>
+    <string name="swipe_icon_to_respond">Swipe icon to respond</string>
+    <string name="camera_off">Camera is off</string>
+    <string name="camera_off_label">Camera\nOff</string>
+    <string name="mute">Mute</string>
+    <string name="keypad">Keypad</string>
+    <string name="speaker">Speaker</string>
+    <string name="add_call">Add Call</string>
+    <string name="facetime">FaceTime</string>
+    <string name="contacts">Contacts</string>
+    <string name="end">End</string>
 
+    <!-- Units -->
     <string name="seconds">s</string>
-    <string name="minutes">min</string>
+    <string name="minutes_unit">min</string>
     <string name="hours">h</string>
 </resources>

@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -65,9 +66,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import com.example.thebusysimulator.presentation.di.AppContainer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import com.example.thebusysimulator.R
-import kotlinx.coroutines.launch
 
 class FakeVideoCallActivity : ComponentActivity() {
     private var mediaPlayer: MediaPlayer? = null
@@ -360,7 +359,7 @@ fun IncomingVideoCallScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             painter = painterResource(R.drawable.ic_verify),
-                            contentDescription = "Verified",
+                            contentDescription = stringResource(R.string.verified),
                             tint = Color.White,
                             modifier = Modifier.size(28.dp)
                         )
@@ -368,7 +367,7 @@ fun IncomingVideoCallScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Video Call...",
+                    text = stringResource(R.string.video_call_ellipsis),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -394,13 +393,13 @@ fun IncomingVideoCallScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_call_end),
-                        contentDescription = "Decline",
+                        contentDescription = stringResource(R.string.decline),
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Từ chối", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                Text(stringResource(R.string.decline), color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
             }
 
             // Accept Button
@@ -412,13 +411,13 @@ fun IncomingVideoCallScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_call),
-                        contentDescription = "Accept",
+                        contentDescription = stringResource(R.string.answer),
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Trả lời", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                Text(stringResource(R.string.answer), color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
             }
         }
     }
@@ -491,7 +490,7 @@ fun InVideoCallScreen(
                 }
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
-                    text = "Camera đang tắt",
+                    text = stringResource(R.string.camera_off),
                     color = Color.White.copy(alpha = 0.5f),
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -588,7 +587,7 @@ fun InVideoCallScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Camera\nOff",
+                                text = stringResource(R.string.camera_off_label),
                                 color = Color.White.copy(alpha = 0.5f),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
@@ -642,7 +641,7 @@ fun InVideoCallScreen(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_call_end),
-                            contentDescription = "End",
+                            contentDescription = stringResource(R.string.end),
                             tint = Color.White
                         )
                     }

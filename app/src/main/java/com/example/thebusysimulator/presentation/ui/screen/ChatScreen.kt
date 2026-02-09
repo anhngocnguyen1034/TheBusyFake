@@ -54,11 +54,12 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.thebusysimulator.R
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.util.DateUtils
 import com.example.thebusysimulator.presentation.util.ImageHelper
-import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.sin
 
@@ -109,7 +110,8 @@ fun ChatScreen(
     val isVerified = message?.isVerified ?: false
     
     // Kiểm tra xem có phải preset message không (Mẹ, Người yêu, Bác sĩ, Nhà khoa học)
-    val isPresetMessage = contactName in listOf("Mẹ", "Người yêu", "Bác sĩ", "Nhà khoa học")
+    val displayName = getContactDisplayName(contactName)
+    val isPresetMessage = MessageViewModel.isPresetContact(contactName)
 
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
@@ -190,20 +192,20 @@ fun ChatScreen(
                                             .data(imageUri)
                                             .build()
                                     ),
-                                    contentDescription = "Avatar",
+                                    contentDescription = stringResource(R.string.avatar),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
                                 Text(
-                                    text = contactName.take(1).uppercase(),
+                                    text = displayName.take(1).uppercase(),
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         } else {
                             Text(
-                                text = contactName.take(1).uppercase(),
+                                text = displayName.take(1).uppercase(),
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
@@ -215,11 +217,11 @@ fun ChatScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(contactName, style = MaterialTheme.typography.titleMedium, color = colorScheme.onBackground)
+                        Text(displayName, style = MaterialTheme.typography.titleMedium, color = colorScheme.onBackground)
                         if (isVerified) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_verify),
-                                contentDescription = "Verified",
+                                contentDescription = stringResource(R.string.verified),
                                 tint = colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -228,7 +230,7 @@ fun ChatScreen(
 
                     IconButton(onClick = {
                         val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
-                            putExtra("caller_name", contactName)
+                            putExtra("caller_name", displayName)
                             putExtra("caller_number", "")
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         }
@@ -354,14 +356,14 @@ fun ChatScreen(
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Đang trả lời ${if(replyMsg.isFromMe) "chính mình" else contactName}",
+                                        text = stringResource(R.string.replying_to, if (replyMsg.isFromMe) stringResource(R.string.yourself) else displayName),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = colorScheme.primary,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = replyMsg.text.ifBlank { if (replyMsg.imageUri != null) "📷 [Hình ảnh]" else "" },
+                                        text = replyMsg.text.ifBlank { if (replyMsg.imageUri != null) stringResource(R.string.image_bracket) else "" },
                                         style = MaterialTheme.typography.bodySmall,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
@@ -427,7 +429,7 @@ fun ChatScreen(
                                     Box(modifier = Modifier.weight(1f)) {
                                         if (messageText.isEmpty()) {
                                             Text(
-                                                "Nhập tin nhắn...",
+                                                stringResource(R.string.typing_message),
                                                 style = TextStyle(
                                                     color = colorScheme.onBackground.copy(alpha = 0.5f),
                                                     fontSize = 16.sp
@@ -496,7 +498,7 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(Icons.Rounded.Send, null, tint = colorScheme.primary)
-                    Text("Gửi tin", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.send_message), style = MaterialTheme.typography.bodyLarge)
                 }
                 Divider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Row(
@@ -511,7 +513,7 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(Icons.Rounded.ArrowBack, null, tint = colorScheme.primary, modifier = Modifier.rotate(180f))
-                    Text("Nhận tin", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.receive_message), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
@@ -532,7 +534,7 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(Icons.Default.Edit, null, tint = colorScheme.primary)
-                    Text("Trả lời", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.reply_message), style = MaterialTheme.typography.bodyLarge)
                 }
                 Divider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Row(
@@ -544,7 +546,7 @@ fun ChatScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(Icons.Rounded.Delete, null, tint = colorScheme.error)
-                    Text("Xóa tin nhắn", style = MaterialTheme.typography.bodyLarge, color = colorScheme.error)
+                    Text(stringResource(R.string.delete_message_action), style = MaterialTheme.typography.bodyLarge, color = colorScheme.error)
                 }
             }
         }
@@ -636,7 +638,7 @@ fun ChatBubble(
                                             .data(imageUri)
                                             .build()
                                     ),
-                                    contentDescription = "Avatar",
+                                    contentDescription = stringResource(R.string.avatar),
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape),
@@ -644,7 +646,7 @@ fun ChatBubble(
                                 )
                             } else {
                                 Text(
-                                    text = contactName.take(1).uppercase(),
+                                    text = getContactDisplayName(contactName).take(1).uppercase(),
                                     color = Color.White,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
@@ -652,7 +654,7 @@ fun ChatBubble(
                             }
                         } else {
                             Text(
-                                text = contactName.take(1).uppercase(),
+                                text = getContactDisplayName(contactName).take(1).uppercase(),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
@@ -722,7 +724,7 @@ fun ChatBubble(
                                     .fillMaxWidth()
                             ) {
                                 Text(
-                                    text = if (original.isFromMe) "Bạn" else "Người khác", // Có thể thay bằng contactName nếu có
+                                    text = if (original.isFromMe) stringResource(R.string.you) else stringResource(R.string.other_person),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (message.isFromMe) Color.White.copy(alpha = 0.9f) else colorScheme.primary,
                                     fontWeight = FontWeight.Bold
@@ -730,8 +732,8 @@ fun ChatBubble(
                                 Text(
                                     text = when {
                                         original.text.isNotBlank() -> original.text
-                                        original.imageUri != null -> "📷 Hình ảnh"
-                                        else -> "Tin nhắn đã xóa"
+                                        original.imageUri != null -> stringResource(R.string.image)
+                                        else -> stringResource(R.string.message_deleted)
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (message.isFromMe) Color.White.copy(alpha = 0.7f) else colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
@@ -753,7 +755,7 @@ fun ChatBubble(
 
                             Image(
                                 painter = rememberAsyncImagePainter(ImageRequest.Builder(context).data(imageData).build()),
-                                contentDescription = "Chat Image",
+                                contentDescription = stringResource(R.string.chat_image),
                                 modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
                                 contentScale = ContentScale.Crop
                             )
@@ -800,6 +802,7 @@ fun ContactHeader(
     context: android.content.Context,
     onViewInfoClick: () -> Unit = {}
 ) {
+    val displayName = getContactDisplayName(contactName)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -841,7 +844,7 @@ fun ContactHeader(
                                 .data(imageUri)
                                 .build()
                         ),
-                        contentDescription = "Avatar",
+                        contentDescription = stringResource(R.string.avatar),
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(CircleShape),
@@ -849,7 +852,7 @@ fun ContactHeader(
                     )
                 } else {
                     Text(
-                        text = contactName.take(1).uppercase(),
+                        text = displayName.take(1).uppercase(),
                         color = Color.White,
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Bold
@@ -857,7 +860,7 @@ fun ContactHeader(
                 }
             } else {
                 Text(
-                    text = contactName.take(1).uppercase(),
+                    text = displayName.take(1).uppercase(),
                     color = Color.White,
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold
@@ -871,7 +874,7 @@ fun ContactHeader(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = contactName,
+                text = displayName,
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onBackground,
                 fontWeight = FontWeight.Bold
@@ -879,7 +882,7 @@ fun ContactHeader(
             if (isVerified) {
                 Icon(
                     painter = painterResource(R.drawable.ic_verify),
-                    contentDescription = "Verified",
+                    contentDescription = stringResource(R.string.verified),
                     tint = colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -896,7 +899,7 @@ fun ContactHeader(
             modifier = Modifier.padding(top = 4.dp)
         ) {
             Text(
-                text = "Xem trang cá nhân",
+                text = stringResource(R.string.view_profile),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
@@ -908,6 +911,8 @@ fun ContactHeader(
 @Composable
 fun DateHeader(date: java.util.Date) {
     val colorScheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -915,7 +920,7 @@ fun DateHeader(date: java.util.Date) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = DateUtils.getDateHeaderLabel(date),
+            text = DateUtils.getDateHeaderLabel(context, date),
             style = MaterialTheme.typography.bodySmall,
             color = colorScheme.onBackground.copy(alpha = 0.6f),
             modifier = Modifier

@@ -1,0 +1,185 @@
+<resources>
+    <string name="app_name">The Busy Simulator</string>
+
+    <string name="home_title">The Busy Simulator</string>
+    <string name="home">الرئيسية</string>
+    <string name="settings">الإعدادات</string>
+    <string name="busy_simulator">محاكي\nالانشغال</string>
+    <string name="fake_it_till_you_make_it">تظاهر بالأمر حتى تتقنه 😎</string>
+    <string name="fake_call">مكالمة وهمية</string>
+    <string name="fake_call_description">إنشاء مكالمات وهمية برقم هاتف واسم متصل مخصص</string>
+    <string name="fake_chat">دردشة وهمية</string>
+    <string name="fake_call_card_description">إنشاء مكالمات وهمية برقم واسم مخصصين</string>
+    <string name="fake_chat_card_description">رسائل دردشة وهمية بمحتوى مخصص</string>
+    <string name="notifications_card_description">تنبيهات وهمية على شاشة القفل</string>
+    <string name="fake_chat_message">رسالة دردشة وهمية</string>
+    <string name="fake_chat_message_description">إنشاء رسائل دردشة وهمية بمحتوى ووقت مخصصين</string>
+    <string name="notifications">الإشعارات</string>
+    <string name="fake_notification">إشعار وهمي</string>
+    <string name="fake_notification_description">إنشاء إشعارات رسائل وهمية تظهر على شاشة القفل</string>
+
+    <string name="fake_call_title">مكالمة وهمية</string>
+    <string name="back">رجوع</string>
+    <string name="setup_call">إعداد المكالمة</string>
+    <string name="who_will_call_you">من سيتصل بك؟</string>
+    <string name="who_is_calling">من المتصل؟</string>
+    <string name="phone_number_optional">رقم الهاتف (اختياري)</string>
+    <string name="phone_number">رقم الهاتف</string>
+    <string name="how_long_until_call">متى تبدأ المكالمة؟</string>
+    <string name="how_long_until_call_uppercase">متى تبدأ المكالمة؟</string>
+    <string name="immediately">فوراً</string>
+    <string name="one_minute">دقيقة واحدة</string>
+    <string name="five_minutes">5 دقائق</string>
+    <string name="thirty_minutes">30 دقيقة</string>
+    <string name="seconds_placeholder">ثوانٍ…</string>
+    <string name="or_enter_seconds">أو أدخل الثواني</string>
+    <string name="schedule_now">جدولة الآن</string>
+    <string name="schedule_now_uppercase">جدولة الآن 🚀</string>
+    <string name="enter_name_and_time">أدخل الاسم والوقت</string>
+    <string name="fill_in_all_fields">يرجى ملء جميع الحقول</string>
+    <string name="enter_here">أدخل هنا…</string>
+    <string name="caller_info">بيانات المتصل</string>
+    <string name="advanced_options">خيارات متقدمة</string>
+    <string name="vibrate_on_call">اهتزاز عند الاتصال</string>
+    <string name="flash_on_call">وميض عند الاتصال</string>
+    <string name="call_settings">إعدادات المكالمة</string>
+    <string name="vibration_on_call">اهتزاز عند الاتصال</string>
+    <string name="vibration_on_call_description">اهتزاز عند تلقي مكالمة</string>
+    <string name="flash_on_call_description">وميض LED عند تلقي مكالمة</string>
+    <string name="no_calls_yet">لا توجد مكالمات بعد</string>
+    <string name="add_schedule_to_escape">جدول مكالمة الآن للهروب من الاجتماع!</string>
+    <string name="ringing_at">رنين في %1$s</string>
+    <string name="overdue">متأخر</string>
+    <string name="cancel">إلغاء</string>
+    <string name="camera_permission_required">مطلوب إذن الكاميرا</string>
+    <string name="camera_permission_description">لتفعيل ميزة مكالمات الفيديو</string>
+    <string name="camera_permission_required_title">مطلوب إذن الكاميرا</string>
+    <string name="camera_permission_body">يحتاج التطبيق للوصول إلى الكاميرا لمكالمات الفيديو الوهمية. يرجى فتح الإعدادات ومنح الإذن.</string>
+    <string name="grant_permission">منح الإذن</string>
+    <string name="open_settings">فتح الإعدادات</string>
+    <string name="later">لاحقاً</string>
+
+    <string name="fake_message_title">رسالة وهمية</string>
+    <string name="fake_notification_uppercase">إشعار وهمي</string>
+    <string name="notification_history">سجل الإشعارات</string>
+    <string name="setup_message">إعداد الرسالة</string>
+    <string name="setup_message_uppercase">إعداد الرسالة</string>
+    <string name="who_will_message_you">من سيرسل لك رسالة؟</string>
+    <string name="who_will_message_placeholder">من المرسل؟ (مثل المدير، الحبيب…)</string>
+    <string name="message_content">محتوى الرسالة</string>
+    <string name="message_content_placeholder">محتوى الرسالة</string>
+    <string name="how_long_until_send">متى يتم الإرسال؟</string>
+    <string name="how_long_uppercase">كم من الوقت؟</string>
+    <string name="send_now">إرسال الآن</string>
+    <string name="schedule">جدولة</string>
+    <string name="enter_all_fields">يرجى ملء جميع الحقول</string>
+    <string name="custom_seconds_placeholder">ثوانٍ مخصصة…</string>
+    <string name="send_now_uppercase">إرسال الآن 🚀</string>
+    <string name="schedule_send">جدولة الإرسال</string>
+    <string name="enter_info">إدخال البيانات</string>
+    <string name="scheduled_messages">الرسائل المجدولة</string>
+    <string name="send_at">إرسال في %1$s</string>
+    <string name="no_messages_yet">لا توجد رسائل بعد</string>
+    <string name="create_fake_message_to_escape">أنشئ رسالة وهمية الآن للهروب!</string>
+    <string name="notification_permission_required">مطلوب إذن الإشعارات</string>
+    <string name="notification_permission_body">لإظهار الرسائل الوهمية، يحتاج التطبيق إلى إذن الإشعارات.</string>
+    <string name="schedule_permission_required">مطلوب إذن الجدولة</string>
+    <string name="schedule_permission_body">لجدولة المواعيد بدقة، يحتاج التطبيق إلى إذن المنبه.</string>
+
+    <string name="messages">الرسائل</string>
+    <string name="add_message">إضافة رسالة</string>
+    <string name="no_messages_yet_message">لا توجد رسائل بعد</string>
+    <string name="tap_to_create_fake_message">اضغط على + لإنشاء رسالة وهمية من مشهور أو شخص تهتم به!</string>
+    <string name="create_fake_message">إنشاء رسالة وهمية</string>
+    <string name="create_new_sender">إنشاء مرسل جديد</string>
+    <string name="info">معلومات</string>
+    <string name="contact_name">اسم جهة الاتصال</string>
+    <string name="display_name_placeholder">اسم العرض (مثل إيلون ماسك)</string>
+    <string name="celebrity">مشهور</string>
+    <string name="create_now">إنشاء الآن 🚀</string>
+    <string name="enter_name">أدخل الاسم</string>
+    <string name="avatar">الصورة الشخصية</string>
+    <string name="select_image">اختر صورة</string>
+    <string name="verified">موثق</string>
+    <string name="create">إنشاء</string>
+    <string name="cancel_button">إلغاء</string>
+    <string name="video_call">مكالمة فيديو</string>
+    <string name="typing_message">اكتب رسالة…</string>
+    <string name="send">إرسال</string>
+    <string name="select_image_chat">اختر صورة</string>
+    <string name="replying_to">الرد على %1$s</string>
+    <string name="replying_to_self">الرد على نفسك</string>
+    <string name="yourself">نفسك</string>
+    <string name="cancel_reply">إلغاء الرد</string>
+    <string name="reply">رد</string>
+    <string name="delete_message">حذف الرسالة</string>
+    <string name="you">أنت</string>
+    <string name="other_person">الآخر</string>
+    <string name="image">📷 صورة</string>
+    <string name="image_bracket">📷 [صورة]</string>
+    <string name="message_deleted">تم حذف الرسالة</string>
+    <string name="chat_image">صورة الدردشة</string>
+    <string name="send_message">إرسال</string>
+    <string name="receive_message">استقبال</string>
+    <string name="reply_message">رد</string>
+    <string name="delete_message_action">حذف الرسالة</string>
+    <string name="view_profile">عرض الملف الشخصي</string>
+    <string name="image_label">صورة</string>
+
+    <string name="today">اليوم</string>
+    <string name="yesterday">أمس</string>
+
+    <string name="fake_notification_log">سجل الإشعارات الوهمية</string>
+    <string name="delete_all">حذف الكل</string>
+    <string name="delete_all_history_title">حذف السجل بالكامل؟</string>
+    <string name="delete_all_history_message">هل أنت متأكد من رغبتك في حذف سجل الإشعارات بالكامل؟ لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="delete_all_button">حذف الكل</string>
+    <string name="scheduled">مجدول</string>
+    <string name="no_notification_history">لا يوجد سجل إشعارات</string>
+    <string name="no_notification_history_hint">الإشعارات الوهمية التي ترسلها ستظهر هنا.</string>
+
+    <string name="call_history">سجل المكالمات</string>
+    <string name="no_call_history">لا يوجد سجل مكالمات بعد</string>
+    <string name="no_call_history_hint">المكالمات المكتملة ستظهر هنا.</string>
+
+    <string name="profile">الملف الشخصي</string>
+    <string name="fake_messages">رسائل وهمية</string>
+    <string name="create_fake_notification">إنشاء إشعار رسالة وهمي</string>
+    <string name="more_features_coming">المزيد من الميزات قريباً.</string>
+
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_uppercase">الإعدادات</string>
+    <string name="appearance">المظهر</string>
+    <string name="language">اللغة</string>
+    <string name="dark_mode">الوضع الداكن</string>
+    <string name="light_mode">الوضع الفاتح</string>
+    <string name="dark_mode_enabled">تم تفعيل الوضع الداكن</string>
+    <string name="dark_mode_disabled">تم تعطيل الوضع الداكن</string>
+    <string name="english">الإنجليزية</string>
+
+    <string name="select_language">اختر اللغة</string>
+    <string name="confirm">تأكيد</string>
+
+    <string name="incoming_call">مكالمة واردة</string>
+    <string name="decline">رفض</string>
+    <string name="answer">رد</string>
+    <string name="end_call">إنهاء المكالمة</string>
+    <string name="call_ended">انتهت المكالمة</string>
+    <string name="swipe_up_to_answer">اسحب للأعلى للرد</string>
+    <string name="swipe_down_to_decline">اسحب للأسفل للرفض</string>
+    <string name="video_call_ellipsis">مكالمة فيديو…</string>
+    <string name="swipe_icon_to_respond">اسحب الأيقونة للرد</string>
+    <string name="camera_off">الكاميرا مغلقة</string>
+    <string name="camera_off_label">إيقاف\nالكاميرا</string>
+    <string name="mute">كتم الصوت</string>
+    <string name="keypad">لوحة المفاتيح</string>
+    <string name="speaker">مكبر الصوت</string>
+    <string name="add_call">إضافة مكالمة</string>
+    <string name="facetime">FaceTime</string>
+    <string name="contacts">جهات الاتصال</string>
+    <string name="end">إنهاء</string>
+
+    <string name="seconds">ث</string>
+    <string name="minutes_unit">د</string>
+    <string name="hours">س</string>
+</resources>

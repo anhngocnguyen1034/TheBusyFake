@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -66,9 +67,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import com.example.thebusysimulator.presentation.di.AppContainer
+import com.example.thebusysimulator.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import com.example.thebusysimulator.R
 import kotlinx.coroutines.launch
 
 class FakeCallActivity : ComponentActivity() {
@@ -371,7 +372,7 @@ fun IncomingCallScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             painter = painterResource(R.drawable.ic_verify),
-                            contentDescription = "Verified",
+                            contentDescription = stringResource(R.string.verified),
                             tint = Color.White,
                             modifier = Modifier.size(28.dp)
                         )
@@ -396,7 +397,7 @@ fun IncomingCallScreen(
 
             // Text hướng dẫn nhỏ
             Text(
-                text = "Swipe icon to respond",
+                text = stringResource(R.string.swipe_icon_to_respond),
                 color = Color.White.copy(alpha = 0.4f),
                 fontSize = 14.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -567,17 +568,17 @@ fun InCallScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                DummyCallAction(icon = Icons.Filled.Close, text = "Mute")
-                DummyCallAction(icon = Icons.Filled.Menu, text = "Keypad")
-                DummyCallAction(icon = Icons.Default.ThumbUp, text = "Speaker")
+                DummyCallAction(icon = Icons.Filled.Close, text = stringResource(R.string.mute))
+                DummyCallAction(icon = Icons.Filled.Menu, text = stringResource(R.string.keypad))
+                DummyCallAction(icon = Icons.Default.ThumbUp, text = stringResource(R.string.speaker))
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                DummyCallAction(icon = Icons.Filled.Add, text = "Add Call")
-                DummyCallAction(icon = Icons.Filled.Call, text = "FaceTime")
-                DummyCallAction(icon = Icons.Filled.Person, text = "Contacts")
+                DummyCallAction(icon = Icons.Filled.Add, text = stringResource(R.string.add_call))
+                DummyCallAction(icon = Icons.Filled.Call, text = stringResource(R.string.facetime))
+                DummyCallAction(icon = Icons.Filled.Person, text = stringResource(R.string.contacts))
             }
         }
 
@@ -605,7 +606,7 @@ fun InCallScreen(
         ) {
             Icon(
                 imageVector = Icons.Filled.Menu,
-                contentDescription = "End Call",
+                contentDescription = stringResource(R.string.end_call),
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)
             )

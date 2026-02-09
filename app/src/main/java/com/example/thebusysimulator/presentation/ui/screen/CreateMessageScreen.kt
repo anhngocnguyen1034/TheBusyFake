@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -92,13 +93,13 @@ fun CreateMessageScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = theme.text
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "TẠO NGƯỜI GỬI MỚI",
+                    text = stringResource(R.string.create_new_sender),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace
@@ -110,7 +111,7 @@ fun CreateMessageScreen(
 
             // Main Content
             GenZContainer(
-                title = "THÔNG TIN",
+                title = stringResource(R.string.info),
                 theme = theme,
                 accentColor = GenZPink
             ) {
@@ -165,7 +166,7 @@ fun CreateMessageScreen(
                                 if (selectedAvatarUri != null) {
                                     androidx.compose.foundation.Image(
                                         painter = rememberAsyncImagePainter(selectedAvatarUri),
-                                        contentDescription = "Avatar",
+                                        contentDescription = stringResource(R.string.avatar),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
@@ -182,7 +183,7 @@ fun CreateMessageScreen(
                                     } else {
                                         Icon(
                                             painter = painterResource(R.drawable.union__3_),
-                                            contentDescription = "Chọn ảnh",
+                                            contentDescription = stringResource(R.string.select_image),
                                             tint = Color.Black,
                                             modifier = Modifier.size(48.dp).align(Alignment.Center)
                                         )
@@ -219,7 +220,7 @@ fun CreateMessageScreen(
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.ic_verify),
-                                            contentDescription = "Verified",
+                                            contentDescription = stringResource(R.string.verified),
                                             tint = Color.Black,
                                             modifier = Modifier.size(20.dp)
                                         )
@@ -235,7 +236,7 @@ fun CreateMessageScreen(
                     GenZTextField(
                         value = newContactName,
                         onValueChange = { newContactName = it },
-                        label = "Tên hiển thị (VD: Elon Musk)",
+                        label = stringResource(R.string.display_name_placeholder),
                         theme = theme,
                         accentColor = GenZPink
                     )
@@ -254,12 +255,12 @@ fun CreateMessageScreen(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_verify),
-                                contentDescription = "Verified",
+                                contentDescription = stringResource(R.string.verified),
                                 tint = GenZYellow,
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = "NGƯỜI NỔI TIẾNG",
+                                text = stringResource(R.string.celebrity),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
@@ -330,7 +331,7 @@ fun CreateMessageScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isEnabled) "TẠO NGAY 🚀" else "NHẬP TÊN",
+                        text = if (isEnabled) stringResource(R.string.create_now) else stringResource(R.string.enter_name),
                         color = if (isEnabled) Color.Black else theme.text.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,

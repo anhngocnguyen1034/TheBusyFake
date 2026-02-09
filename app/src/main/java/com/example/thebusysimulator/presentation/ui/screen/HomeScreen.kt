@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -124,7 +125,7 @@ fun MainScreenUI(
         // Header "Gen Z" Style
         Box(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)) {
             Text(
-                text = "BUSY\nSIMULATOR",
+                text = stringResource(R.string.busy_simulator),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Black,
                 fontFamily = FontFamily.Monospace,
@@ -143,7 +144,7 @@ fun MainScreenUI(
         }
 
         Text(
-            text = "Fake it till you make it \uD83D\uDE0E",
+            text = stringResource(R.string.fake_it_till_you_make_it),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = theme.text.copy(alpha = 0.7f),
@@ -152,8 +153,8 @@ fun MainScreenUI(
 
         // Các Card theo phong cách Neo-Brutalism
         NeoBrutalistCard(
-            title = "FAKE CALL",
-            description = "Tạo cuộc gọi ảo tung chảo",
+            title = stringResource(R.string.fake_call_title),
+            description = stringResource(R.string.fake_call_card_description),
             iconId = R.drawable.ic_call,
             accentColor = GenZYellow,
             theme = theme,
@@ -163,8 +164,8 @@ fun MainScreenUI(
         )
 
         NeoBrutalistCard(
-            title = "FAKE CHAT",
-            description = "Nhắn tin 'sống ảo' cực nghệ",
+            title = stringResource(R.string.fake_chat),
+            description = stringResource(R.string.fake_chat_card_description),
             iconId = R.drawable.ic_message,
             accentColor = GenZPink,
             theme = theme,
@@ -174,8 +175,8 @@ fun MainScreenUI(
         )
 
         NeoBrutalistCard(
-            title = "NOTIFICATIONS",
-            description = "Nổ thông báo liên tục cho ngầu",
+            title = stringResource(R.string.notifications),
+            description = stringResource(R.string.notifications_card_description),
             iconId = R.drawable.ic_message,
             accentColor = GenZBlue,
             theme = theme,

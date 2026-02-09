@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -128,7 +129,7 @@ fun NotificationHistoryScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = theme.text
                         )
                     }
@@ -137,7 +138,7 @@ fun NotificationHistoryScreen(
 
                     ) {
                         Text(
-                            text = "FAKE NOTIFICATION",
+                            text = stringResource(R.string.fake_notification_log),
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontWeight = FontWeight.Black,
                                 fontFamily = FontFamily.Monospace
@@ -148,7 +149,7 @@ fun NotificationHistoryScreen(
                         if (notifications.isNotEmpty() && !isLoading) {
                             TextButton(onClick = { showDeleteAllDialog = true }) {
                                 Text(
-                                    text = "XÓA TẨT CẢ",
+                                    text = stringResource(R.string.delete_all),
                                     color = theme.text,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = FontFamily.Monospace,
@@ -215,13 +216,13 @@ fun NotificationHistoryScreen(
                 onDismissRequest = { showDeleteAllDialog = false },
                 title = {
                     Text(
-                        text = "Xóa tất cả lịch sử?",
+                        text = stringResource(R.string.delete_all_history_title),
                         fontWeight = FontWeight.Bold
                     )
                 },
                 text = {
                     Text(
-                        text = "Bạn có chắc chắn muốn xóa tất cả lịch sử thông báo? Hành động này không thể hoàn tác.",
+                        text = stringResource(R.string.delete_all_history_message),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },
@@ -232,14 +233,14 @@ fun NotificationHistoryScreen(
                             containerColor = colorScheme.error
                         )
                     ) {
-                        Text("Xóa tất cả")
+                        Text(stringResource(R.string.delete_all_button))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showDeleteAllDialog = false }
                     ) {
-                        Text("Hủy")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -317,7 +318,7 @@ fun HistoryNotificationItem(
                                 color = GenZBlue.copy(alpha = 0.1f)
                             ) {
                                 Text(
-                                    text = "ĐÃ LÊN LỊCH",
+                                    text = stringResource(R.string.scheduled),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = GenZBlue,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -354,7 +355,7 @@ fun HistoryNotificationItem(
 
                 Icon(
                     imageVector = Icons.Rounded.Notifications,
-                    contentDescription = "Notification",
+                    contentDescription = stringResource(R.string.fake_notification),
                     tint = GenZBlue,
                     modifier = Modifier.size(24.dp)
                 )
@@ -401,14 +402,14 @@ fun EmptyNotificationHistoryCard(theme: GenZThemeColors) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Chưa có lịch sử thông báo",
+                    text = stringResource(R.string.no_notification_history),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     fontFamily = FontFamily.Monospace,
                     color = theme.text
                 )
                 Text(
-                    text = "Các thông báo fake bạn gửi sẽ hiện ở đây.",
+                    text = stringResource(R.string.no_notification_history_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = theme.text.copy(alpha = 0.7f),
                     modifier = Modifier.padding(top = 8.dp)

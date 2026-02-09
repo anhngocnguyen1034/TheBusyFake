@@ -22,7 +22,31 @@ class MessageViewModel(
     private val messageRepository: MessageRepository,
     private val context: Context? = null
 ) : ViewModel() {
-    
+
+    companion object {
+        const val PRESET_MOM = "preset_mom"
+        const val PRESET_LOVER = "preset_lover"
+        const val PRESET_DOCTOR = "preset_doctor"
+        const val PRESET_SCIENTIST = "preset_scientist"
+
+        private val PRESET_KEYS = setOf(PRESET_MOM, PRESET_LOVER, PRESET_DOCTOR, PRESET_SCIENTIST)
+        private val LEGACY_MOM = "Mẹ"
+        private val LEGACY_LOVER = "Người yêu"
+        private val LEGACY_DOCTOR = "Bác sĩ"
+        private val LEGACY_SCIENTIST = "Nhà khoa học"
+
+        fun isPresetContact(contactName: String): Boolean =
+            contactName in PRESET_KEYS || contactName in setOf(LEGACY_MOM, LEGACY_LOVER, LEGACY_DOCTOR, LEGACY_SCIENTIST)
+
+        fun getPresetType(contactName: String): String? = when (contactName) {
+            PRESET_MOM, LEGACY_MOM -> "mom"
+            PRESET_LOVER, LEGACY_LOVER -> "lover"
+            PRESET_DOCTOR, LEGACY_DOCTOR -> "doctor"
+            PRESET_SCIENTIST, LEGACY_SCIENTIST -> "scientist"
+            else -> null
+        }
+    }
+
     private val _uiState = MutableStateFlow(MessageUiState())
     val uiState: StateFlow<MessageUiState> = _uiState.asStateFlow()
     
@@ -67,7 +91,7 @@ class MessageViewModel(
                 val momId = UUID.randomUUID().toString()
                 val defaultMessage = Message(
                     id = momId,
-                    contactName = "Mẹ",
+                    contactName = PRESET_MOM,
                     lastMessage = AutoReplyHelper.defaultMomMessages.first(),
                     timestamp = Date(),
                     unreadCount = AutoReplyHelper.defaultMomMessages.size,
@@ -130,7 +154,7 @@ class MessageViewModel(
                 val loverId = UUID.randomUUID().toString()
                 val defaultMessage = Message(
                     id = loverId,
-                    contactName = "Người yêu",
+                    contactName = PRESET_LOVER,
                     lastMessage = AutoReplyHelper.defaultLoverMessages.first(),
                     timestamp = Date(),
                     unreadCount = AutoReplyHelper.defaultLoverMessages.size,
@@ -193,7 +217,7 @@ class MessageViewModel(
                 val doctorId = UUID.randomUUID().toString()
                 val defaultMessage = Message(
                     id = doctorId,
-                    contactName = "Bác sĩ",
+                    contactName = PRESET_DOCTOR,
                     lastMessage = AutoReplyHelper.defaultDoctorMessages.first(),
                     timestamp = Date(),
                     unreadCount = AutoReplyHelper.defaultDoctorMessages.size,
@@ -256,7 +280,7 @@ class MessageViewModel(
                 val scientistId = UUID.randomUUID().toString()
                 val defaultMessage = Message(
                     id = scientistId,
-                    contactName = "Nhà khoa học",
+                    contactName = PRESET_SCIENTIST,
                     lastMessage = AutoReplyHelper.defaultScientistMessages.first(),
                     timestamp = Date(),
                     unreadCount = AutoReplyHelper.defaultScientistMessages.size,
@@ -397,16 +421,14 @@ class MessageViewModel(
                 val message = _uiState.value.messages.find { it.id == messageId }
                 val contactName = message?.contactName ?: ""
                 
-                if (contactName in listOf("Mẹ", "Người yêu", "Bác sĩ", "Nhà khoa học")) {
-                    // Lấy reply index hiện tại
+                if (isPresetContact(contactName)) {
+                    val presetType = getPresetType(contactName)
                     val currentIndex = prefs?.getInt("reply_index_$messageId", 0) ?: 0
-                    
-                    // Lấy câu trả lời phù hợp
-                    val replyText = when (contactName) {
-                        "Mẹ" -> AutoReplyHelper.getNextReply(currentIndex)
-                        "Người yêu" -> AutoReplyHelper.getNextLoverReply(currentIndex)
-                        "Bác sĩ" -> AutoReplyHelper.getNextDoctorReply(currentIndex)
-                        "Nhà khoa học" -> AutoReplyHelper.getNextScientistReply(currentIndex)
+                    val replyText = when (presetType) {
+                        "mom" -> AutoReplyHelper.getNextReply(currentIndex)
+                        "lover" -> AutoReplyHelper.getNextLoverReply(currentIndex)
+                        "doctor" -> AutoReplyHelper.getNextDoctorReply(currentIndex)
+                        "scientist" -> AutoReplyHelper.getNextScientistReply(currentIndex)
                         else -> ""
                     }
                     
@@ -441,11 +463,11 @@ class MessageViewModel(
                         _chatUiState.value = updatedState
                         
                         // Tăng reply index và lưu lại
-                        val nextIndex = (currentIndex + 1) % when (contactName) {
-                            "Mẹ" -> AutoReplyHelper.getTotalReplies()
-                            "Người yêu" -> AutoReplyHelper.getTotalLoverReplies()
-                            "Bác sĩ" -> AutoReplyHelper.getTotalDoctorReplies()
-                            "Nhà khoa học" -> AutoReplyHelper.getTotalScientistReplies()
+                        val nextIndex = (currentIndex + 1) % when (presetType) {
+                            "mom" -> AutoReplyHelper.getTotalReplies()
+                            "lover" -> AutoReplyHelper.getTotalLoverReplies()
+                            "doctor" -> AutoReplyHelper.getTotalDoctorReplies()
+                            "scientist" -> AutoReplyHelper.getTotalScientistReplies()
                             else -> 1
                         }
                         prefs?.edit()?.putInt("reply_index_$messageId", nextIndex)?.apply()

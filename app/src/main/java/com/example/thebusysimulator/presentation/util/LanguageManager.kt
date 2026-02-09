@@ -43,13 +43,18 @@ object LanguageManager {
     }
     
     /**
-     * Set app language
+     * Set app language. Returns a new Context with the given locale applied.
+     * Use attachBaseContext() in Activity to apply app-wide.
      */
     fun setLanguage(context: Context, languageCode: String): Context {
         val locale = when (languageCode) {
-            "zh-rCN" -> Locale.SIMPLIFIED_CHINESE
-            "zh-rTW" -> Locale.TRADITIONAL_CHINESE
-            else -> Locale(languageCode)
+            "zh-CN", "zh-rCN" -> Locale.SIMPLIFIED_CHINESE
+            "zh-TW", "zh-rTW" -> Locale.TRADITIONAL_CHINESE
+            else -> {
+                val parts = languageCode.split("-")
+                if (parts.size >= 2) Locale(parts[0], parts[1])
+                else Locale(languageCode)
+            }
         }
         
         val config = Configuration(context.resources.configuration)

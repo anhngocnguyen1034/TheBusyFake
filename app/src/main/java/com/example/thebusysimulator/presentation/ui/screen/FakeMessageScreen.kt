@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -112,13 +113,13 @@ fun FakeMessageScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = theme.text
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "FAKE NOTIFICATION",
+                        text = stringResource(R.string.fake_notification_uppercase),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Monospace
@@ -131,7 +132,7 @@ fun FakeMessageScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_history),
-                            contentDescription = "Lịch sử thông báo",
+                            contentDescription = stringResource(R.string.notification_history),
                             tint = theme.text
                         )
                     }
@@ -197,20 +198,20 @@ fun FakeMessageScreen(
                     viewModel.markNotificationPermissionDenied()
                     viewModel.clearPermissionRequest()
                 },
-                title = { Text("Cần quyền thông báo", fontWeight = FontWeight.Bold) },
-                text = { Text("Để hiển thị tin nhắn giả, ứng dụng cần quyền thông báo.") },
+                title = { Text(stringResource(R.string.notification_permission_required), fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(R.string.notification_permission_body)) },
                 confirmButton = {
                     Button(onClick = {
                         viewModel.markNotificationPermissionDenied()
                         viewModel.clearPermissionRequest()
                         viewModel.openNotificationSettings()
-                    }) { Text("Mở Cài đặt") }
+                    }) { Text(stringResource(R.string.open_settings)) }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         viewModel.markNotificationPermissionDenied()
                         viewModel.clearPermissionRequest()
-                    }) { Text("Để sau") }
+                    }) { Text(stringResource(R.string.later)) }
                 }
             )
         }
@@ -221,20 +222,20 @@ fun FakeMessageScreen(
                     viewModel.markPermissionDenied()
                     viewModel.clearPermissionRequest()
                 },
-                title = { Text("Cần quyền lên lịch", fontWeight = FontWeight.Bold) },
-                text = { Text("Để lên lịch chính xác, ứng dụng cần quyền Alarm.") },
+                title = { Text(stringResource(R.string.schedule_permission_required), fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(R.string.schedule_permission_body)) },
                 confirmButton = {
                     Button(onClick = {
                         viewModel.markPermissionDenied()
                         viewModel.clearPermissionRequest()
                         viewModel.openScheduleExactAlarmSettings()
-                    }) { Text("Mở Cài đặt") }
+                    }) { Text(stringResource(R.string.open_settings)) }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         viewModel.markPermissionDenied()
                         viewModel.clearPermissionRequest()
-                    }) { Text("Để sau") }
+                    }) { Text(stringResource(R.string.later)) }
                 }
             )
         }
@@ -288,15 +289,14 @@ fun MessageInputSection(
     var messageText by rememberSaveable { mutableStateOf("") }
 
     val quickTimeOptions = listOf(
-        "Ngay lập tức" to 5,
-        "1 phút" to 60,
-        "5 phút" to 300,
-        "30 phút" to 1800
+        R.string.immediately to 5,
+        R.string.one_minute to 60,
+        R.string.five_minutes to 300,
+        R.string.thirty_minutes to 1800
     )
 
     var selectedDelaySeconds by rememberSaveable { mutableStateOf(5) }
     var customTimeInput by rememberSaveable { mutableStateOf("") }
-    var selectedQuickOption by rememberSaveable { mutableStateOf<String?>("Ngay lập tức") }
 
     LaunchedEffect(uiState.messageScheduledSuccessfully) {
         if (uiState.messageScheduledSuccessfully) {
@@ -304,7 +304,6 @@ fun MessageInputSection(
             messageText = ""
             selectedDelaySeconds = 5
             customTimeInput = ""
-            selectedQuickOption = "Ngay lập tức"
             viewModel.clearSuccessFlag()
         }
     }
@@ -316,7 +315,7 @@ fun MessageInputSection(
     }
 
     GenZContainer(
-        title = "SETUP TIN NHẮN",
+        title = stringResource(R.string.setup_message_uppercase),
         theme = theme,
         accentColor = GenZBlue
     ) {
@@ -324,7 +323,7 @@ fun MessageInputSection(
         PopTextField(
             value = senderName,
             onValueChange = { senderName = it },
-            label = "Ai sẽ nhắn? (VD: Sếp, Crush...)",
+            label = stringResource(R.string.who_will_message_placeholder),
             icon = Icons.Rounded.Person,
             theme = theme,
             accentColor = GenZBlue
@@ -333,7 +332,7 @@ fun MessageInputSection(
         PopTextField(
             value = messageText,
             onValueChange = { messageText = it },
-            label = "Nội dung tin nhắn",
+            label = stringResource(R.string.message_content_placeholder),
             icon = Icons.Rounded.Email,
             theme = theme,
             accentColor = GenZBlue
@@ -342,7 +341,7 @@ fun MessageInputSection(
         HorizontalDivider(color = theme.border.copy(alpha = 0.3f))
 
         Text(
-            text = "BAO LÂU NỮA?",
+            text = stringResource(R.string.how_long_uppercase),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
             fontFamily = FontFamily.Monospace,
@@ -354,8 +353,9 @@ fun MessageInputSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(quickTimeOptions) { (label, seconds) ->
-                val isSelected = selectedQuickOption == label
+            items(quickTimeOptions) { (labelResId, seconds) ->
+                val label = stringResource(labelResId)
+                val isSelected = selectedDelaySeconds == seconds
                 val interactionSource = remember { MutableInteractionSource() }
                 val isPressed by interactionSource.collectIsPressedAsState()
                 val offsetState by animateDpAsState(
@@ -367,7 +367,6 @@ fun MessageInputSection(
                     modifier = Modifier
                         .padding(bottom = 2.dp)
                         .clickable(interactionSource = interactionSource, indication = null) {
-                            selectedQuickOption = label
                             selectedDelaySeconds = seconds
                             customTimeInput = ""
                         }
@@ -413,12 +412,11 @@ fun MessageInputSection(
                 onValueChange = { newValue ->
                     if (newValue.all { it.isDigit() }) {
                         customTimeInput = newValue
-                        selectedQuickOption = null
                         if (newValue.isNotBlank()) selectedDelaySeconds =
                             newValue.toIntOrNull() ?: 0
                     }
                 },
-                label = "Số giây tùy chỉnh...",
+                label = stringResource(R.string.custom_seconds_placeholder),
                 icon = Icons.Rounded.Edit,
                 theme = theme,
                 accentColor = GenZBlue,
@@ -461,7 +459,6 @@ fun MessageInputSection(
                             messageText = ""
                             selectedDelaySeconds = 5
                             customTimeInput = ""
-                            selectedQuickOption = "Ngay lập tức"
                         }
                     }
                 )
@@ -506,8 +503,8 @@ fun MessageInputSection(
                     }
                     Text(
                         text = if (isEnabled) {
-                            if (selectedDelaySeconds <= 10) "GỬI NGAY 🚀" else "LÊN LỊCH GỬI"
-                        } else "NHẬP THÔNG TIN",
+                            if (selectedDelaySeconds <= 10) stringResource(R.string.send_now_uppercase) else stringResource(R.string.schedule_send)
+                        } else stringResource(R.string.enter_info),
                         color = if (isEnabled) Color.Black else theme.text.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,

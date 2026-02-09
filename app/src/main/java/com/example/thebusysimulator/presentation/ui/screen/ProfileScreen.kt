@@ -17,7 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import com.example.thebusysimulator.R
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 
@@ -50,13 +52,13 @@ fun ProfileScreen(
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = colorScheme.onBackground
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Profile",
+                    text = stringResource(R.string.profile),
                     style = MaterialTheme.typography.headlineMedium,
                     color = colorScheme.onBackground,
                     fontWeight = FontWeight.Bold
@@ -107,13 +109,13 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Tin nhắn giả",
+                            text = stringResource(R.string.fake_messages),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Tạo thông báo tin nhắn giả",
+                            text = stringResource(R.string.create_fake_notification),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -134,7 +136,7 @@ fun ProfileScreen(
             
             // Placeholder for other profile features
             Text(
-                text = "Các tính năng khác sẽ được thêm vào đây",
+                text = stringResource(R.string.more_features_coming),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier.padding(vertical = 16.dp)

@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -92,7 +93,7 @@ fun SettingsScreenContent(navController: NavController) {
     ) {
         // --- HEADER ---
         Text(
-            text = "SETTINGS",
+            text = stringResource(R.string.settings_uppercase),
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Black,
             fontFamily = FontFamily.Monospace,
@@ -115,7 +116,7 @@ fun SettingsScreenContent(navController: NavController) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "APPEARANCE",
+                        text = stringResource(R.string.appearance),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -123,7 +124,7 @@ fun SettingsScreenContent(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (isDarkTheme) "Dark Mode" else "Light Mode",
+                        text = if (isDarkTheme) stringResource(R.string.dark_mode) else stringResource(R.string.light_mode),
                         style = MaterialTheme.typography.bodySmall,
                         color = GenZTheme.colors.text.copy(alpha = 0.7f)
                     )
@@ -152,7 +153,7 @@ fun SettingsScreenContent(navController: NavController) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "LANGUAGE",
+                        text = stringResource(R.string.language),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -160,7 +161,7 @@ fun SettingsScreenContent(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = currentLanguage?.displayName ?: "English",
+                        text = currentLanguage?.displayName ?: stringResource(R.string.english),
                         style = MaterialTheme.typography.bodySmall,
                         color = GenZTheme.colors.text.copy(alpha = 0.7f)
                     )

@@ -21,6 +21,7 @@ import com.example.thebusysimulator.R
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,13 +89,13 @@ fun CallHistoryScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Lịch sử cuộc gọi",
+                        text = stringResource(R.string.call_history),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Black,
                             brush = Brush.linearGradient(
@@ -227,7 +228,7 @@ fun HistoryCallItem(
             if (call.isVideoCall) {
                 Icon(
                     imageVector = Icons.Filled.Phone,
-                    contentDescription = "Video Call",
+                    contentDescription = stringResource(R.string.video_call),
                     tint = colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -261,13 +262,13 @@ fun EmptyHistoryCard(colorScheme: ColorScheme) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Chưa có lịch sử cuộc gọi",
+                text = stringResource(R.string.no_call_history),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Các cuộc gọi đã hoàn thành sẽ hiển thị ở đây",
+                text = stringResource(R.string.no_call_history_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 modifier = Modifier.padding(top = 8.dp)

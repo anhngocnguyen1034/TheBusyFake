@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,13 +81,13 @@ fun MessageScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = colorScheme.onBackground
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Tin nhắn",
+                        text = stringResource(R.string.messages),
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
@@ -103,7 +104,7 @@ fun MessageScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Add,
-                        contentDescription = "Add Message"
+                        contentDescription = stringResource(R.string.add_message)
                     )
                 }
             }
@@ -130,13 +131,13 @@ fun MessageScreen(
                             tint = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                         Text(
-                            text = "Chưa có tin nhắn nào",
+                            text = stringResource(R.string.no_messages_yet_message),
                             style = MaterialTheme.typography.titleMedium,
                             color = colorScheme.onBackground.copy(alpha = 0.6f),
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Bấm nút + ở góc trên để tạo một tin nhắn giả từ người nổi tiếng hoặc crush!",
+                            text = stringResource(R.string.tap_to_create_fake_message),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onBackground.copy(alpha = 0.4f),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -172,6 +173,7 @@ fun MessageItem(
     message: Message,
     onClick: () -> Unit
 ) {
+    val displayName = getContactDisplayName(message.contactName)
     val colorScheme = MaterialTheme.colorScheme
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
@@ -242,13 +244,13 @@ fun MessageItem(
                                     .crossfade(true)
                                     .build()
                             ),
-                            contentDescription = "Avatar",
+                            contentDescription = stringResource(R.string.avatar),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
                     } else {
                         Text(
-                            text = message.contactName.take(1).uppercase(),
+                            text = displayName.take(1).uppercase(),
                             color = Color.White,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
@@ -256,7 +258,7 @@ fun MessageItem(
                     }
                 } else {
                     Text(
-                        text = message.contactName.take(1).uppercase(),
+                        text = displayName.take(1).uppercase(),
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -279,7 +281,7 @@ fun MessageItem(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = message.contactName,
+                            text = displayName,
                             style = MaterialTheme.typography.titleMedium,
                             color = colorScheme.onBackground,
                             fontWeight = FontWeight.Bold,
@@ -288,7 +290,7 @@ fun MessageItem(
                         if (message.isVerified) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_verify),
-                                contentDescription = "Verified",
+                                contentDescription = stringResource(R.string.verified),
                                 tint = colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -304,7 +306,7 @@ fun MessageItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = message.lastMessage.ifBlank { "Hình ảnh" },
+                    text = message.lastMessage.ifBlank { stringResource(R.string.image_label) },
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onBackground.copy(alpha = 0.7f),
                     maxLines = 1,

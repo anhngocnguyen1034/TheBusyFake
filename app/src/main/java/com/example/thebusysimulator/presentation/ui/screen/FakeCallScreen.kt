@@ -38,6 +38,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -149,7 +150,7 @@ fun FakeCallScreen(
                     Spacer(modifier = Modifier.width(16.dp))
 
                     Text(
-                        text = "FAKE CALL",
+                        text = stringResource(R.string.fake_call_title),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Monospace,
@@ -331,7 +332,7 @@ fun GenZTextField(
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty()) {
                             Text(
-                                text = "Nhập vào đây...",
+                                text = stringResource(R.string.enter_here),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = theme.text.copy(alpha = 0.4f),
                                 fontFamily = FontFamily.Monospace
@@ -356,15 +357,14 @@ fun InputSection(
     var callerNumber by rememberSaveable { mutableStateOf("") }
 
     val quickTimeOptions = listOf(
-        "Ngay lập tức" to 5,
-        "1 phút" to 60,
-        "5 phút" to 300,
-        "30 phút" to 1800
+        R.string.immediately to 5,
+        R.string.one_minute to 60,
+        R.string.five_minutes to 300,
+        R.string.thirty_minutes to 1800
     )
 
     var selectedDelaySeconds by rememberSaveable { mutableStateOf(5) }
     var customTimeInput by rememberSaveable { mutableStateOf("") }
-    var selectedQuickOption by rememberSaveable { mutableStateOf<String?>("Ngay lập tức") }
 
     fun createDateWithDelay(seconds: Int): Date {
         val calendar = Calendar.getInstance()
@@ -373,13 +373,13 @@ fun InputSection(
     }
 
     GenZContainer(
-        title = "THÔNG TIN NGƯỜI GỌI",
+        title = stringResource(R.string.caller_info),
         theme = theme
     ) {
         GenZTextField(
             value = callerName,
             onValueChange = { callerName = it },
-            label = "Ai gọi thế?",
+            label = stringResource(R.string.who_is_calling),
             icon = Icons.Rounded.Person,
             theme = theme
         )
@@ -387,7 +387,7 @@ fun InputSection(
         GenZTextField(
             value = callerNumber,
             onValueChange = { callerNumber = it },
-            label = "Số điện thoại",
+            label = stringResource(R.string.phone_number),
             icon = Icons.Rounded.Phone,
             theme = theme,
             keyboardType = KeyboardType.Phone
@@ -397,7 +397,7 @@ fun InputSection(
 
         // --- TIME SELECTION ---
         Text(
-            text = "BAO LÂU NỮA THÌ GỌI?",
+            text = stringResource(R.string.how_long_until_call_uppercase),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = theme.text
@@ -407,14 +407,14 @@ fun InputSection(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(quickTimeOptions) { (label, seconds) ->
-                val isSelected = selectedQuickOption == label
+            items(quickTimeOptions) { (labelResId, seconds) ->
+                val label = stringResource(labelResId)
+                val isSelected = selectedDelaySeconds == seconds
 
                 // Gen Z Chip
                 Box(
                     modifier = Modifier
                         .clickable {
-                            selectedQuickOption = label
                             selectedDelaySeconds = seconds
                             customTimeInput = ""
                         }
@@ -442,11 +442,10 @@ fun InputSection(
             onValueChange = { newValue ->
                 if (newValue.all { it.isDigit() }) {
                     customTimeInput = newValue
-                    selectedQuickOption = null
                     if (newValue.isNotBlank()) selectedDelaySeconds = newValue.toIntOrNull() ?: 0
                 }
             },
-            label = "Hoặc nhập số giây",
+            label = stringResource(R.string.or_enter_seconds),
             icon = Icons.Rounded.Edit,
             theme = theme,
             keyboardType = KeyboardType.Number
@@ -458,7 +457,7 @@ fun InputSection(
         val isEnabled = callerName.isNotBlank() && selectedDelaySeconds > 0
 
         GenZButton(
-            text = if (isEnabled) "LÊN LỊCH NGAY \uD83D\uDE80" else "NHẬP ĐỦ ĐI BẠN ƠI",
+            text = if (isEnabled) stringResource(R.string.schedule_now_uppercase) else stringResource(R.string.fill_in_all_fields),
             theme = theme,
             color = if (isEnabled) GenZGreen else theme.surface,
             enabled = isEnabled,
@@ -474,7 +473,6 @@ fun InputSection(
                     callerNumber = ""
                     selectedDelaySeconds = 5
                     customTimeInput = ""
-                    selectedQuickOption = "Ngay lập tức"
                 }
             }
         )
@@ -486,12 +484,12 @@ fun SettingsSection(viewModel: FakeCallViewModel, theme: GenZThemeColors) {
     val uiState by viewModel.uiState.collectAsState()
 
     GenZContainer(
-        title = "TÙY CHỈNH NÂNG CAO",
+        title = stringResource(R.string.advanced_options),
         theme = theme
     ) {
         // Row Rung
         GenZSwitchRow(
-            label = "Rung khi gọi",
+            label = stringResource(R.string.vibrate_on_call),
             icon = Icons.Default.Phone,
             checked = uiState.vibrationEnabled,
             onCheckedChange = { viewModel.setVibrationEnabled(it) },
@@ -501,7 +499,7 @@ fun SettingsSection(viewModel: FakeCallViewModel, theme: GenZThemeColors) {
 
         // Row Flash
         GenZSwitchRow(
-            label = "Nháy đèn Flash",
+            label = stringResource(R.string.flash_on_call),
             icon = Icons.Default.Star,
             checked = uiState.flashEnabled,
             onCheckedChange = { viewModel.setFlashEnabled(it) },

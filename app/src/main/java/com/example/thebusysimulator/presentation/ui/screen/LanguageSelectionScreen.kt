@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -30,6 +31,7 @@ import com.example.thebusysimulator.presentation.util.LanguageManager
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.thebusysimulator.R
 
 @Composable
 fun LanguageSelectionScreen(navController: NavController) {
@@ -99,7 +101,7 @@ fun LanguageSelectionScreen(navController: NavController) {
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Select Language",
+                        text = stringResource(R.string.select_language),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onBackground
@@ -120,7 +122,7 @@ fun LanguageSelectionScreen(navController: NavController) {
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Check,
-                        contentDescription = "Confirm",
+                        contentDescription = "Check",
                         tint = if (selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode) {
                             colorScheme.onPrimary
                         } else {

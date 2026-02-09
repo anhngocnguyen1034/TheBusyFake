@@ -1,5 +1,7 @@
 package com.example.thebusysimulator.presentation.util
 
+import android.content.Context
+import com.example.thebusysimulator.R
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -44,14 +46,14 @@ object DateUtils {
         return formatMessageTime(date.time)
     }
 
-    // Hàm để lấy label header theo ngày (Hôm nay, Hôm qua, hoặc ngày tháng)
-    fun getDateHeaderLabel(date: Date): String {
+    /** Gets date header label (Today, Yesterday, or date). Requires Context for localized strings. */
+    fun getDateHeaderLabel(context: Context, date: Date): String {
         val now = Calendar.getInstance()
         val msgTime = Calendar.getInstance().apply { time = date }
 
         return when {
-            isSameDay(now, msgTime) -> "Hôm nay"
-            isYesterday(now, msgTime) -> "Hôm qua"
+            isSameDay(now, msgTime) -> context.getString(R.string.today)
+            isYesterday(now, msgTime) -> context.getString(R.string.yesterday)
             isSameYear(now, msgTime) -> {
                 // Ngày/tháng (cùng năm)
                 SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
