@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -248,7 +249,7 @@ fun PopTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    icon: ImageVector,
+    icon: Painter,
     theme: GenZThemeColors,
     accentColor: Color = GenZBlue,
     keyboardType: KeyboardType = KeyboardType.Text
@@ -324,7 +325,7 @@ fun MessageInputSection(
             value = senderName,
             onValueChange = { senderName = it },
             label = stringResource(R.string.who_will_message_placeholder),
-            icon = Icons.Rounded.Person,
+            icon = painterResource(R.drawable.ic_person),
             theme = theme,
             accentColor = GenZBlue
         )
@@ -333,7 +334,7 @@ fun MessageInputSection(
             value = messageText,
             onValueChange = { messageText = it },
             label = stringResource(R.string.message_content_placeholder),
-            icon = Icons.Rounded.Email,
+            icon = painterResource(R.drawable.ic_edit),
             theme = theme,
             accentColor = GenZBlue
         )
@@ -417,7 +418,7 @@ fun MessageInputSection(
                     }
                 },
                 label = stringResource(R.string.custom_seconds_placeholder),
-                icon = Icons.Rounded.Edit,
+                icon= painterResource(R.drawable.ic_clock),
                 theme = theme,
                 accentColor = GenZBlue,
                 keyboardType = KeyboardType.Number

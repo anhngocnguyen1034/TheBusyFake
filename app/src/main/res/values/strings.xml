@@ -68,7 +68,7 @@
     <string name="setup_message">Setup Message</string>
     <string name="setup_message_uppercase">SETUP MESSAGE</string>
     <string name="who_will_message_you">Who will message you?</string>
-    <string name="who_will_message_placeholder">Who will message? (e.g. Boss, Crush…)</string>
+    <string name="who_will_message_placeholder">Who will message?</string>
     <string name="message_content">Message content</string>
     <string name="message_content_placeholder">Message content</string>
     <string name="how_long_until_send">How long until sent?</string>

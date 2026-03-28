@@ -103,7 +103,7 @@ fun MessageScreen(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Add,
+                       painter = painterResource(R.drawable.ic_add_user),
                         contentDescription = stringResource(R.string.add_message)
                     )
                 }

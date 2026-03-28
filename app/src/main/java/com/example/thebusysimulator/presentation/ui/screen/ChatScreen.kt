@@ -113,6 +113,17 @@ fun ChatScreen(
     val displayName = getContactDisplayName(contactName)
     val isPresetMessage = MessageViewModel.isPresetContact(contactName)
 
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
+            putExtra("caller_name", displayName)
+            putExtra("caller_number", "")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }
+
     // Hàm để scroll đến tin nhắn được phản hồi
     fun scrollToMessage(replyToMessageId: String) {
         val index = reversedMessages.indexOfFirst { it.id == replyToMessageId }
@@ -179,7 +190,7 @@ fun ChatScreen(
                     ) {
                         if (avatarUri != null) {
                             val imageUri = remember(avatarUri) {
-                                com.example.thebusysimulator.presentation.util.ImageHelper.getImageUri(
+                                ImageHelper.getImageUri(
                                     context,
                                     avatarUri
                                 )
@@ -229,12 +240,21 @@ fun ChatScreen(
                     }
 
                     IconButton(onClick = {
-                        val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
-                            putExtra("caller_name", displayName)
-                            putExtra("caller_number", "")
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.CAMERA
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        
+                        if (hasPermission) {
+                            val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
+                                putExtra("caller_name", displayName)
+                                putExtra("caller_number", "")
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        } else {
+                            cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                         }
-                        context.startActivity(intent)
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
@@ -403,7 +423,7 @@ fun ChatScreen(
                         IconButton(onClick = {
                             imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }) {
-                            Icon(Icons.Rounded.AccountBox, "Select Image", tint = colorScheme.primary)
+                            Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
                         }
                         BasicTextField(
                             value = messageText,
@@ -464,7 +484,7 @@ fun ChatScreen(
                            enabled = messageText.isNotBlank()
                         ) {
                             Icon(
-                                Icons.Rounded.Send, "Send",
+                                painter = painterResource(R.drawable.send), "Send",
                                 tint = if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.5f),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -577,16 +597,11 @@ fun ChatBubble(
     // Logic xác định khi nào hiển thị avatar
     val shouldShowAvatar = remember(message.isFromMe, nextMessage) {
         if (message.isFromMe) {
-            // Tin nhắn của "Mình": Không hiện avatar
             false
         } else {
-            // Tin nhắn của "Người khác"
             when {
-                // Nếu không có tin nhắn tiếp theo (tin mới nhất) -> Hiện avatar
                 nextMessage == null -> true
-                // Nếu tin nhắn tiếp theo là của "Mình" -> Hiện avatar (kết thúc chuỗi)
                 nextMessage.isFromMe -> true
-                // Nếu tin nhắn tiếp theo vẫn là của "Người khác" -> Ẩn avatar
                 else -> false
             }
         }
@@ -625,7 +640,7 @@ fun ChatBubble(
                     ) {
                         if (avatarUri != null) {
                             val imageUri = remember(avatarUri) {
-                                com.example.thebusysimulator.presentation.util.ImageHelper.getImageUri(
+                                ImageHelper.getImageUri(
                                     context,
                                     avatarUri
                                 )
