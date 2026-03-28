@@ -153,12 +153,11 @@ upload_to_github_release() {
     file_name=$(basename "$file")
 
     if [ -z "$GITHUB_TOKEN" ]; then
-        echo "WARN: GITHUB_TOKEN không được set, bỏ qua upload GitHub Release"
-        echo ""
+        echo "WARN: GITHUB_TOKEN không được set, bỏ qua upload GitHub Release" >&2
         return
     fi
 
-    echo "Tạo GitHub Release: $tag"
+    echo "Tạo GitHub Release: $tag" >&2
 
     # Tạo release (bỏ qua lỗi nếu đã tồn tại)
     release_response=$(curl -sS -X POST \
@@ -170,7 +169,7 @@ upload_to_github_release() {
             \"name\": \"$tag [$current_branch]\",
             \"body\": \"Auto build từ Jenkins\\nBranch: $current_branch\\nBuild: #${BUILD_NUMBER:-?}\",
             \"draft\": false,
-            \"prerelease\": $([ \"$current_branch\" == \"main\" ] && echo 'false' || echo 'true')
+            \"prerelease\": $([ "$current_branch" == "main" ] && echo 'false' || echo 'true')
         }")
 
     # Lấy upload_url (xử lý cả trường hợp release đã tồn tại)
@@ -178,6 +177,7 @@ upload_to_github_release() {
 
     if [ -z "$upload_url" ]; then
         # Release đã tồn tại, lấy lại upload_url
+        echo "Release đã tồn tại, lấy lại upload_url..." >&2
         upload_url=$(curl -sS \
             -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/tags/$tag" \
@@ -185,22 +185,22 @@ upload_to_github_release() {
     fi
 
     if [ -z "$upload_url" ]; then
-        echo "WARN: Không lấy được upload_url, bỏ qua upload"
-        echo ""
+        echo "WARN: Không lấy được upload_url, bỏ qua upload" >&2
         return
     fi
 
-    echo "Upload: $file_name → GitHub Release $tag"
+    echo "Upload: $file_name → GitHub Release $tag" >&2
     asset_response=$(curl -sS -X POST \
         -H "Authorization: token $GITHUB_TOKEN" \
         -H "Content-Type: application/octet-stream" \
         "$upload_url?name=$file_name" \
         --data-binary @"$file")
 
-    # Lấy download URL của asset
-    download_url=$(echo "$asset_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('browser_download_url',''))" 2>/dev/null)
-    echo "Download URL: $download_url"
-    echo "$download_url"
+    # Lấy download URL — chỉ echo ra stdout để caller nhận được
+    local result
+    result=$(echo "$asset_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('browser_download_url',''))" 2>/dev/null)
+    echo "Download URL: $result" >&2
+    echo "$result"
 }
 
 # ─────────────────────────────────────────────
