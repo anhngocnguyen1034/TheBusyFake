@@ -22,6 +22,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -167,7 +168,7 @@ class FakeVideoCallActivity : ComponentActivity() {
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 ).build()
-            audioManager?.requestAudioFocus(audioFocusRequest!!)
+            audioFocusRequest?.let { audioManager?.requestAudioFocus(it) }
         } else {
             @Suppress("DEPRECATION")
             audioManager?.requestAudioFocus(null, AudioManager.STREAM_RING, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
@@ -346,13 +347,9 @@ fun IncomingVideoCallScreen(
                     )
                     // Kiểm tra xem có phải người nổi tiếng không
                     var isVerified by remember { mutableStateOf(false) }
-                    val context = LocalContext.current
-                    val scope = rememberCoroutineScope()
-                    
+
                     LaunchedEffect(callerName) {
-                        scope.launch {
-                            isVerified = AppContainer.messageRepository.isContactVerified(callerName)
-                        }
+                        isVerified = AppContainer.messageRepository.isContactVerified(callerName)
                     }
                     
                     if (isVerified) {
@@ -438,7 +435,7 @@ fun InVideoCallScreen(
     // State cho thời gian gọi
     var callDuration by remember { mutableLongStateOf(0L) }
     LaunchedEffect(Unit) {
-        while (true) {
+        while (isActive) {
             delay(1000)
             callDuration++
         }
@@ -520,12 +517,95 @@ fun InVideoCallScreen(
 
         // 3. DRAGGABLE SELF CAMERA PREVIEW
         var cameraProvider: ProcessCameraProvider? by remember { mutableStateOf(null) }
+        var isFrontCamera by remember { mutableStateOf(true) }
+        var isMicOn by remember { mutableStateOf(true) }
+        var isVideoOn by remember { mutableStateOf(true) }
+        val previewViewRef = remember { mutableStateOf<PreviewView?>(null) }
         val context = androidx.compose.ui.platform.LocalContext.current
-        val hasCameraPermission = remember {
-            ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.CAMERA
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        var hasCameraPermission by remember {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.CAMERA
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            )
+        }
+
+        var showSettingsDialog by remember { mutableStateOf(false) }
+        val cameraPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            hasCameraPermission = isGranted
+            if (!isGranted) {
+                val activity = context as? android.app.Activity
+                val shouldShowRationale = activity?.let { androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(it, android.Manifest.permission.CAMERA) } ?: false
+                if (!shouldShowRationale) {
+                    showSettingsDialog = true
+                }
+            }
+        }
+
+        val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+        DisposableEffect(lifecycle) {
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                    hasCameraPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.CAMERA
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                }
+            }
+            lifecycle.addObserver(observer)
+            onDispose {
+                lifecycle.removeObserver(observer)
+            }
+        }
+
+        // Rebind camera khi isFrontCamera thay đổi
+        LaunchedEffect(isFrontCamera, hasCameraPermission, isVideoOn) {
+            val provider = cameraProvider ?: return@LaunchedEffect
+            val previewView = previewViewRef.value ?: return@LaunchedEffect
+            provider.unbindAll()
+            if (!hasCameraPermission || !isVideoOn) return@LaunchedEffect
+            val cameraSelector = if (isFrontCamera) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+            try {
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview
+                )
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        if (showSettingsDialog) {
+            AlertDialog(
+                onDismissRequest = { showSettingsDialog = false },
+                title = { Text("Cấp quyền Camera") },
+                text = { Text("Để sử dụng tính năng này, vui lòng cấp quyền camera trong Cài đặt.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showSettingsDialog = false
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = android.net.Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
+                    }) {
+                        Text("Cài đặt")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSettingsDialog = false }) {
+                        Text("Hủy")
+                    }
+                }
+            )
         }
 
         Card(
@@ -544,15 +624,21 @@ fun InVideoCallScreen(
                 }
         ) {
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-                if (hasCameraPermission) {
-                    // Có quyền camera - hiển thị camera preview
+                if (hasCameraPermission && isVideoOn) {
+                    // Có quyền camera và đang bật video - hiển thị camera preview
                     AndroidView(
                         factory = { ctx ->
                             val previewView = PreviewView(ctx)
+                            previewViewRef.value = previewView
                             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                             cameraProviderFuture.addListener({
                                 val provider = cameraProviderFuture.get()
                                 cameraProvider = provider
+                                val cameraSelector = if (isFrontCamera) {
+                                    CameraSelector.DEFAULT_FRONT_CAMERA
+                                } else {
+                                    CameraSelector.DEFAULT_BACK_CAMERA
+                                }
                                 val preview = Preview.Builder().build().also {
                                     it.setSurfaceProvider(previewView.surfaceProvider)
                                 }
@@ -560,7 +646,7 @@ fun InVideoCallScreen(
                                     provider.unbindAll()
                                     provider.bindToLifecycle(
                                         lifecycleOwner,
-                                        CameraSelector.DEFAULT_FRONT_CAMERA,
+                                        cameraSelector,
                                         preview
                                     )
                                 } catch (e: Exception) { e.printStackTrace() }
@@ -570,9 +656,17 @@ fun InVideoCallScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Không có quyền camera - hiển thị placeholder với icon
+                    // Không có quyền camera hoặc đang tắt video - hiển thị placeholder với icon
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                if (!hasCameraPermission) {
+                                    cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                } else {
+                                    isVideoOn = true
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -624,14 +718,33 @@ fun InVideoCallScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Mute Button (Fake)
-                    CallControlButton(painter = painterResource(R.drawable.ic_mic), isActive = true) {}
+                    // Mute Button
+                    CallControlButton(
+                        painter = painterResource(if (isMicOn) R.drawable.ic_mic else R.drawable.ic_mic_off),
+                        isActive = isMicOn,
+                        onClick = { isMicOn = !isMicOn }
+                    )
 
-                    // Video Button (Fake)
-                    CallControlButton(painter = painterResource(R.drawable.ic_video_call), isActive = true) {}
+                    // Video Button
+                    CallControlButton(
+                        painter = painterResource(if (isVideoOn && hasCameraPermission) R.drawable.ic_video_call else R.drawable.ic_camera_off), 
+                        isActive = isVideoOn && hasCameraPermission,
+                        onClick = {
+                            if (!hasCameraPermission) {
+                                cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                            } else {
+                                isVideoOn = !isVideoOn
+                            }
+                        }
+                    )
 
-                    // Switch Camera (Fake)
-                    CallControlButton(painter = painterResource(R.drawable.switch_camera), isActive = false) {}
+                    // Switch Camera
+                    CallControlButton(
+                        painter = painterResource(R.drawable.switch_camera),
+                        isActive = !isFrontCamera
+                    ) {
+                        isFrontCamera = !isFrontCamera
+                    }
 
                     // End Call
                     FilledIconButton(

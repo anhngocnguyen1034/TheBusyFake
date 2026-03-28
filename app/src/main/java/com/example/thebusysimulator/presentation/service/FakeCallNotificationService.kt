@@ -103,8 +103,7 @@ object FakeCallNotificationService {
             .setPriority(NotificationCompat.PRIORITY_HIGH) // HIGH priority
             .setCategory(NotificationCompat.CATEGORY_CALL) // Category CALL
             .setFullScreenIntent(fullScreenPendingIntent, true) // Full Screen Intent - QUAN TRỌNG
-            .setAutoCancel(true) // Tự động đóng khi user tap
-            .setOngoing(true) // Không thể swipe away
+            .setOngoing(true) // Không thể swipe away — giống cuộc gọi thật
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Hiển thị trên lock screen
             .setDefaults(NotificationCompat.DEFAULT_ALL) // Sound, vibration, lights
             .setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)) // Ringtone

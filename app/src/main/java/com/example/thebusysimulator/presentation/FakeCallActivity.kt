@@ -16,21 +16,19 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,10 +48,12 @@ import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
 import kotlinx.coroutines.delay
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.launch
@@ -70,7 +70,6 @@ import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.launch
 
 class FakeCallActivity : ComponentActivity() {
     private var mediaPlayer: MediaPlayer? = null
@@ -82,18 +81,18 @@ class FakeCallActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Turn screen on and unlock
         turnScreenOnAndKeyguard()
-        
+
         // Make fullscreen
         enableEdgeToEdge()
-        
+
         // Get caller info from intent
         val callerName = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Unknown"
         val callerNumber = intent.getStringExtra(EXTRA_CALLER_NUMBER) ?: "Unknown"
         val action = intent.getStringExtra(EXTRA_ACTION) // "accept" or "decline"
-        
+
         // Nếu action là "decline", đóng activity ngay
         if (action == "decline") {
             finish()
@@ -103,7 +102,8 @@ class FakeCallActivity : ComponentActivity() {
         // Initialize audio and vibration
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibratorManager =
+                getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
@@ -115,7 +115,7 @@ class FakeCallActivity : ComponentActivity() {
 
         // Start ringing
         startRinging()
-        
+
         // Start flash if enabled
         startFlashIfEnabled()
 
@@ -126,7 +126,6 @@ class FakeCallActivity : ComponentActivity() {
                     callerNumber = callerNumber,
                     onAccept = {
                         stopRinging()
-                        // Navigate to in-call screen
                     },
                     onDecline = {
                         stopRinging()
@@ -145,8 +144,8 @@ class FakeCallActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             window.addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
             )
         }
     }
@@ -154,11 +153,14 @@ class FakeCallActivity : ComponentActivity() {
     private fun startRinging() {
         // Request audio focus
         requestAudioFocus()
-        
+
         // Play ringtone
         try {
             mediaPlayer = MediaPlayer().apply {
-                setDataSource(applicationContext, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))
+                setDataSource(
+                    applicationContext,
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                )
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
@@ -183,11 +185,11 @@ class FakeCallActivity : ComponentActivity() {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
-            
+
             audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
                 .setAudioAttributes(audioAttributes)
                 .build()
-            audioManager?.requestAudioFocus(audioFocusRequest!!)
+            audioFocusRequest?.let { audioManager?.requestAudioFocus(it) }
         } else {
             @Suppress("DEPRECATION")
             audioManager?.requestAudioFocus(
@@ -200,7 +202,7 @@ class FakeCallActivity : ComponentActivity() {
 
     private fun startVibration() {
         val pattern = longArrayOf(0, 1000, 1000)
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val vibrationEffect = VibrationEffect.createWaveform(pattern, 0)
             vibrator?.vibrate(vibrationEffect)
@@ -241,12 +243,12 @@ class FakeCallActivity : ComponentActivity() {
     private fun stopRinging() {
         mediaPlayer?.release()
         mediaPlayer = null
-        
+
         vibrator?.cancel()
-        
+
         // Stop flash
         flashHelper?.stopFlashing()
-        
+
         // Release audio focus
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             audioFocusRequest?.let {
@@ -359,15 +361,11 @@ fun IncomingCallScreen(
                     )
                     // Kiểm tra xem có phải người nổi tiếng không
                     var isVerified by remember { mutableStateOf(false) }
-                    val context = LocalContext.current
-                    val scope = rememberCoroutineScope()
-                    
+
                     LaunchedEffect(callerName) {
-                        scope.launch {
-                            isVerified = AppContainer.messageRepository.isContactVerified(callerName)
-                        }
+                        isVerified = AppContainer.messageRepository.isContactVerified(callerName)
                     }
-                    
+
                     if (isVerified) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
@@ -407,11 +405,11 @@ fun IncomingCallScreen(
             // Sử dụng widthIn để giới hạn kích thước trên màn hình lớn (tablet)
             val configuration = LocalConfiguration.current
             val maxRowWidth = (configuration.screenWidthDp * 0.9f).dp.coerceAtMost(600.dp)
-            
+
             // Track chung liên tục cho cả 2 nút
             val buttonSizeDp = (configuration.screenWidthDp * 0.15f).dp.coerceIn(64.dp, 80.dp)
             val trackHeightDp = buttonSizeDp
-            
+
             Box(
                 modifier = Modifier
                     .widthIn(max = maxRowWidth)
@@ -442,7 +440,7 @@ fun IncomingCallScreen(
                         showTrack = false // Không hiển thị track riêng vì đã có track chung
                     )
                 }
-                
+
                 // Mũi tên hướng dẫn ở giữa track (hiển thị phía trên)
                 val infiniteTransition = rememberInfiniteTransition(label = "shared_arrow_alpha")
                 val arrowAlpha by infiniteTransition.animateFloat(
@@ -452,7 +450,7 @@ fun IncomingCallScreen(
                         repeatMode = RepeatMode.Reverse
                     ), label = "arrow_alpha"
                 )
-                
+
                 Row(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalArrangement = Arrangement.spacedBy((-4).dp)
@@ -468,9 +466,9 @@ fun IncomingCallScreen(
                                 .graphicsLayer { alpha = (arrowAlpha + (index * 0.2f)) % 1f }
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.width(16.dp))
-                    
+
                     // Mũi tên phải (cho nút trả lời)
                     repeat(2) { index ->
                         Icon(
@@ -488,6 +486,7 @@ fun IncomingCallScreen(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun InCallScreen(
     callerName: String,
@@ -495,14 +494,14 @@ fun InCallScreen(
     onEndCall: () -> Unit
 ) {
     var callDuration by remember { mutableStateOf(0) }
-    
+    var showKeypad by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        while (true) {
+        while (isActive) {
             delay(1000)
             callDuration++
         }
     }
-    
+
     val minutes = callDuration / 60
     val seconds = callDuration % 60
     val durationText = String.format("%02d:%02d", minutes, seconds)
@@ -520,13 +519,13 @@ fun InCallScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(60.dp))
-        
+
         // Caller Info nhỏ gọn hơn
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-             Box(
+            Box(
                 modifier = Modifier
                     .size(80.dp)
                     .background(Color.Gray.copy(alpha = 0.3f), CircleShape),
@@ -564,24 +563,59 @@ fun InCallScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Mute state
+            var isMuted by remember { mutableStateOf(false) }
+            var speaker by remember { mutableStateOf(false) }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                DummyCallAction(icon = Icons.Filled.Close, text = stringResource(R.string.mute))
-                DummyCallAction(icon = Icons.Filled.Menu, text = stringResource(R.string.keypad))
-                DummyCallAction(icon = Icons.Default.ThumbUp, text = stringResource(R.string.speaker))
+                DummyCallAction(
+                    painter = painterResource(if (isMuted) R.drawable.ic_mic_off else R.drawable.ic_mic),
+                    text = stringResource(R.string.mute),
+                    onClick = { isMuted = !isMuted }
+                )
+                DummyCallAction(
+                    painter = painterResource(R.drawable.ic_keypad),
+                    text = stringResource(R.string.keypad),
+                    onClick = { showKeypad = true }
+                )
+                DummyCallAction(
+                    painter = painterResource(if (speaker) R.drawable.ic_volume_off else R.drawable.ic_volume),
+                    text = stringResource(R.string.speaker),
+                    onClick = {speaker = !speaker}
+                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                DummyCallAction(icon = Icons.Filled.Add, text = stringResource(R.string.add_call))
-                DummyCallAction(icon = Icons.Filled.Call, text = stringResource(R.string.facetime))
-                DummyCallAction(icon = Icons.Filled.Person, text = stringResource(R.string.contacts))
+                DummyCallAction(
+                    painter = painterResource(R.drawable.ic_add),
+                    text = stringResource(R.string.add_call)
+                )
+                DummyCallAction(
+                    painter = painterResource(R.drawable.ic_video_call),
+                    text = stringResource(R.string.facetime)
+                )
+                DummyCallAction(
+                    painter = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.contacts)
+                )
             }
         }
-
+        AnimatedVisibility(
+            visible = showKeypad,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(
+                initialOffsetY = { it / 2 }
+            ),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(
+                targetOffsetY = { it / 2 }
+            )
+        ) {
+            KeypadOverlay(onDismiss = { showKeypad = false })
+        }
         Spacer(modifier = Modifier.height(40.dp))
 
         // Waveform Animation
@@ -605,13 +639,13 @@ fun InCallScreen(
             shape = CircleShape
         ) {
             Icon(
-                imageVector = Icons.Filled.Menu,
+                painter = painterResource(R.drawable.ic_call_end),
                 contentDescription = stringResource(R.string.end_call),
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(40.dp))
     }
 }
@@ -628,19 +662,14 @@ fun SwipeCallButton(
     color: Color,
     direction: SwipeDirection,
     onTriggered: () -> Unit,
-    showTrack: Boolean = true // Mặc định hiển thị track riêng
+    showTrack: Boolean = true
 ) {
     // 1. Lấy Density và Configuration để tính toán responsive
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
-
-    // Kích thước responsive - tính toán dựa trên chiều rộng màn hình
-    // Button size: 15% chiều rộng màn hình, giới hạn từ 64dp đến 80dp
     val buttonSizeDp = (screenWidthDp * 0.15f).dp.coerceIn(64.dp, 80.dp)
-    
-    // Track width: 38% chiều rộng màn hình, với min 200dp và max 280dp
-    // Đảm bảo có đủ không gian vuốt trên mọi thiết bị (nhỏ, vừa, lớn)
+
     val trackWidthDp = (screenWidthDp * 0.38f).dp.coerceIn(200.dp, 280.dp)
 
     // Chuyển đổi sang Pixel để tính toán logic kéo
@@ -724,9 +753,9 @@ fun SwipeCallButton(
                         )
                 )
             }
-            
+
             // Progress indicator - đã ẩn theo yêu cầu (không hiển thị màu xanh/đỏ khi vuốt)
-            
+
             // Mũi tên - chỉ hiển thị khi showTrack = true (hiện tại không hiển thị vì showTrack = false)
             if (showTrack) {
                 Row(
@@ -789,8 +818,15 @@ fun SwipeCallButton(
                                 val newOffset = offsetX.value + dragAmount.x
                                 scope.launch {
                                     val clampedOffset = when (direction) {
-                                        SwipeDirection.LEFT_TO_RIGHT -> newOffset.coerceIn(0f, maxDragDistancePx)
-                                        SwipeDirection.RIGHT_TO_LEFT -> newOffset.coerceIn(-maxDragDistancePx, 0f)
+                                        SwipeDirection.LEFT_TO_RIGHT -> newOffset.coerceIn(
+                                            0f,
+                                            maxDragDistancePx
+                                        )
+
+                                        SwipeDirection.RIGHT_TO_LEFT -> newOffset.coerceIn(
+                                            -maxDragDistancePx,
+                                            0f
+                                        )
                                     }
                                     offsetX.snapTo(clampedOffset)
                                 }
@@ -815,28 +851,46 @@ fun SwipeCallButton(
 
 // Component phụ cho nút chức năng giả
 @Composable
-fun DummyCallAction(icon: ImageVector, text: String) {
+fun DummyCallAction(
+    painter: Painter,
+    text: String,
+    isActive: Boolean = false,
+    onClick: () -> Unit = {}
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        // KHÔNG để clickable ở Column này nữa
+        modifier = Modifier.width(IntrinsicSize.Min)
     ) {
         Box(
             modifier = Modifier
                 .size(60.dp)
-                .background(Color.White.copy(alpha = 0.15f), CircleShape), // Glassmorphism nhẹ
+                // 1. Cắt theo hình tròn trước để ripple không bị tràn ra ngoài
+                .clip(CircleShape)
+                // 2. Để background
+                .background(
+                    if (isActive) Color.White else Color.White.copy(alpha = 0.15f)
+                )
+                // 3. Đặt clickable ở đây để chỉ icon phản hồi khi nhấn
+                .clickable { onClick() }
+                .padding(16.dp), // Padding để icon không chạm mép vòng tròn
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painter,
                 contentDescription = text,
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
+                tint = if (isActive) Color(0xFF141E30) else Color.White,
+                modifier = Modifier.fillMaxSize()
             )
         }
+
+        // Text ở dưới sẽ không có hiệu ứng nhấn, trông sạch sẽ hơn
         Text(
             text = text,
             color = Color.White.copy(alpha = 0.9f),
-            fontSize = 12.sp
+            fontSize = 12.sp,
+            maxLines = 1
         )
     }
 }
@@ -844,17 +898,17 @@ fun DummyCallAction(icon: ImageVector, text: String) {
 @Composable
 fun AnimatedWaveBar(delay: Int) {
     var animatedHeight by remember { mutableStateOf(8.dp) }
-    
+
     LaunchedEffect(Unit) {
         delay(delay.toLong())
-        while (true) {
+        while (isActive) {
             animatedHeight = (8..40).random().dp
             delay((100..300).random().toLong())
             animatedHeight = 8.dp
             delay((100..300).random().toLong())
         }
     }
-    
+
     Box(
         modifier = Modifier
             .width(6.dp)
@@ -866,3 +920,64 @@ fun AnimatedWaveBar(delay: Int) {
     )
 }
 
+@Composable
+fun KeypadOverlay(onDismiss: () -> Unit) {
+    // Phủ toàn bộ màn hình với màu tối mờ
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.9f))
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 1. Hiển thị số đang bấm (tùy chọn)
+        var typedText by remember { mutableStateOf("") }
+        Text(
+            text = typedText,
+            fontSize = 40.sp,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 40.dp),
+            minLines = 1
+        )
+
+        // 2. Grid bàn phím
+        val keys = listOf(
+            "1", "2", "3",
+            "4", "5", "6",
+            "7", "8", "9",
+            "*", "0", "#"
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            keys.chunked(3).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(30.dp)) {
+                    row.forEach { key ->
+                        KeypadButton(key) { typedText += key }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(60.dp))
+
+        // 3. Nút đóng bàn phím
+        TextButton(onClick = onDismiss) {
+            Text("Hide", color = Color(0xFF4CD964), fontSize = 20.sp)
+        }
+    }
+}
+
+@Composable
+fun KeypadButton(number: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(75.dp)
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.1f))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = number, fontSize = 32.sp, color = Color.White)
+    }
+}

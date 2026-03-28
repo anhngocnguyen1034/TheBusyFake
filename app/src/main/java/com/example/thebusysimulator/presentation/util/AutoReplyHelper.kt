@@ -1,8 +1,27 @@
 package com.example.thebusysimulator.presentation.util
 
+import android.content.Context
+import android.os.Build
+import java.util.Locale
+
 object AutoReplyHelper {
-    // Danh sách câu trả lời tự động cho "Mẹ"
-    private val momReplies = listOf(
+
+    // --- Locale detection ---
+    private fun currentLanguage(context: Context): String {
+        val config = context.resources.configuration
+        val locale: Locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale
+        }
+        return locale.language
+    }
+
+    private fun isVietnamese(context: Context): Boolean = currentLanguage(context) == "vi"
+
+    // --- Mẹ / Mom ---
+    private val momRepliesVi = listOf(
         "Con ơi, mẹ đang bận một chút. Con có cần gì không?",
         "Mẹ nhớ con lắm. Con ăn cơm chưa?",
         "Con về nhà sớm nhé, mẹ nấu món con thích đấy.",
@@ -24,16 +43,50 @@ object AutoReplyHelper {
         "Con đừng quên tập thể dục nhé. Sức khỏe là vàng.",
         "Mẹ yêu con nhiều lắm. Con là niềm tự hào của mẹ."
     )
-    
-    // Tin nhắn mặc định khi khởi động
-    val defaultMomMessages = listOf(
+
+    private val momRepliesEn = listOf(
+        "Hey, I'm a bit busy right now. Do you need anything?",
+        "I miss you. Have you eaten yet?",
+        "Come home early, I cooked your favorite dish.",
+        "I'm out shopping. Do you want me to buy anything for you?",
+        "Have you finished studying? Don't stay up too late.",
+        "You look a bit tired lately. Are you okay?",
+        "Remember to drink enough water. Your health matters.",
+        "I'm cooking dinner. Come home and eat with me.",
+        "Do you remember what day it is today? I'm thinking of you.",
+        "I'm thinking about you. Do you want to talk for a bit?",
+        "Don't forget to dress warmly, it's getting cold.",
+        "I just baked something. Come home and try it.",
+        "Are your friends coming over? I'll prepare some food.",
+        "I know you're working hard. Try your best but don't overdo it.",
+        "Call me when you get home, so I won't worry.",
+        "I'm tidying up the house. Come help me when you're free.",
+        "Is there anything special you'd like me to cook for you?",
+        "I miss when you were little. Time flies so fast.",
+        "Don't forget to exercise a bit. Health is golden.",
+        "I love you so much. You make me proud every day."
+    )
+
+    private fun momReplies(context: Context): List<String> =
+        if (isVietnamese(context)) momRepliesVi else momRepliesEn
+
+    private val defaultMomMessagesVi = listOf(
         "Con ơi, mẹ nhớ con lắm. Con có khỏe không?",
         "Mẹ vừa nấu món con thích đấy. Con về nhà sớm nhé.",
         "Con đừng quên ăn đủ bữa nhé. Mẹ lo lắng lắm."
     )
-    
-    // Danh sách câu trả lời tự động cho "Người yêu"
-    private val loverReplies = listOf(
+
+    private val defaultMomMessagesEn = listOf(
+        "Hey, I miss you. How are you doing?",
+        "I just cooked your favorite dish. Come home early, okay?",
+        "Don't skip your meals, I worry about you."
+    )
+
+    fun defaultMomMessages(context: Context): List<String> =
+        if (isVietnamese(context)) defaultMomMessagesVi else defaultMomMessagesEn
+
+    // --- Người yêu / Lover ---
+    private val loverRepliesVi = listOf(
         "Mình nhớ bạn lắm. Bạn đang làm gì thế?",
         "Hôm nay bạn có rảnh không? Mình đi chơi nhé.",
         "Mình vừa nghĩ về bạn. Bạn có nhớ mình không?",
@@ -55,16 +108,50 @@ object AutoReplyHelper {
         "Mình thấy hôm nay bạn có vẻ mệt. Bạn có ổn không?",
         "Bạn là lý do mình thức dậy mỗi sáng với nụ cười. Mình yêu bạn."
     )
-    
-    // Tin nhắn mặc định khi khởi động cho người yêu
-    val defaultLoverMessages = listOf(
+
+    private val loverRepliesEn = listOf(
+        "I really miss you. What are you up to?",
+        "Are you free today? Let's go out together.",
+        "I was just thinking about you. Do you miss me too?",
+        "I love you so much, you know that?",
+        "I'm feeling a bit down today. Can we talk for a while?",
+        "I want to see you. When can we meet?",
+        "What are you doing right now? I miss you a lot.",
+        "I just watched a great movie. Let's watch it together sometime.",
+        "Are you hungry? I can cook your favorite food.",
+        "You look so good today. I really like it.",
+        "Do you want to grab a coffee? I'd really love to see you.",
+        "I'm listening to sad songs... can you stay with me for a bit?",
+        "You are the most important person to me. I love you.",
+        "I just bought you a gift. Want a hint?",
+        "I'm happy today because of you. Thank you.",
+        "Do you remember the first time we met? I still do.",
+        "I want to be by your side forever. Would you like that?",
+        "Don't skip your meals, I worry about you.",
+        "You seem a bit tired today. Are you okay?",
+        "You're the reason I wake up with a smile every morning."
+    )
+
+    private fun loverReplies(context: Context): List<String> =
+        if (isVietnamese(context)) loverRepliesVi else loverRepliesEn
+
+    private val defaultLoverMessagesVi = listOf(
         "Mình nhớ bạn lắm. Bạn có khỏe không?",
         "Hôm nay mình muốn gặp bạn. Mình đi chơi nhé.",
         "Mình yêu bạn nhiều lắm. Bạn biết không?"
     )
-    
-    // Danh sách câu trả lời tự động cho "Bác sĩ"
-    private val doctorReplies = listOf(
+
+    private val defaultLoverMessagesEn = listOf(
+        "I miss you. How have you been?",
+        "I really want to see you today. Let's go out.",
+        "I love you so much. You know that, right?"
+    )
+
+    fun defaultLoverMessages(context: Context): List<String> =
+        if (isVietnamese(context)) defaultLoverMessagesVi else defaultLoverMessagesEn
+
+    // --- Bác sĩ / Doctor ---
+    private val doctorRepliesVi = listOf(
         "Bạn nhớ kiểm tra xem đã uống đủ nước chưa? Não bộ chứa khoảng 73% là nước, mất nước nhẹ cũng làm giảm trí nhớ và sự tập trung đấy.",
         "Nếu bạn đang nhìn màn hình lâu, hãy áp dụng quy tắc 20-20-20: Cứ 20 phút, nhìn xa 6 mét trong 20 giây để giảm cận thị giả.",
         "Thử bài tập thở này xem: Hít vào bằng mũi 4 giây, giữ hơi 7 giây, rồi thở ra bằng miệng 8 giây. Nó giúp hệ thần kinh thư giãn ngay lập tức.",
@@ -86,15 +173,48 @@ object AutoReplyHelper {
         "Hãy chớp mắt thường xuyên hơn. Khi tập trung vào màn hình, tần số chớp mắt giảm 66% gây khô và mỏi mắt.",
         "Một nụ cười giúp giãn cơ mặt và giảm hormone căng thẳng. Dù có đang bận, hãy thử cười một cái xem sao!"
     )
-    
-    // Tin nhắn mặc định khi khởi động cho bác sĩ
-    val defaultDoctorMessages = listOf(
+
+    private val doctorRepliesEn = listOf(
+        "Have you had enough water today? Even mild dehydration can affect memory and focus.",
+        "If you're staring at a screen, try the 20-20-20 rule: every 20 minutes, look 20 feet away for 20 seconds.",
+        "Try this breathing exercise: inhale 4 seconds, hold 7, exhale 8. It calms your nervous system.",
+        "Are you slouching right now? Bad posture reduces oxygen to your brain. Stand up and stretch a bit.",
+        "Chronic stress raises cortisol, which can hurt your immune system. Relax your shoulders and breathe.",
+        "Try to sleep before 11 PM. Your brain needs deep sleep to 'clean up' the toxins of the day.",
+        "Breakfast jump-starts your metabolism. Skipping it is like running a car without fuel.",
+        "Avoid too much sugar in the afternoon; the crash will make you even more tired.",
+        "Your body is built to move. Walk around a bit every hour to protect your heart.",
+        "Limit phone use an hour before bed. Blue light makes it harder to fall into deep sleep.",
+        "If you can, get some morning sunlight. It boosts Vitamin D and your mood.",
+        "Your gut is your 'second brain'. Eat some fiber or yogurt to keep it happy.",
+        "Avoid coffee too late in the day. Caffeine can stay in your system for hours.",
+        "Sometimes the best medicine is turning off notifications for a while.",
+        "Don't ignore small pains; they're your body's way of asking for a break.",
+        "Try to find one small thing that makes you smile every day.",
+        "A slightly cool room actually helps you fall asleep faster and deeper.",
+        "Work will always be there; your health won't. Take care of yourself first.",
+        "Remember to blink more when focused on screens to avoid dry eyes.",
+        "A simple smile can relax your face and lower stress hormones."
+    )
+
+    private fun doctorReplies(context: Context): List<String> =
+        if (isVietnamese(context)) doctorRepliesVi else doctorRepliesEn
+
+    private val defaultDoctorMessagesVi = listOf(
         "Bạn nhớ kiểm tra xem đã uống đủ nước chưa? Não bộ chứa khoảng 73% là nước, mất nước nhẹ cũng làm giảm trí nhớ và sự tập trung đấy.",
         "Nếu bạn đang nhìn màn hình lâu, hãy áp dụng quy tắc 20-20-20: Cứ 20 phút, nhìn xa 6 mét trong 20 giây để giảm cận thị giả."
     )
-    
-    // Danh sách câu trả lời tự động cho "Nhà khoa học"
-    private val scientistReplies = listOf(
+
+    private val defaultDoctorMessagesEn = listOf(
+        "Have you checked if you've had enough water today? Your brain needs it to focus.",
+        "If you stare at screens a lot, try the 20-20-20 rule to rest your eyes."
+    )
+
+    fun defaultDoctorMessages(context: Context): List<String> =
+        if (isVietnamese(context)) defaultDoctorMessagesVi else defaultDoctorMessagesEn
+
+    // --- Nhà khoa học / Scientist ---
+    private val scientistRepliesVi = listOf(
         "Bạn thực chất là 'bụi sao'. Các nguyên tử Carbon, Nitơ trong cơ thể bạn được tạo ra từ lò phản ứng hạt nhân của các ngôi sao đã chết hàng tỷ năm trước.",
         "Một ngày trên Sao Kim dài hơn cả một năm trên Sao Kim. Nó quay quanh trục mất 243 ngày Trái Đất, nhưng quay quanh Mặt Trời chỉ mất 225 ngày.",
         "Khi nhìn lên bầu trời, bạn đang nhìn về quá khứ. Ánh sáng Mặt Trời mất 8 phút 20 giây để đến đây. Nếu Mặt Trời tắt, 8 phút sau chúng ta mới biết.",
@@ -116,15 +236,48 @@ object AutoReplyHelper {
         "Trên Sao Hải Vương và Sao Thiên Vương, áp suất cực lớn có thể khiến carbon bị nén lại và tạo ra những cơn mưa kim cương thực sự.",
         "Loài Gấu nước (Tardigrade) có thể sống sót trong chân không vũ trụ, chịu được phóng xạ và nhiệt độ sôi, là sinh vật 'bất tử' nhất Trái Đất."
     )
-    
-    // Tin nhắn mặc định khi khởi động cho nhà khoa học
-    val defaultScientistMessages = listOf(
+
+    private val scientistRepliesEn = listOf(
+        "You are literally made of stardust. The atoms in your body were forged in ancient stars.",
+        "A day on Venus is longer than a year there. It spins once every 243 Earth days but orbits the Sun in 225.",
+        "When you look at the stars, you're looking into the past. Sunlight takes about 8 minutes to reach Earth.",
+        "If you stretched all the DNA in your body in a line, it would reach far beyond Pluto and back many times.",
+        "Atoms are mostly empty space. If you removed the empty space from all humans, we'd fit into a sugar cube.",
+        "Octopuses have three hearts, nine brains, and blue blood due to copper instead of iron.",
+        "Sharks are older than trees. They appeared around 400 million years ago; trees, about 350 million.",
+        "Cleopatra lived closer in time to the invention of the iPhone than to the building of the Great Pyramid.",
+        "A fluffy white cloud can weigh around 500 tons, yet floats because the air beneath it is even heavier.",
+        "Bananas are slightly radioactive due to potassium-40—but you'd need millions at once to be in danger.",
+        "A teaspoon of neutron star material would weigh billions of tons on Earth.",
+        "Your body hosts more bacterial cells than human cells—you are basically a walking ecosystem.",
+        "Some of the water molecules you drink are older than the Sun itself.",
+        "Your brain awake can power a small LED bulb with its electrical activity.",
+        "Most gold on Earth arrived via ancient cosmic collisions and meteorites, not from our planet.",
+        "Astronauts say space smells like hot metal, seared steak, and welding fumes on their suits.",
+        "Mount Everest is still growing a few millimeters each year as tectonic plates push together.",
+        "The largest living organism is a fungus in Oregon, spreading across hundreds of hectares.",
+        "On Uranus and Neptune, extreme pressure may create real diamond rain.",
+        "Tardigrades can survive in space, high radiation, and boiling or freezing conditions."
+    )
+
+    private fun scientistReplies(context: Context): List<String> =
+        if (isVietnamese(context)) scientistRepliesVi else scientistRepliesEn
+
+    private val defaultScientistMessagesVi = listOf(
         "Bạn thực chất là 'bụi sao'. Các nguyên tử Carbon, Nitơ trong cơ thể bạn được tạo ra từ lò phản ứng hạt nhân của các ngôi sao đã chết hàng tỷ năm trước.",
         "Một ngày trên Sao Kim dài hơn cả một năm trên Sao Kim. Nó quay quanh trục mất 243 ngày Trái Đất, nhưng quay quanh Mặt Trời chỉ mất 225 ngày."
     )
-    
-    // Danh sách câu trả lời tự động cho các contact tự tạo (generic)
-    private val genericReplies = listOf(
+
+    private val defaultScientistMessagesEn = listOf(
+        "You are literally made of stardust. The atoms in your body came from ancient stars.",
+        "A day on Venus is longer than its year—it spins slower than it orbits the Sun."
+    )
+
+    fun defaultScientistMessages(context: Context): List<String> =
+        if (isVietnamese(context)) defaultScientistMessagesVi else defaultScientistMessagesEn
+
+    // --- Generic replies ---
+    private val genericRepliesVi = listOf(
         "Ồ, mình vừa thấy tin nhắn của bạn. Bạn đang làm gì thế?",
         "Cảm ơn bạn đã nhắn tin. Mình đang bận một chút, lát nữa trả lời nhé.",
         "Mình thấy tin nhắn rồi. Bạn có cần gì không?",
@@ -146,95 +299,70 @@ object AutoReplyHelper {
         "Mình thấy tin nhắn rồi. Bạn muốn làm gì?",
         "Xin chào! Mình đang ở đây. Bạn nói đi."
     )
+
+    private val genericRepliesEn = listOf(
+        "Hey, I just saw your message. What are you up to?",
+        "Thanks for texting. I'm a bit busy, I'll reply properly in a moment.",
+        "I saw your message. Do you need anything?",
+        "Hi! I'm here and listening. What would you like to say?",
+        "Just read your message. How are you feeling today?",
+        "Thanks for reaching out. I'll get back to you soon.",
+        "I saw your message. How's your day going?",
+        "Hey, I'm here. Go ahead, I'm listening.",
+        "I just read your message. Do you want to meet up?",
+        "Thanks, I'm thinking about what you said.",
+        "I saw your text. Are you free right now?",
+        "Hi! I'm around. Do you need anything?",
+        "I just checked your message. Want to chat for a bit?",
+        "Thanks for your message. I'll reply in a second.",
+        "Got your message. Where are you now?",
+        "Hey, I'm listening. Keep talking.",
+        "Just read your message. Hope you're doing okay.",
+        "Thanks, I'm considering it.",
+        "I saw your message. What would you like to do?",
+        "Hey, I'm here. Tell me more."
+    )
+
+    private fun genericReplies(context: Context): List<String> =
+        if (isVietnamese(context)) genericRepliesVi else genericRepliesEn
     
-    /**
-     * Lấy câu trả lời tiếp theo dựa trên index cho Mẹ
-     * Index sẽ được lưu trong database hoặc state
-     */
-    fun getNextReply(replyIndex: Int): String {
-        return if (replyIndex < momReplies.size) {
-            momReplies[replyIndex]
-        } else {
-            // Nếu hết câu trả lời, quay lại từ đầu
-            momReplies[replyIndex % momReplies.size]
-        }
+    // --- Public APIs used bởi ViewModel (đã locale-aware) ---
+
+    fun getNextReply(context: Context, replyIndex: Int): String {
+        val list = momReplies(context)
+        return list[replyIndex % list.size]
     }
-    
-    /**
-     * Lấy câu trả lời tiếp theo dựa trên index cho Người yêu
-     * Index sẽ được lưu trong database hoặc state
-     */
-    fun getNextLoverReply(replyIndex: Int): String {
-        return if (replyIndex < loverReplies.size) {
-            loverReplies[replyIndex]
-        } else {
-            // Nếu hết câu trả lời, quay lại từ đầu
-            loverReplies[replyIndex % loverReplies.size]
-        }
+
+    fun getNextMomReply(context: Context, replyIndex: Int): String = getNextReply(context, replyIndex)
+
+    fun getNextLoverReply(context: Context, replyIndex: Int): String {
+        val list = loverReplies(context)
+        return list[replyIndex % list.size]
     }
-    
-    /**
-     * Lấy câu trả lời tiếp theo dựa trên index cho Bác sĩ
-     * Index sẽ được lưu trong database hoặc state
-     */
-    fun getNextDoctorReply(replyIndex: Int): String {
-        return if (replyIndex < doctorReplies.size) {
-            doctorReplies[replyIndex]
-        } else {
-            // Nếu hết câu trả lời, quay lại từ đầu
-            doctorReplies[replyIndex % doctorReplies.size]
-        }
+
+    fun getNextDoctorReply(context: Context, replyIndex: Int): String {
+        val list = doctorReplies(context)
+        return list[replyIndex % list.size]
     }
-    
-    /**
-     * Lấy câu trả lời tiếp theo dựa trên index cho Nhà khoa học
-     * Index sẽ được lưu trong database hoặc state
-     */
-    fun getNextScientistReply(replyIndex: Int): String {
-        return if (replyIndex < scientistReplies.size) {
-            scientistReplies[replyIndex]
-        } else {
-            // Nếu hết câu trả lời, quay lại từ đầu
-            scientistReplies[replyIndex % scientistReplies.size]
-        }
+
+    fun getNextScientistReply(context: Context, replyIndex: Int): String {
+        val list = scientistReplies(context)
+        return list[replyIndex % list.size]
     }
-    
-    /**
-     * Lấy tổng số câu trả lời cho Mẹ
-     */
-    fun getTotalReplies(): Int = momReplies.size
-    
-    /**
-     * Lấy tổng số câu trả lời cho Người yêu
-     */
-    fun getTotalLoverReplies(): Int = loverReplies.size
-    
-    /**
-     * Lấy tổng số câu trả lời cho Bác sĩ
-     */
-    fun getTotalDoctorReplies(): Int = doctorReplies.size
-    
-    /**
-     * Lấy tổng số câu trả lời cho Nhà khoa học
-     */
-    fun getTotalScientistReplies(): Int = scientistReplies.size
-    
-    /**
-     * Lấy câu trả lời tiếp theo dựa trên index cho các contact tự tạo (generic)
-     * Index sẽ được lưu trong database hoặc state
-     */
-    fun getNextGenericReply(replyIndex: Int): String {
-        return if (replyIndex < genericReplies.size) {
-            genericReplies[replyIndex]
-        } else {
-            // Nếu hết câu trả lời, quay lại từ đầu
-            genericReplies[replyIndex % genericReplies.size]
-        }
+
+    fun getTotalReplies(context: Context): Int = momReplies(context).size
+
+    fun getTotalLoverReplies(context: Context): Int = loverReplies(context).size
+
+    fun getTotalDoctorReplies(context: Context): Int = doctorReplies(context).size
+
+    fun getTotalScientistReplies(context: Context): Int = scientistReplies(context).size
+
+    fun getNextGenericReply(context: Context, replyIndex: Int): String {
+        val list = genericReplies(context)
+        return list[replyIndex % list.size]
     }
-    
-    /**
-     * Lấy tổng số câu trả lời cho các contact tự tạo
-     */
-    fun getTotalGenericReplies(): Int = genericReplies.size
+
+    fun getTotalGenericReplies(context: Context): Int = genericReplies(context).size
 }
 
