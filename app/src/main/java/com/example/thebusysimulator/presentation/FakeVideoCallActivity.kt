@@ -56,6 +56,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource

@@ -118,10 +118,10 @@ object AppContainer {
     }
     
     fun createMessageViewModel(): MessageViewModel {
-        requireNotNull(context) { "AppContainer must be initialized with context" }
+        val ctx = requireNotNull(context) { "AppContainer must be initialized with context" }
         return MessageViewModel(
             messageRepository = messageRepository,
-            context = context
+            context = ctx
         )
     }
     

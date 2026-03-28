@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.ui.draw.clip

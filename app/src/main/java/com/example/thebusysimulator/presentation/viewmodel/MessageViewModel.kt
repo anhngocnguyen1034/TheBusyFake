@@ -124,7 +124,7 @@ class MessageViewModel(
                 }
                 
                 // Lưu messageId và loại contact
-                prefs.edit()?.apply {
+                prefs.edit().apply {
                     putString("mom_message_id", momId)
                     putString("contact_type_$momId", "mom")
                     putInt("reply_index_$momId", 0)
@@ -132,7 +132,7 @@ class MessageViewModel(
                 }.apply()
             } else {
                 // Nếu đã có tin nhắn mẹ trong database, cũng đánh dấu đã khởi tạo
-                prefs.edit()?.putBoolean("mom_messages_initialized", true)?.apply()
+                prefs.edit().putBoolean("mom_messages_initialized", true)?.apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -190,7 +190,7 @@ class MessageViewModel(
                 }
                 
                 // Lưu messageId và loại contact
-                prefs.edit()?.apply {
+                prefs.edit().apply {
                     putString("lover_message_id", loverId)
                     putString("contact_type_$loverId", "lover")
                     putInt("reply_index_$loverId", 0)
@@ -198,7 +198,7 @@ class MessageViewModel(
                 }.apply()
             } else {
                 // Nếu đã có tin nhắn người yêu trong database, cũng đánh dấu đã khởi tạo
-                prefs.edit()?.putBoolean("lover_messages_initialized", true)?.apply()
+                prefs.edit().putBoolean("lover_messages_initialized", true)?.apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -256,7 +256,7 @@ class MessageViewModel(
                 }
                 
                 // Lưu messageId và loại contact
-                prefs.edit()?.apply {
+                prefs.edit().apply {
                     putString("doctor_message_id", doctorId)
                     putString("contact_type_$doctorId", "doctor")
                     putInt("reply_index_$doctorId", 0)
@@ -264,7 +264,7 @@ class MessageViewModel(
                 }.apply()
             } else {
                 // Nếu đã có tin nhắn bác sĩ trong database, cũng đánh dấu đã khởi tạo
-                prefs.edit()?.putBoolean("doctor_messages_initialized", true)?.apply()
+                prefs.edit().putBoolean("doctor_messages_initialized", true)?.apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -322,7 +322,7 @@ class MessageViewModel(
                 }
                 
                 // Lưu messageId và loại contact
-                prefs.edit()?.apply {
+                prefs.edit().apply {
                     putString("scientist_message_id", scientistId)
                     putString("contact_type_$scientistId", "scientist")
                     putInt("reply_index_$scientistId", 0)
@@ -330,7 +330,7 @@ class MessageViewModel(
                 }.apply()
             } else {
                 // Nếu đã có tin nhắn nhà khoa học trong database, cũng đánh dấu đã khởi tạo
-                prefs.edit()?.putBoolean("scientist_messages_initialized", true)?.apply()
+                prefs.edit().putBoolean("scientist_messages_initialized", true)?.apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -486,7 +486,7 @@ class MessageViewModel(
                             "scientist" -> AutoReplyHelper.getTotalScientistReplies(context)
                             else -> 1
                         }
-                        prefs.edit()?.putInt("reply_index_$messageId", nextIndex)?.apply()
+                        prefs.edit().putInt("reply_index_$messageId", nextIndex)?.apply()
                     }
                 }
             } catch (e: Exception) {
