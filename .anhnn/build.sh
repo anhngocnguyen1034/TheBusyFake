@@ -3,6 +3,11 @@
 # ─────────────────────────────────────────────
 # Cấu hình
 # ─────────────────────────────────────────────
+GITHUB_OWNER="anhngocnguyen1034"
+GITHUB_REPO="TheBusyFake"
+# GITHUB_TOKEN: truyền từ Jenkins qua biến môi trường (Jenkins Credential)
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+
 # WEBHOOKS nhận từ Jenkins qua biến môi trường
 DISCORD_WEBHOOK_SUCCESS="${WEBHOOK_SUCCESS:-}"
 DISCORD_WEBHOOK_JENKINS="${WEBHOOK_JENKINS:-}"
@@ -139,22 +144,115 @@ auto_create_tag() {
 }
 
 # ─────────────────────────────────────────────
-# Gửi thông báo Discord khi build thành công
+# Upload APK lên GitHub Releases
+# ─────────────────────────────────────────────
+upload_to_github_release() {
+    local file="$1"
+    local tag="$2"
+    local file_name
+    file_name=$(basename "$file")
+
+    if [ -z "$GITHUB_TOKEN" ]; then
+        echo "WARN: GITHUB_TOKEN không được set, bỏ qua upload GitHub Release"
+        echo ""
+        return
+    fi
+
+    echo "Tạo GitHub Release: $tag"
+
+    # Tạo release (bỏ qua lỗi nếu đã tồn tại)
+    release_response=$(curl -sS -X POST \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        -H "Content-Type: application/json" \
+        "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases" \
+        -d "{
+            \"tag_name\": \"$tag\",
+            \"name\": \"$tag [$current_branch]\",
+            \"body\": \"Auto build từ Jenkins\\nBranch: $current_branch\\nBuild: #${BUILD_NUMBER:-?}\",
+            \"draft\": false,
+            \"prerelease\": $([ \"$current_branch\" == \"main\" ] && echo 'false' || echo 'true')
+        }")
+
+    # Lấy upload_url (xử lý cả trường hợp release đã tồn tại)
+    upload_url=$(echo "$release_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('upload_url',''))" 2>/dev/null | sed 's/{?name,label}//')
+
+    if [ -z "$upload_url" ]; then
+        # Release đã tồn tại, lấy lại upload_url
+        upload_url=$(curl -sS \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/tags/$tag" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('upload_url',''))" 2>/dev/null | sed 's/{?name,label}//')
+    fi
+
+    if [ -z "$upload_url" ]; then
+        echo "WARN: Không lấy được upload_url, bỏ qua upload"
+        echo ""
+        return
+    fi
+
+    echo "Upload: $file_name → GitHub Release $tag"
+    asset_response=$(curl -sS -X POST \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        -H "Content-Type: application/octet-stream" \
+        "$upload_url?name=$file_name" \
+        --data-binary @"$file")
+
+    # Lấy download URL của asset
+    download_url=$(echo "$asset_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('browser_download_url',''))" 2>/dev/null)
+    echo "Download URL: $download_url"
+    echo "$download_url"
+}
+
+# ─────────────────────────────────────────────
+# Gửi thông báo Discord khi build thành công + QR
 # ─────────────────────────────────────────────
 notify_discord_success() {
     local file="$1"
     local elapsed_seconds="$2"
+    local download_url="$3"
     local file_name
     file_name=$(basename "$file")
     local size
     size=$(ls -lh "$file" | awk '{print $5}')
 
+    local qr=""
+    local description
+
+    if [ -n "$download_url" ]; then
+        # Tạo QR từ download URL (dùng api.qrserver.com public, không cần server)
+        local encoded_url
+        encoded_url=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$download_url")
+        qr="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$encoded_url"
+
+        description=$(printf "File: [%s](%s)\nTag: *%s*\nBranch: *%s*\nSize: *%s*\nBuild time: *%ss*" \
+            "$file_name" "$download_url" \
+            "$newTag" "$current_branch" \
+            "$size" "$elapsed_seconds")
+    else
+        description=$(printf "File: \`%s\`\nTag: *%s*\nBranch: *%s*\nSize: *%s*\nBuild time: *%ss*\n⚠️ Không có GitHub Token — APK không được upload" \
+            "$file_name" \
+            "$newTag" "$current_branch" \
+            "$size" "$elapsed_seconds")
+    fi
+
     local JSON_PAYLOAD
-    JSON_PAYLOAD=$(jq -n \
-        --arg username "${GIT_AUTHOR_NAME:-Jenkins}" \
-        --arg title "✅ Build Success - $current_branch" \
-        --arg description "File: \`$file_name\`\nTag: *$newTag*\nBranch: *$current_branch*\nSize: *$size*\nBuild time: *${elapsed_seconds}s*" \
-        '{username: $username, embeds: [{title: $title, description: $description, color: 3066993}]}')
+    if [ -n "$qr" ]; then
+        JSON_PAYLOAD=$(jq -n \
+            --arg username "${GIT_AUTHOR_NAME:-Jenkins}" \
+            --arg avatar_url "https://mirrors.tuna.tsinghua.edu.cn/jenkins/art/jenkins-logo/256x256/headshot.png" \
+            --arg title "✅ Build Success - $current_branch" \
+            --arg url "$download_url" \
+            --arg description "$description" \
+            --arg image_url "$qr" \
+            '{username: $username, avatar_url: $avatar_url, embeds: [{title: $title, url: $url, description: $description, color: 3066993, image: {url: $image_url}}]}')
+    else
+        JSON_PAYLOAD=$(jq -n \
+            --arg username "${GIT_AUTHOR_NAME:-Jenkins}" \
+            --arg avatar_url "https://mirrors.tuna.tsinghua.edu.cn/jenkins/art/jenkins-logo/256x256/headshot.png" \
+            --arg title "✅ Build Success - $current_branch" \
+            --arg description "$description" \
+            '{username: $username, avatar_url: $avatar_url, embeds: [{title: $title, description: $description, color: 3066993}]}')
+    fi
 
     curl -sS -H 'Content-Type: application/json' -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_SUCCESS"
 }
@@ -169,9 +267,10 @@ notify_discord_failure() {
     local JSON_PAYLOAD
     JSON_PAYLOAD=$(jq -n \
         --arg username "${GIT_AUTHOR_NAME:-Jenkins}" \
+        --arg avatar_url "https://mirrors.tuna.tsinghua.edu.cn/jenkins/art/jenkins-logo/256x256/headshot.png" \
         --arg title "❌ Build THẤT BẠI - $current_branch" \
         --arg description "Branch: \`$current_branch\`\nCommit: \`$commit\`\nBuild: [#${BUILD_NUMBER:-?}]($build_url)" \
-        '{username: $username, embeds: [{title: $title, description: $description, color: 15158332}]}')
+        '{username: $username, avatar_url: $avatar_url, embeds: [{title: $title, description: $description, color: 15158332}]}')
 
     curl -sS -H 'Content-Type: application/json' -X POST -d "$JSON_PAYLOAD" "$DISCORD_WEBHOOK_JENKINS"
 }
@@ -216,9 +315,11 @@ auto_create_tag
 end_time=$(date +%s)
 elapsed_seconds=$((end_time - start_time))
 
+# Upload và notify từng file
 for file in $(find app/build -type f \( -name "*.apk" -o -name "*.aab" \)); do
-    echo "Notify Discord: $file"
-    notify_discord_success "$file" "$elapsed_seconds"
+    echo "Processing: $file"
+    download_url=$(upload_to_github_release "$file" "$newTag")
+    notify_discord_success "$file" "$elapsed_seconds" "$download_url"
 done
 
 echo "================================================"

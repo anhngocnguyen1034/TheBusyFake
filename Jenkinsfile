@@ -6,10 +6,11 @@ pipeline {
         ANDROID_HOME = '/Users/nguyenquocchinh/Library/Android/sdk'
         PATH         = "/opt/homebrew/bin:${env.JAVA_HOME}/bin:${env.ANDROID_HOME}/tools:${env.ANDROID_HOME}/platform-tools:${env.PATH}"
 
-        // Discord Webhooks — thay YOUR_ID/YOUR_TOKEN bằng webhook thực tế
         WEBHOOK_GITHUB  = 'https://discord.com/api/webhooks/1485532290795835403/Spxq-09qW7l4-NSbgS965FECBOK-SpzIUuWeAbS4kvxwet13B0HY7p7CLeo7lGCiFRi9'
         WEBHOOK_JENKINS = 'https://discord.com/api/webhooks/1485532554764353546/T-5d7HbtSCgWkQUe-sdNWqZN3_2qyr7LgX1O_aHvAplo037pTnLkliGuuBKeK29S4iwS'
         WEBHOOK_SUCCESS = 'https://discord.com/api/webhooks/1485532912970502257/9SMn_kHU8aExSP1Xov74Tnj9NApaQeS1MVudJB-9TN9LUlf6Hz1cfNUkiKcEIz3vvME1'
+        // GitHub Token để upload APK lên GitHub Releases và tạo QR
+        GITHUB_TOKEN    = credentials('GITHUB_TOKEN')
     }
 
     stages {
@@ -51,7 +52,7 @@ pipeline {
         stage('Build & Deploy') {
             steps {
                 sh 'chmod +x .anhnn/build.sh'
-                withEnv(["WEBHOOK_SUCCESS=${env.WEBHOOK_SUCCESS}", "WEBHOOK_JENKINS=${env.WEBHOOK_JENKINS}"]) {
+                withEnv(["WEBHOOK_SUCCESS=${env.WEBHOOK_SUCCESS}", "WEBHOOK_JENKINS=${env.WEBHOOK_JENKINS}", "GITHUB_TOKEN=${env.GITHUB_TOKEN}"]) {
                     sh '.anhnn/build.sh'
                 }
             }
