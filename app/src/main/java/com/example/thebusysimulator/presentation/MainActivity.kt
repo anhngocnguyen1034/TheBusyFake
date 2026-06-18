@@ -23,8 +23,8 @@ import com.example.thebusysimulator.presentation.navigation.NavGraph
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
 import com.example.thebusysimulator.presentation.util.PermissionHelper
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
-import com.example.thebusysimulator.data.datasource.LanguageDataSource
-import com.example.thebusysimulator.presentation.util.LanguageManager
+import com.anhnn.language.LanguageDataSource
+import com.anhnn.language.LanguageManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 

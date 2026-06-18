@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.thebusysimulator.presentation.ui.screen.*
+import com.anhnn.language.LanguageScreen
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
@@ -86,7 +87,11 @@ fun NavGraph(
         }
         
         composable(Screen.Language.route) {
-            LanguageSelectionScreen(navController = navController)
+            val context = androidx.compose.ui.platform.LocalContext.current
+            LanguageScreen(
+                onBack = { navController.popBackStack() },
+                onLanguageSaved = { (context as? android.app.Activity)?.recreate() }
+            )
         }
         
         composable(Screen.CallHistory.route) {

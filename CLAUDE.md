@@ -18,7 +18,13 @@ Run a single test class:
 ./gradlew test --tests "com.example.thebusysimulator.ExampleUnitTest"
 ```
 
-CI builds are handled by `.anhnn/build.sh` (called from `Jenkinsfile`) — it auto-increments version, builds, and sends Discord notifications.
+CI builds are handled by `.anhnn/build.sh` (called from `Jenkinsfile`) — it auto-increments version, builds, and uploads to GitHub Releases with a QR code Discord notification.
+
+## SDK & Language Versions
+
+- `compileSdk` / `targetSdk` = 36, `minSdk` = 24
+- Kotlin 2.0.21, Java 11, KSP for annotation processing
+- Compose BOM 2024.09.00, Room 2.6.1, Navigation Compose 2.8.4
 
 ## Architecture
 
@@ -26,39 +32,44 @@ Clean Architecture with 3 layers. Dependency direction: `presentation → domain
 
 ```
 domain/       # Pure Kotlin — no Android dependencies
-  model/      # Domain entities (FakeCall, Message, ChatMessage, FakeNotification)
+  model/      # FakeCall, Message, ChatMessage, FakeNotification
   repository/ # Repository interfaces
-  usecase/    # Business logic (Schedule/Cancel/Get/MarkCompleted for fake calls)
+  usecase/    # Schedule/Cancel/Get/MarkCompleted for fake calls
+  util/       # CallScheduler interface
 
 data/         # Android-aware implementations
-  dao/        # Room DAOs
+  dao/        # Room DAOs (FakeCall, Message, ChatMessage, FakeNotification)
   database/   # AppDatabase (Room v8, 7 migrations)
   datasource/ # Local data sources (Room + DataStore)
   mapper/     # Entity ↔ Domain model converters
+  model/      # Room entities + data models
   repository/ # Repository implementations
 
 presentation/ # UI layer (Jetpack Compose)
-  di/         # Manual DI via AppContainer (lazy singletons — not Hilt/Koin)
-  navigation/ # NavGraph + Screen sealed class
-  receiver/   # BroadcastReceivers for fake call/message triggers
-  service/    # Foreground services for fake call notifications
-  ui/screen/  # Compose screens (one file per screen)
-  ui/theme/   # Material Design 3, supports Light/Dark/System via DataStore
+  di/         # AppContainer — manual DI via lazy singletons (no Hilt/Koin)
+  navigation/ # NavGraph + Screen sealed class (11 routes)
+  receiver/   # BroadcastReceivers: FakeCallReceiver, FakeMessageReceiver
+  service/    # Foreground services: FakeCallNotificationService, FakeCallService, FakeMessageNotificationService
+  ui/screen/  # One Compose file per screen
+  ui/theme/   # Material Design 3, Light/Dark/System via DataStore
+  ui/component/ # Reusable Compose components
   viewmodel/  # FakeCallViewModel, MessageViewModel, FakeMessageViewModel
-  util/       # AlarmSchedulerImpl, PermissionHelper, LanguageManager
+  util/       # AlarmSchedulerImpl, PermissionHelper, LanguageManager, DateUtils, ImageHelper
 ```
+
+Activities: `MainActivity`, `FakeCallActivity` (full-screen incoming call UI), `FakeVideoCallActivity`.
 
 ## Key Patterns
 
-- **Dependency Injection**: Manual `AppContainer` in `presentation/di/`. All dependencies are `lazy`. No Hilt/Koin.
-- **Navigation**: Compose Navigation. Screens defined in `Screen.kt` as a sealed class/object.
-- **Database**: Room with explicit migrations. Always add a migration when changing schema — `AppDatabase` is currently at version 8.
-- **Settings persistence**: DataStore Preferences (theme mode, language).
+- **Dependency Injection**: `AppContainer` singleton requires `AppContainer.init(context)` before use. All deps are `lazy`.
+- **Navigation**: Compose Navigation. `Screen.kt` sealed class defines all 11 routes. `Chat` route uses URL-encoded args: `chat/{contactName}/{messageId}`.
+- **Database**: Room with explicit migrations. **Always add a migration when changing the schema.** `AppDatabase` is at version 8. Version code formula: `major*1000000 + minor*10000 + patch*100 + develop`.
+- **Settings persistence**: DataStore Preferences for theme mode and language. Language switching requires `attachBaseContext` override.
 - **Fake Call flow**: `ScheduleFakeCallUseCase` → `AlarmSchedulerImpl` (AlarmManager exact alarm) → `FakeCallReceiver` → `FakeCallNotificationService` → `FakeCallActivity` (full-screen intent).
-- **Permissions required**: `SCHEDULE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, camera.
+- **Permissions required**: `SCHEDULE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, `CAMERA`, `SYSTEM_ALERT_WINDOW` (overlay).
 
 ## CI / Discord Notifications
 
 Jenkinsfile triggers on branches: `main`, `develop`, `testing`, `release`.
-Three Discord webhooks are configured in `Jenkinsfile` env block (GitHub events, Jenkins CI status, build success).
-Version is auto-bumped per branch: `develop` → patch4, `testing` → patch3, `release` → minor, `main` → major.
+Three Discord webhooks in `Jenkinsfile` env block: GitHub events, Jenkins CI status, build success (with APK QR code).
+Version auto-bump per branch: `develop` → patch4, `testing` → patch3, `release` → minor, `main` → major.

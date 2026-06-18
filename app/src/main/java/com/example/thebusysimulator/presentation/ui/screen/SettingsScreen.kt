@@ -36,12 +36,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
-import com.example.thebusysimulator.data.datasource.LanguageDataSource
+import com.anhnn.language.LanguageDataSource
+import com.anhnn.language.LanguageManager
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.ui.theme.GenZTheme
 import com.example.thebusysimulator.presentation.ui.theme.ThemeMode
-import com.example.thebusysimulator.presentation.util.LanguageManager
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch

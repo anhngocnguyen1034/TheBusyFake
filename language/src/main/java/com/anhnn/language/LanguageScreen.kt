@@ -1,7 +1,8 @@
-package com.example.thebusysimulator.presentation.ui.screen
+package com.anhnn.language
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -18,23 +19,39 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.example.thebusysimulator.data.datasource.LanguageDataSource
-import com.example.thebusysimulator.presentation.util.LanguageManager
-import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import com.example.thebusysimulator.R
+
+/**
+ * Màn hình chọn ngôn ngữ dùng chung.
+ *
+ * @param onBack       Gọi khi người dùng nhấn nút Back.
+ * @param onLanguageSaved Gọi sau khi lưu thành công, trả về langCode mới.
+ *                     App thường gọi recreate() hoặc restart ở đây.
+ */
+@Composable
+private fun LockPortrait() {
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val activity = context as? Activity ?: return@DisposableEffect onDispose {}
+        val original = activity.requestedOrientation
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        onDispose { activity.requestedOrientation = original }
+    }
+}
 
 @Composable
-fun LanguageSelectionScreen(navController: NavController) {
+fun LanguageScreen(
+    onBack: () -> Unit,
+    onLanguageSaved: (langCode: String) -> Unit = {}
+) {
+    LockPortrait()
     val context = LocalContext.current
     val languageDataSource = remember { LanguageDataSource(context) }
     val scope = rememberCoroutineScope()
@@ -49,15 +66,14 @@ fun LanguageSelectionScreen(navController: NavController) {
 
     val colorScheme = MaterialTheme.colorScheme
     val languages = LanguageManager.getSupportedLanguages()
-    
-    // Hàm xác nhận và áp dụng ngôn ngữ
-    val confirmLanguageSelection: () -> Unit = {
+
+    val confirmSelection: () -> Unit = {
         selectedLanguageCode?.let { code ->
             scope.launch {
                 languageDataSource.setLanguageCode(code)
                 currentLanguageCode = code
                 LanguageManager.setLanguage(context, code)
-                (context as? android.app.Activity)?.recreate()
+                onLanguageSaved(code)
             }
         }
     }
@@ -67,16 +83,15 @@ fun LanguageSelectionScreen(navController: NavController) {
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(colorScheme.background, colorScheme.surfaceVariant) // Đổi surfaceVariant cho dịu mắt hơn chút
+                    colors = listOf(colorScheme.background, colorScheme.surfaceVariant)
                 )
             )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarPadding()
+                .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header được căn chỉnh lại một chút cho thoáng
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,11 +99,9 @@ fun LanguageSelectionScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = onBack,
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = colorScheme.surface.copy(alpha = 0.5f)
                         )
@@ -101,33 +114,27 @@ fun LanguageSelectionScreen(navController: NavController) {
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = stringResource(R.string.select_language),
+                        text = stringResource(R.string.anhnn_select_language),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onBackground
                     )
                 }
-                
-                // Icon xác nhận cố định ở header
+
+                val canConfirm = selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode
                 IconButton(
-                    onClick = confirmLanguageSelection,
-                    enabled = selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode,
+                    onClick = confirmSelection,
+                    enabled = canConfirm,
                     colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = if (selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode) {
-                            colorScheme.primary
-                        } else {
-                            colorScheme.surface.copy(alpha = 0.5f)
-                        }
+                        containerColor = if (canConfirm) colorScheme.primary
+                        else colorScheme.surface.copy(alpha = 0.5f)
                     )
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Check,
-                        contentDescription = "Check",
-                        tint = if (selectedLanguageCode != null && selectedLanguageCode != currentLanguageCode) {
-                            colorScheme.onPrimary
-                        } else {
-                            colorScheme.onSurface.copy(alpha = 0.5f)
-                        }
+                        contentDescription = "Confirm",
+                        tint = if (canConfirm) colorScheme.onPrimary
+                        else colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
             }
@@ -141,9 +148,7 @@ fun LanguageSelectionScreen(navController: NavController) {
                     LanguageItem(
                         language = language,
                         isSelected = selectedLanguageCode == language.code,
-                        onClick = {
-                            selectedLanguageCode = language.code
-                        }
+                        onClick = { selectedLanguageCode = language.code }
                     )
                 }
             }
@@ -159,20 +164,15 @@ fun LanguageItem(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    // Animation cho màu nền
     val containerColor by animateColorAsState(
-        targetValue = if (isSelected) {
-            colorScheme.primaryContainer // Màu nổi bật khi chọn
-        } else {
-            colorScheme.surface.copy(alpha = 0.3f) // Trong suốt nhẹ khi chưa chọn (thay vì White cứng)
-        },
+        targetValue = if (isSelected) colorScheme.primaryContainer
+        else colorScheme.surface.copy(alpha = 0.3f),
         animationSpec = tween(durationMillis = 300),
         label = "colorAnim"
     )
-
-    // Animation cho viền
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) Color.Transparent else colorScheme.outline.copy(alpha = 0.3f),
+        targetValue = if (isSelected) androidx.compose.ui.graphics.Color.Transparent
+        else colorScheme.outline.copy(alpha = 0.3f),
         animationSpec = tween(durationMillis = 300),
         label = "borderAnim"
     )
@@ -181,20 +181,14 @@ fun LanguageItem(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        ),
-        // Không có đổ bóng (elevation = 0)
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
-        ),
-        // Thêm viền (Border) khi chưa chọn để tạo hình khối rõ ràng mà không cần bóng
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = if (!isSelected) BorderStroke(1.dp, borderColor) else null
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 16.dp), // Tăng padding dọc cho thoáng
+                .padding(vertical = 20.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -203,25 +197,18 @@ fun LanguageItem(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Flag image
                 Image(
                     painter = painterResource(id = language.flagResId),
                     contentDescription = "${language.displayName} flag",
                     modifier = Modifier.size(32.dp),
                     contentScale = ContentScale.Fit
                 )
-                Column {
-                    Text(
-                        text = language.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold, // Đậm hơn khi chọn
-                        color = if (isSelected) {
-                            colorScheme.onPrimaryContainer
-                        } else {
-                            colorScheme.onSurface
-                        }
-                    )
-                }
+                Text(
+                    text = language.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                    color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurface
+                )
             }
         }
     }
