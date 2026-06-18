@@ -42,6 +42,7 @@
     <string name="advanced_options">TÙY CHỌN NÂNG CAO</string>
     <string name="vibrate_on_call">Rung khi có cuộc gọi</string>
     <string name="flash_on_call">Nháy đèn khi có cuộc gọi</string>
+    <string name="flash_on_message">Nháy đèn khi có tin nhắn</string>
     <string name="call_settings">Cài đặt cuộc gọi</string>
     <string name="vibration_on_call">Rung khi gọi</string>
     <string name="vibration_on_call_description">Rung máy khi nhận cuộc gọi giả</string>

@@ -42,6 +42,7 @@
     <string name="advanced_options">उन्नत विकल्प</string>
     <string name="vibrate_on_call">कॉल पर वाइब्रेशन</string>
     <string name="flash_on_call">कॉल पर फ्लैश</string>
+    <string name="flash_on_message">संदेश पर फ्लैश</string>
     <string name="call_settings">कॉल सेटिंग्स</string>
     <string name="vibration_on_call">वाइब्रेशन चालू</string>
     <string name="vibration_on_call_description">कॉल प्राप्त होने पर वाइब्रेट करें</string>

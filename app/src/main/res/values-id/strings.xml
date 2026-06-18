@@ -42,6 +42,7 @@
     <string name="advanced_options">OPSI LANJUTAN</string>
     <string name="vibrate_on_call">Getar saat panggilan</string>
     <string name="flash_on_call">Flash saat panggilan</string>
+    <string name="flash_on_message">Flash saat pesan</string>
     <string name="call_settings">Pengaturan Panggilan</string>
     <string name="vibration_on_call">Getar saat panggilan</string>
     <string name="vibration_on_call_description">Bergetar saat menerima panggilan</string>

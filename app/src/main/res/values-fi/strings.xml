@@ -42,6 +42,7 @@
     <string name="advanced_options">LISÄASETUKSET</string>
     <string name="vibrate_on_call">Värinä puhelun aikana</string>
     <string name="flash_on_call">Salama puhelun aikana</string>
+    <string name="flash_on_message">Salama viestissä</string>
     <string name="call_settings">Puheluasetukset</string>
     <string name="vibration_on_call">Värinä puhelun aikana</string>
     <string name="vibration_on_call_description">Värise, kun puhelu saapuu</string>

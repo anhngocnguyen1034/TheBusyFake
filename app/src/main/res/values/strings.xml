@@ -44,6 +44,7 @@
     <string name="advanced_options">ADVANCED OPTIONS</string>
     <string name="vibrate_on_call">Vibrate on call</string>
     <string name="flash_on_call">Flash on call</string>
+    <string name="flash_on_message">Flash on message</string>
     <string name="call_settings">Call Settings</string>
     <string name="vibration_on_call">Vibrate on call</string>
     <string name="vibration_on_call_description">Vibrate when receiving a call</string>

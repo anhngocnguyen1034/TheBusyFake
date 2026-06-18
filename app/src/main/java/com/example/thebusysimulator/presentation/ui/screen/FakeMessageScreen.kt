@@ -425,6 +425,16 @@ fun MessageInputSection(
             )
         }
 
+        // Row Flash
+        GenZSwitchRow(
+            label = stringResource(R.string.flash_on_message),
+            icon = Icons.Rounded.Star,
+            checked = uiState.flashEnabled,
+            onCheckedChange = { viewModel.setFlashEnabled(it) },
+            theme = theme,
+            accentColor = GenZBlue
+        )
+
         // BIG ACTION BUTTON (Neo-Brutalism style)
         val isEnabled = senderName.isNotBlank() && messageText.isNotBlank() && selectedDelaySeconds > 0
         val buttonInteractionSource = remember { MutableInteractionSource() }

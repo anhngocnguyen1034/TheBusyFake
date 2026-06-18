@@ -42,6 +42,7 @@
     <string name="advanced_options">GELİŞMİŞ SEÇENEKLER</string>
     <string name="vibrate_on_call">Aramada titreşim</string>
     <string name="flash_on_call">Aramada flaş</string>
+    <string name="flash_on_message">Mesajda flaş</string>
     <string name="call_settings">Arama Ayarları</string>
     <string name="vibration_on_call">Titreşim açık</string>
     <string name="vibration_on_call_description">Arama geldiğinde titret</string>

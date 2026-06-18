@@ -94,7 +94,7 @@ object AppContainer {
     }
     
     // Settings DataSource
-    private val settingsDataSource: FakeCallSettingsDataSource by lazy {
+    val settingsDataSource: FakeCallSettingsDataSource by lazy {
         requireNotNull(context) { "AppContainer must be initialized with context" }
         FakeCallSettingsDataSource(context!!)
     }
@@ -129,7 +129,8 @@ object AppContainer {
         requireNotNull(context) { "AppContainer must be initialized with context" }
         return FakeMessageViewModel(
             context = context!!,
-            notificationRepository = fakeNotificationRepository
+            notificationRepository = fakeNotificationRepository,
+            settingsDataSource = settingsDataSource
         )
     }
 }

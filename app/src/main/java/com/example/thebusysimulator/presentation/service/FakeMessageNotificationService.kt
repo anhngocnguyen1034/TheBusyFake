@@ -10,6 +10,13 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.thebusysimulator.presentation.MainActivity
+import com.example.thebusysimulator.presentation.util.FlashHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Service để tạo Notification cho fake message
@@ -19,6 +26,10 @@ object FakeMessageNotificationService {
     private const val CHANNEL_ID = "fake_message_channel"
     private const val CHANNEL_NAME = "Messages"
     const val NOTIFICATION_ID_BASE = 2000
+
+    private val flashScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var flashJob: Job? = null
+    private var flashHelper: FlashHelper? = null
 
     /**
      * Tạo notification channel (cần thiết cho Android O+)
@@ -50,7 +61,8 @@ object FakeMessageNotificationService {
         context: Context,
         senderName: String,
         messageText: String,
-        notificationId: Int = NOTIFICATION_ID_BASE
+        notificationId: Int = NOTIFICATION_ID_BASE,
+        flashEnabled: Boolean = false
     ) {
         // Intent để mở MainActivity khi tap vào notification
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -98,6 +110,19 @@ object FakeMessageNotificationService {
             android.util.Log.e("FakeMessageNotification", "❌ SecurityException: Cannot show notification", e)
         } catch (e: Exception) {
             android.util.Log.e("FakeMessageNotification", "❌ Error showing notification", e)
+        }
+
+        if (flashEnabled) {
+            flashJob?.cancel()
+            flashHelper?.release()
+            flashHelper = FlashHelper(context)
+            val helper = flashHelper!!
+            flashJob = flashScope.launch {
+                helper.startFlashing()
+                delay(5000)
+                helper.stopFlashing()
+                helper.release()
+            }
         }
     }
 

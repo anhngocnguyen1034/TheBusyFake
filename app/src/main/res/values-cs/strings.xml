@@ -42,6 +42,7 @@
     <string name="advanced_options">POKROČILÉ MOŽNOSTI</string>
     <string name="vibrate_on_call">Vibrace při hovoru</string>
     <string name="flash_on_call">Blesk při hovoru</string>
+    <string name="flash_on_message">Blesk při zprávě</string>
     <string name="call_settings">Nastavení hovoru</string>
     <string name="vibration_on_call">Vibrace při hovoru</string>
     <string name="vibration_on_call_description">Vibrovat při příchozím hovoru</string>

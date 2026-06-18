@@ -42,6 +42,7 @@
     <string name="advanced_options">OPZIONI AVANZATE</string>
     <string name="vibrate_on_call">Vibrazione durante la chiamata</string>
     <string name="flash_on_call">Flash durante la chiamata</string>
+    <string name="flash_on_message">Flash durante il messaggio</string>
     <string name="call_settings">Impostazioni Chiamata</string>
     <string name="vibration_on_call">Vibrazione attiva</string>
     <string name="vibration_on_call_description">Vibra quando ricevi una chiamata</string>
