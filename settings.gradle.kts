@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "The Busy Simulator"
 include(":app")
+include(":language")

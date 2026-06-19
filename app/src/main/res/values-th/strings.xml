@@ -42,6 +42,7 @@
     <string name="advanced_options">ตัวเลือกขั้นสูง</string>
     <string name="vibrate_on_call">สั่นเมื่อโทรเข้า</string>
     <string name="flash_on_call">ไฟแฟลชเมื่อโทรเข้า</string>
+    <string name="flash_on_message">ไฟแฟลชเมื่อรับข้อความ</string>
     <string name="call_settings">ตั้งค่าการโทร</string>
     <string name="vibration_on_call">เปิดการสั่น</string>
     <string name="vibration_on_call_description">สั่นเมื่อมีสายเข้าปลอม</string>

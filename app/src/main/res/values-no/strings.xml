@@ -42,6 +42,7 @@
     <string name="advanced_options">AVANSERTE VALG</string>
     <string name="vibrate_on_call">Vibrer ved samtale</string>
     <string name="flash_on_call">Blink ved samtale</string>
+    <string name="flash_on_message">Blink ved melding</string>
     <string name="call_settings">Samtaleinnstillinger</string>
     <string name="vibration_on_call">Vibrasjon på</string>
     <string name="vibration_on_call_description">Vibrer når du mottar en samtale</string>

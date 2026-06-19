@@ -63,6 +63,9 @@ dependencies {
     
     // DataStore Preferences
     implementation(libs.androidx.datastore.preferences)
+
+    // Language module
+    implementation(project(":language"))
     
     // CameraX
     implementation(libs.androidx.camera.core)

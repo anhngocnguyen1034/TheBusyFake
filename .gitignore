@@ -1,0 +1,37 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# IDE
+.idea/caches/
+.idea/libraries/
+.idea/tasks.xml
+.idea/shelf/
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/markdown.xml
+.idea/gradle.xml
+*.iws
+*.iml
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin
+.kotlin/
+
+# Local configs
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Logs
+*.log
+
+# Generated
+app/release/

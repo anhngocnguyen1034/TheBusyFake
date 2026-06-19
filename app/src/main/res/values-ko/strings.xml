@@ -42,6 +42,7 @@
     <string name="advanced_options">詳細オプション</string>
     <string name="vibrate_on_call">着信時にバイブレーション</string>
     <string name="flash_on_call">着信時にフラッシュ点滅</string>
+    <string name="flash_on_message">메시지 시 플래시 점멸</string>
     <string name="call_settings">着信設定</string>
     <string name="vibration_on_call">バイブレーション</string>
     <string name="vibration_on_call_description">着信時に端末を振動させる</string>

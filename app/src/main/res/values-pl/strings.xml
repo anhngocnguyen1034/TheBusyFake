@@ -42,6 +42,7 @@
     <string name="advanced_options">OPCJE ZAAWANSOWANE</string>
     <string name="vibrate_on_call">Wibracje podczas połączenia</string>
     <string name="flash_on_call">Lampa błyskowa podczas połączenia</string>
+    <string name="flash_on_message">Lampa błyskowa podczas wiadomości</string>
     <string name="call_settings">Ustawienia połączeń</string>
     <string name="vibration_on_call">Wibracje przy połączeniu</string>
     <string name="vibration_on_call_description">Wibruj przy odbieraniu połączenia</string>

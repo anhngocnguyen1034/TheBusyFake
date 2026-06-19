@@ -42,6 +42,7 @@
     <string name="advanced_options">高级选项</string>
     <string name="vibrate_on_call">来电震动</string>
     <string name="flash_on_call">来电闪光灯</string>
+    <string name="flash_on_message">收到消息时闪光灯</string>
     <string name="call_settings">通话设置</string>
     <string name="vibration_on_call">来电震动</string>
     <string name="vibration_on_call_description">收到来电时震动</string>

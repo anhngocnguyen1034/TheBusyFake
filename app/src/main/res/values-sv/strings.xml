@@ -42,6 +42,7 @@
     <string name="advanced_options">AVANCERADE ALTERNATIV</string>
     <string name="vibrate_on_call">Vibrera vid samtal</string>
     <string name="flash_on_call">Blixt vid samtal</string>
+    <string name="flash_on_message">Blixt vid meddelande</string>
     <string name="call_settings">Samtalsinställningar</string>
     <string name="vibration_on_call">Vibration på</string>
     <string name="vibration_on_call_description">Vibrera när du tar emot ett samtal</string>

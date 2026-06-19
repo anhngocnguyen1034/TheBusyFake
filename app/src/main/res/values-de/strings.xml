@@ -42,6 +42,7 @@
     <string name="advanced_options">ERWEITERTE OPTIONEN</string>
     <string name="vibrate_on_call">Bei Anruf vibrieren</string>
     <string name="flash_on_call">Blitzlicht bei Anruf</string>
+    <string name="flash_on_message">Blitzlicht bei Nachricht</string>
     <string name="call_settings">Anrufeinstellungen</string>
     <string name="vibration_on_call">Bei Anruf vibrieren</string>
     <string name="vibration_on_call_description">Vibrieren bei eingehendem Anruf</string>

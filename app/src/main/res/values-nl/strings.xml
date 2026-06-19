@@ -42,6 +42,7 @@
     <string name="advanced_options">GEAVANCEERDE OPTIES</string>
     <string name="vibrate_on_call">Trillen tijdens oproep</string>
     <string name="flash_on_call">Flits bij oproep</string>
+    <string name="flash_on_message">Flits bij bericht</string>
     <string name="call_settings">Oproepinstellingen</string>
     <string name="vibration_on_call">Trillen bij oproep</string>
     <string name="vibration_on_call_description">Trillen bij het ontvangen van een oproep</string>

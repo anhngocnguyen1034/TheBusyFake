@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.domain.model.FakeNotification
 import com.example.thebusysimulator.domain.repository.FakeNotificationRepository
 import com.example.thebusysimulator.presentation.receiver.FakeMessageReceiver
@@ -15,6 +16,7 @@ import com.example.thebusysimulator.presentation.util.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -32,12 +34,14 @@ data class FakeMessageUiState(
     val needsNotificationPermission: Boolean = false,
     val shouldShowPermissionDialog: Boolean = false, // true nếu đã từ chối schedule exact alarm trước đó
     val shouldShowNotificationPermissionDialog: Boolean = false, // true nếu đã từ chối notification permission trước đó
-    val messageScheduledSuccessfully: Boolean = false // true khi schedule thành công, để reset form
+    val messageScheduledSuccessfully: Boolean = false, // true khi schedule thành công, để reset form
+    val flashEnabled: Boolean = false
 )
 
 class FakeMessageViewModel(
     private val context: Context,
-    private val notificationRepository: FakeNotificationRepository
+    private val notificationRepository: FakeNotificationRepository,
+    private val settingsDataSource: FakeCallSettingsDataSource
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(FakeMessageUiState())
     val uiState: StateFlow<FakeMessageUiState> = _uiState.asStateFlow()
@@ -47,8 +51,18 @@ class FakeMessageViewModel(
     private val prefs: SharedPreferences = context.getSharedPreferences("fake_message_prefs", Context.MODE_PRIVATE)
 
     init {
-        // Load scheduled messages from memory (có thể lưu vào SharedPreferences hoặc Room sau)
         updateUiState()
+        viewModelScope.launch {
+            settingsDataSource.flashMessageEnabled.collect { enabled ->
+                _uiState.value = _uiState.value.copy(flashEnabled = enabled)
+            }
+        }
+    }
+
+    fun setFlashEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setFlashMessageEnabled(enabled)
+        }
     }
 
     fun scheduleMessage(senderName: String, messageText: String, scheduledTime: Date) {
@@ -299,10 +313,12 @@ class FakeMessageViewModel(
                 notificationRepository.saveNotification(notification)
                 
                 com.example.thebusysimulator.presentation.service.FakeMessageNotificationService.createNotificationChannel(context)
+                val flashEnabled = settingsDataSource.flashMessageEnabled.first()
                 com.example.thebusysimulator.presentation.service.FakeMessageNotificationService.showMessageNotification(
                     context = context,
                     senderName = senderName,
-                    messageText = messageText
+                    messageText = messageText,
+                    flashEnabled = flashEnabled
                 )
                 android.util.Log.d("FakeMessageViewModel", "✅ Message shown immediately: $senderName - $messageText")
             } catch (e: Exception) {

@@ -8,7 +8,9 @@ import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.presentation.service.FakeMessageNotificationService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.*
 
 /**
@@ -47,11 +49,19 @@ class FakeMessageReceiver : BroadcastReceiver() {
             }
             
             FakeMessageNotificationService.createNotificationChannel(context)
+            val flashEnabled = runBlocking {
+                try {
+                    AppContainer.settingsDataSource.flashMessageEnabled.first()
+                } catch (e: Exception) {
+                    false
+                }
+            }
             FakeMessageNotificationService.showMessageNotification(
                 context = context,
                 senderName = senderName,
                 messageText = messageText,
-                notificationId = notificationId
+                notificationId = notificationId,
+                flashEnabled = flashEnabled
             )
             android.util.Log.d("FakeMessageReceiver", "✅ Message notification shown successfully")
         } catch (e: Exception) {

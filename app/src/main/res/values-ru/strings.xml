@@ -42,6 +42,7 @@
     <string name="advanced_options">ДОПОЛНИТЕЛЬНО</string>
     <string name="vibrate_on_call">Вибрация при звонке</string>
     <string name="flash_on_call">Вспышка при звонке</string>
+    <string name="flash_on_message">Вспышка при сообщении</string>
     <string name="call_settings">Настройки вызова</string>
     <string name="vibration_on_call">Вибрация</string>
     <string name="vibration_on_call_description">Вибрировать при входящем звонке</string>

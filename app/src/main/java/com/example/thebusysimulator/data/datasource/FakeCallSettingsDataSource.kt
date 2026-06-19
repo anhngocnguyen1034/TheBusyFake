@@ -18,6 +18,7 @@ class FakeCallSettingsDataSource(context: Context) {
     companion object {
         private val VIBRATION_ENABLED_KEY = booleanPreferencesKey("vibration_enabled")
         private val FLASH_ENABLED_KEY = booleanPreferencesKey("flash_enabled")
+        private val FLASH_MESSAGE_ENABLED_KEY = booleanPreferencesKey("flash_message_enabled")
         private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
     }
 
@@ -29,6 +30,10 @@ class FakeCallSettingsDataSource(context: Context) {
         preferences[FLASH_ENABLED_KEY] ?: false // Default: disabled
     }
 
+    val flashMessageEnabled: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[FLASH_MESSAGE_ENABLED_KEY] ?: false // Default: disabled
+    }
+
     suspend fun setVibrationEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[VIBRATION_ENABLED_KEY] = enabled
@@ -38,6 +43,12 @@ class FakeCallSettingsDataSource(context: Context) {
     suspend fun setFlashEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[FLASH_ENABLED_KEY] = enabled
+        }
+    }
+
+    suspend fun setFlashMessageEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[FLASH_MESSAGE_ENABLED_KEY] = enabled
         }
     }
 

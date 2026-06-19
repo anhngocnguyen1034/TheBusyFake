@@ -42,6 +42,7 @@
     <string name="advanced_options">خيارات متقدمة</string>
     <string name="vibrate_on_call">اهتزاز عند الاتصال</string>
     <string name="flash_on_call">وميض عند الاتصال</string>
+    <string name="flash_on_message">وميض عند الرسالة</string>
     <string name="call_settings">إعدادات المكالمة</string>
     <string name="vibration_on_call">اهتزاز عند الاتصال</string>
     <string name="vibration_on_call_description">اهتزاز عند تلقي مكالمة</string>
