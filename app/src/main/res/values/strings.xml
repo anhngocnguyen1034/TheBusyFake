@@ -169,6 +169,12 @@
     <string name="light_mode">Light Mode</string>
     <string name="dark_mode_enabled">Dark mode enabled</string>
     <string name="dark_mode_disabled">Dark mode disabled</string>
+    <string name="privacy_policy">PRIVACY POLICY</string>
+    <string name="privacy_policy_desc">Terms &amp; data usage</string>
+    <string name="rate_us">RATE US</string>
+    <string name="rate_us_desc">Love the app? Rate us ★★★★★</string>
+    <string name="feedback">FEEDBACK</string>
+    <string name="feedback_desc">Send us your thoughts</string>
     <string name="english">English</string>
 
     <!-- Language -->

@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.rotate
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -167,7 +169,6 @@ fun SettingsScreenContent(navController: NavController) {
                     )
                 }
 
-                // Mũi tên tùy biến
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -177,6 +178,147 @@ fun SettingsScreenContent(navController: NavController) {
                 ) {
                     Icon(
                         painter= painterResource(R.drawable.ic_forward),
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // --- PRIVACY POLICY ---
+        GenZOptionBox(
+            onClick = { navController.navigate(Screen.Policy.route) }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.privacy_policy),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = GenZTheme.colors.text
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.privacy_policy_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GenZTheme.colors.text.copy(alpha = 0.7f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(GenZTheme.colors.neonPink, CircleShape)
+                        .border(1.dp, GenZTheme.colors.border, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_forward),
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // --- RATE US ---
+        GenZOptionBox(
+            onClick = {
+                val packageName = context.packageName
+                try {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+                    )
+                } catch (_: Exception) {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
+                    )
+                }
+            }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.rate_us),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = GenZTheme.colors.text
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.rate_us_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GenZTheme.colors.text.copy(alpha = 0.7f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(GenZTheme.colors.neonPink, CircleShape)
+                        .border(1.dp, GenZTheme.colors.border, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_forward),
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // --- FEEDBACK ---
+        GenZOptionBox(
+            onClick = {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:")
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf("nguyenanhcry@gmail.com"))
+                    putExtra(Intent.EXTRA_SUBJECT, "Feedback - The Busy Simulator")
+                }
+                context.startActivity(Intent.createChooser(intent, "Send Feedback"))
+            }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.feedback),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = GenZTheme.colors.text
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.feedback_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GenZTheme.colors.text.copy(alpha = 0.7f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(GenZTheme.colors.neonPink, CircleShape)
+                        .border(1.dp, GenZTheme.colors.border, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_forward),
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = Modifier.size(20.dp)

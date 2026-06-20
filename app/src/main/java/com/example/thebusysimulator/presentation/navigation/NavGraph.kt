@@ -118,6 +118,10 @@ fun NavGraph(
                 )
             }
         }
+
+        composable(Screen.Policy.route) {
+            PolicyScreen(navController = navController)
+        }
     }
 }
 

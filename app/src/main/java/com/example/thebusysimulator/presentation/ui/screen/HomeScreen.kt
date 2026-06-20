@@ -407,14 +407,9 @@ fun GenZNavItem(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
 
-    val animatedRotation by animateFloatAsState(
-        targetValue = if (isSelected) -10f else 0f
-    )
-
     Box(
         modifier = Modifier
             .offset(y = animatedOffsetY)
-            .rotate(animatedRotation)
             .size(52.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
