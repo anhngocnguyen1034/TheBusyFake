@@ -452,12 +452,12 @@ fun MessageInputSection(
             color = theme.text
         )
         val appIconOptions = listOf(
-            "default" to Triple(R.drawable.ic_notification, "Default", Color(0xFF555555)),
-            "messenger" to Triple(R.drawable.ic_notif_messenger, "Messenger", Color(0xFF0084FF)),
-            "whatsapp" to Triple(R.drawable.ic_notif_whatsapp, "WhatsApp", Color(0xFF25D366)),
-            "telegram" to Triple(R.drawable.ic_notif_telegram, "Telegram", Color(0xFF229ED9)),
-            "sms" to Triple(R.drawable.ic_notif_sms, "SMS", Color(0xFF9C27B0)),
-            "instagram" to Triple(R.drawable.ic_notif_instagram, "Instagram", Color(0xFFE1306C))
+            "default" to Triple(R.drawable.ic_notification, "Bell", Color(0xFF555555)),
+            "messenger" to Triple(R.drawable.ic_notif_messenger, "Chat", Color(0xFF0084FF)),
+            "whatsapp" to Triple(R.drawable.ic_notif_whatsapp, "Phone", Color(0xFF25D366)),
+            "telegram" to Triple(R.drawable.ic_notif_telegram, "Send", Color(0xFF229ED9)),
+            "sms" to Triple(R.drawable.ic_notif_sms, "Email", Color(0xFF9C27B0)),
+            "instagram" to Triple(R.drawable.ic_notif_instagram, "Info", Color(0xFFFF6F00))
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(appIconOptions) { (type, info) ->
