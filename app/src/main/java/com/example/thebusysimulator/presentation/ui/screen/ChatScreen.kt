@@ -27,10 +27,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -91,6 +98,9 @@ fun ChatScreen(
     var showSendOptionsSheet by remember { mutableStateOf(false) }
     var showDeleteChatDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var isSearchMode by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var currentSearchIndex by remember { mutableStateOf(0) }
     var pendingMessageText by remember { mutableStateOf("") }
 
     fun openMessageOptions(message: ChatMessage) {
@@ -107,7 +117,23 @@ fun ChatScreen(
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
     val reversedMessages = remember(messages) { messages.reversed() }
-    
+
+    // Search: indices in reversedMessages that match the query
+    val searchMatchIndices = remember(searchQuery, reversedMessages) {
+        if (searchQuery.isBlank()) emptyList()
+        else reversedMessages.mapIndexedNotNull { i, msg ->
+            if (msg.text.contains(searchQuery, ignoreCase = true)) i else null
+        }
+    }
+    LaunchedEffect(searchMatchIndices) {
+        if (searchMatchIndices.isNotEmpty()) currentSearchIndex = 0
+    }
+    LaunchedEffect(currentSearchIndex, searchMatchIndices) {
+        if (searchMatchIndices.isNotEmpty()) {
+            listState.animateScrollToItem(searchMatchIndices[currentSearchIndex])
+        }
+    }
+
     // Lấy avatarUri và isVerified từ Message
     val message = uiState.messages.find { it.id == messageId }
     val avatarUri = message?.avatarUri
@@ -165,6 +191,64 @@ fun ChatScreen(
             .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // Search bar overlay
+            if (isSearchMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarPadding()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(onClick = {
+                        isSearchMode = false
+                        searchQuery = ""
+                    }) {
+                        Icon(Icons.Filled.Close, "Close search", tint = colorScheme.onBackground)
+                    }
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(colorScheme.surfaceVariant, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        singleLine = true,
+                        textStyle = TextStyle(color = colorScheme.onSurface, fontSize = 16.sp),
+                        cursorBrush = SolidColor(colorScheme.primary),
+                        decorationBox = { inner ->
+                            if (searchQuery.isEmpty()) {
+                                Text("Search messages...", color = colorScheme.onSurfaceVariant, fontSize = 16.sp)
+                            }
+                            inner()
+                        }
+                    )
+                    if (searchMatchIndices.isNotEmpty()) {
+                        Text(
+                            text = "${currentSearchIndex + 1}/${searchMatchIndices.size}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                        IconButton(
+                            onClick = {
+                                currentSearchIndex = (currentSearchIndex - 1 + searchMatchIndices.size) % searchMatchIndices.size
+                            }
+                        ) {
+                            Icon(Icons.Filled.KeyboardArrowUp, "Previous", tint = colorScheme.primary)
+                        }
+                        IconButton(
+                            onClick = {
+                                currentSearchIndex = (currentSearchIndex + 1) % searchMatchIndices.size
+                            }
+                        ) {
+                            Icon(Icons.Filled.KeyboardArrowDown, "Next", tint = colorScheme.primary)
+                        }
+                    } else if (searchQuery.isNotBlank()) {
+                        Text("No results", style = MaterialTheme.typography.bodySmall, color = colorScheme.error)
+                    }
+                }
+            } else {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -270,6 +354,16 @@ fun ChatScreen(
                             onDismissRequest = { showMoreMenu = false }
                         ) {
                             DropdownMenuItem(
+                                text = { Text("Search") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Search, null, tint = colorScheme.onSurface)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    isSearchMode = true
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Edit contact") },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Edit, null, tint = colorScheme.onSurface)
@@ -328,6 +422,7 @@ fun ChatScreen(
                         )
                     }
             }
+            } // end else (normal header)
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -374,6 +469,8 @@ fun ChatScreen(
                         // Xác định tin nhắn tiếp theo (index - 1 vì list bị reverse, tin mới hơn ở index nhỏ hơn)
                         val nextMessage = if (index > 0) reversedMessages[index - 1] else null
                         
+                        val isSearchMatch = searchQuery.isNotBlank() && index in searchMatchIndices
+                        val isCurrentMatch = isSearchMatch && searchMatchIndices.getOrNull(currentSearchIndex) == index
                         ChatBubble(
                             message = message,
                             nextMessage = nextMessage,
@@ -382,8 +479,9 @@ fun ChatScreen(
                             avatarUri = avatarUri,
                             onLongClick = { openMessageOptions(message) },
                             onReplyClick = { replyId -> scrollToMessage(replyId) },
-                            isHighlighted = message.id == highlightedMessageId,
+                            isHighlighted = message.id == highlightedMessageId || isCurrentMatch,
                             showTimestamp = message.id == selectedMessageIdForTimestamp,
+                            searchQuery = if (isSearchMatch) searchQuery else "",
                             onClick = {
                                 if (selectedMessageIdForTimestamp == message.id) {
                                     selectedMessageIdForTimestamp = null
@@ -653,6 +751,7 @@ fun ChatBubble(
     onReplyClick: (String) -> Unit = {},
     isHighlighted: Boolean = false,
     showTimestamp: Boolean = false,
+    searchQuery: String = "",
     onClick: () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -846,9 +945,31 @@ fun ChatBubble(
                     }
 
                     if (message.text.isNotBlank()) {
+                        val baseColor = if (message.isFromMe) Color.White else colorScheme.onBackground
+                        val displayText = if (searchQuery.isNotBlank() && message.text.contains(searchQuery, ignoreCase = true)) {
+                            buildAnnotatedString {
+                                val lower = message.text.lowercase()
+                                val queryLower = searchQuery.lowercase()
+                                var start = 0
+                                while (true) {
+                                    val idx = lower.indexOf(queryLower, start)
+                                    if (idx == -1) {
+                                        append(message.text.substring(start))
+                                        break
+                                    }
+                                    append(message.text.substring(start, idx))
+                                    withStyle(SpanStyle(background = Color(0xFFFFD600), color = Color.Black)) {
+                                        append(message.text.substring(idx, idx + searchQuery.length))
+                                    }
+                                    start = idx + searchQuery.length
+                                }
+                            }
+                        } else {
+                            buildAnnotatedString { append(message.text) }
+                        }
                         Text(
-                            text = message.text,
-                            color = if (message.isFromMe) Color.White else colorScheme.onBackground,
+                            text = displayText,
+                            color = baseColor,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
