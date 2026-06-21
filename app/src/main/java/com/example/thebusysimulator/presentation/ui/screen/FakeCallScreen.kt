@@ -140,11 +140,9 @@ fun FakeCallScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Back Button (Vuông vức)
-                    GenZIconButton(
-                        icon = Icons.Rounded.ArrowBack,
-                        theme = theme,
-                        onClick = { navController.popBackStack() }
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() },
+                        theme = theme
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))

@@ -114,7 +114,15 @@ fun MainScreenUI(
     navController: NavController,
     theme: GenZThemeColors
 ) {
-    // Main content with feature cards
+    var lastNavTime by remember { mutableStateOf(0L) }
+    fun navigate(route: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastNavTime > 600L) {
+            lastNavTime = now
+            navController.navigate(route) { launchSingleTop = true }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -132,7 +140,6 @@ fun MainScreenUI(
                 color = theme.text,
                 lineHeight = 40.sp
             )
-            // Dấu chấm trang trí
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -142,47 +149,29 @@ fun MainScreenUI(
                     .border(1.dp, theme.border, CircleShape)
             )
         }
-
-        Text(
-            text = stringResource(R.string.fake_it_till_you_make_it),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = theme.text.copy(alpha = 0.7f),
-            modifier = Modifier.padding(bottom = 10.dp)
-        )
-
-        // Các Card theo phong cách Neo-Brutalism
         NeoBrutalistCard(
             title = stringResource(R.string.fake_call_title),
             description = stringResource(R.string.fake_call_card_description),
             iconId = R.drawable.ic_call,
             accentColor = GenZYellow,
             theme = theme,
-            onClick = {
-                navController.navigate(Screen.FakeCall.route)
-            }
+            onClick = { navigate(Screen.FakeCall.route) }
         )
-
         NeoBrutalistCard(
             title = stringResource(R.string.fake_chat),
             description = stringResource(R.string.fake_chat_card_description),
             iconId = R.drawable.ic_message,
             accentColor = GenZPink,
             theme = theme,
-            onClick = {
-                navController.navigate(Screen.Message.route)
-            }
+            onClick = { navigate(Screen.Message.route) }
         )
-
         NeoBrutalistCard(
             title = stringResource(R.string.notifications),
             description = stringResource(R.string.notifications_card_description),
-            iconId = R.drawable.ic_message,
+            iconId = R.drawable.ic_notification,
             accentColor = GenZBlue,
             theme = theme,
-            onClick = {
-                navController.navigate(Screen.FakeMessage.route)
-            }
+            onClick = { navigate(Screen.FakeMessage.route) }
         )
     }
 }
@@ -310,8 +299,8 @@ fun GenZBottomNavigation(
                 .height(64.dp)
                 .align(Alignment.BottomCenter)
         ) {
-            val curveDepth = 24.dp.toPx()
-            val curveWidth = 90.dp.toPx()
+            val curveDepth = 36.dp.toPx()
+            val curveWidth = 100.dp.toPx()
 
             val path = Path().apply {
                 moveTo(0f, 0f)
@@ -403,7 +392,7 @@ fun GenZNavItem(
 ) {
     // Animation bay và xoay nhẹ
     val animatedOffsetY by animateDpAsState(
-        targetValue = if (isSelected) (-45).dp else 0.dp,
+        targetValue = if (isSelected) (-28).dp else 0.dp,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
 

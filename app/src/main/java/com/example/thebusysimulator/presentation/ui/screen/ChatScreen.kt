@@ -161,18 +161,17 @@ fun ChatScreen(
             .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Surface(
-                color = Color.White.copy(alpha = 0.1f),
-                modifier = Modifier.fillMaxWidth().statusBarPadding()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Rounded.ArrowBack, "Back", tint = colorScheme.onBackground)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -258,7 +257,6 @@ fun ChatScreen(
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
-                }
             }
             LazyColumn(
                 state = listState,

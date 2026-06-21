@@ -109,15 +109,10 @@ fun FakeMessageScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
                         onClick = { navController.popBackStack() },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = stringResource(R.string.back),
-                            tint = theme.text
-                        )
-                    }
+                        theme = theme
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = stringResource(R.string.fake_notification_uppercase),

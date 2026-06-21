@@ -73,18 +73,9 @@ fun MessageScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = colorScheme.surface.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = colorScheme.onBackground
-                        )
-                    }
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() }
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = stringResource(R.string.messages),
@@ -150,15 +141,20 @@ fun MessageScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(messages, key = { it.id }) { message ->
+                        var lastClickTime by remember { mutableStateOf(0L) }
                         MessageItem(
                             message = message,
                             onClick = {
-                                navController.navigate(
-                                    Screen.Chat.createRoute(
-                                        contactName = message.contactName,
-                                        messageId = message.id
-                                    )
-                                )
+                                val now = System.currentTimeMillis()
+                                if (now - lastClickTime > 600L) {
+                                    lastClickTime = now
+                                    navController.navigate(
+                                        Screen.Chat.createRoute(
+                                            contactName = message.contactName,
+                                            messageId = message.id
+                                        )
+                                    ) { launchSingleTop = true }
+                                }
                             }
                         )
                     }

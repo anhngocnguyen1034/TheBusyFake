@@ -49,13 +49,9 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.back),
-                        tint = colorScheme.onBackground
-                    )
-                }
+                com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                    onClick = { navController.popBackStack() }
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.profile),

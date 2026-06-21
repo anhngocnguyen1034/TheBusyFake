@@ -88,15 +88,10 @@ fun CreateMessageScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { navController.popBackStack() }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = stringResource(R.string.back),
-                        tint = theme.text
-                    )
-                }
+                com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                    onClick = { navController.popBackStack() },
+                    theme = theme
+                )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = stringResource(R.string.create_new_sender),

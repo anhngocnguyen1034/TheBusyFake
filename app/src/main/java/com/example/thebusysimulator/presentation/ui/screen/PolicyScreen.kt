@@ -49,25 +49,9 @@ fun PolicyScreenContent(onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(GenZTheme.colors.neonPink, CircleShape)
-                    .border(1.dp, GenZTheme.colors.border, CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onBack
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_back),
-                    contentDescription = "Back",
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                onClick = onBack
+            )
             Text(
                 text = "PRIVACY POLICY",
                 style = MaterialTheme.typography.titleLarge,
