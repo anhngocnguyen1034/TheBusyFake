@@ -270,9 +270,19 @@ fun ChatScreen(
                             onDismissRequest = { showMoreMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = {
-                                    Text("Delete chat", color = colorScheme.error)
+                                text = { Text("Edit contact") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Edit, null, tint = colorScheme.onSurface)
                                 },
+                                onClick = {
+                                    showMoreMenu = false
+                                    navController.navigate(
+                                        com.example.thebusysimulator.presentation.navigation.Screen.EditContact.createRoute(messageId)
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete chat", color = colorScheme.error) },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Delete, null, tint = colorScheme.error)
                                 },

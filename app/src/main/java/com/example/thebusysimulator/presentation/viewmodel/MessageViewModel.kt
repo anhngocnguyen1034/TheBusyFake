@@ -407,6 +407,23 @@ class MessageViewModel(
         }
     }
     
+    fun updateContact(messageId: String, newName: String, newAvatarUri: String?, isVerified: Boolean) {
+        viewModelScope.launch {
+            try {
+                val existing = messageRepository.getMessageById(messageId) ?: return@launch
+                messageRepository.updateMessage(
+                    existing.copy(
+                        contactName = newName,
+                        avatarUri = newAvatarUri,
+                        isVerified = isVerified
+                    )
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
+        }
+    }
+
     fun deleteMessage(messageId: String) {
         viewModelScope.launch {
             try {

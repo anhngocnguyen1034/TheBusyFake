@@ -21,6 +21,9 @@ sealed class Screen(val route: String) {
     data object CallHistory : Screen("call_history")
     data object NotificationHistory : Screen("notification_history")
     data object CreateMessage : Screen("create_message")
+    data object EditContact : Screen("edit_contact/{messageId}") {
+        fun createRoute(messageId: String): String = "edit_contact/$messageId"
+    }
     data object Policy : Screen("policy")
 }
 
