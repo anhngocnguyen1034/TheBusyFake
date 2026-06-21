@@ -21,12 +21,14 @@ class FakeMessageReceiver : BroadcastReceiver() {
         const val EXTRA_SENDER_NAME = "sender_name"
         const val EXTRA_MESSAGE_TEXT = "message_text"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
+        const val EXTRA_APP_ICON_TYPE = "app_icon_type"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         val senderName = intent.getStringExtra(EXTRA_SENDER_NAME) ?: "Unknown"
         val messageText = intent.getStringExtra(EXTRA_MESSAGE_TEXT) ?: "You have a new message"
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, FakeMessageNotificationService.NOTIFICATION_ID_BASE)
+        val appIconType = intent.getStringExtra(EXTRA_APP_ICON_TYPE) ?: "default"
 
         android.util.Log.d("FakeMessageReceiver", "🔔 Message alarm triggered: $senderName - $messageText")
 
@@ -61,7 +63,8 @@ class FakeMessageReceiver : BroadcastReceiver() {
                 senderName = senderName,
                 messageText = messageText,
                 notificationId = notificationId,
-                flashEnabled = flashEnabled
+                flashEnabled = flashEnabled,
+                appIconType = appIconType
             )
             android.util.Log.d("FakeMessageReceiver", "✅ Message notification shown successfully")
         } catch (e: Exception) {

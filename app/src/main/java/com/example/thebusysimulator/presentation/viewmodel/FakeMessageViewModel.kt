@@ -24,7 +24,8 @@ data class ScheduledMessage(
     val id: String,
     val senderName: String,
     val messageText: String,
-    val scheduledTime: Date
+    val scheduledTime: Date,
+    val appIconType: String = "default"
 )
 
 data class FakeMessageUiState(
@@ -65,7 +66,7 @@ class FakeMessageViewModel(
         }
     }
 
-    fun scheduleMessage(senderName: String, messageText: String, scheduledTime: Date) {
+    fun scheduleMessage(senderName: String, messageText: String, scheduledTime: Date, appIconType: String = "default") {
         viewModelScope.launch {
             try {
                 // 1. Kiểm tra quyền Notification (BẮT BUỘC)
@@ -135,7 +136,8 @@ class FakeMessageViewModel(
                     id = messageId,
                     senderName = senderName,
                     messageText = messageText,
-                    scheduledTime = scheduledTime
+                    scheduledTime = scheduledTime,
+                    appIconType = appIconType
                 )
 
                 // Lên lịch alarm
@@ -143,6 +145,7 @@ class FakeMessageViewModel(
                     putExtra(FakeMessageReceiver.EXTRA_SENDER_NAME, senderName)
                     putExtra(FakeMessageReceiver.EXTRA_MESSAGE_TEXT, messageText)
                     putExtra(FakeMessageReceiver.EXTRA_NOTIFICATION_ID, messageId.hashCode())
+                    putExtra(FakeMessageReceiver.EXTRA_APP_ICON_TYPE, appIconType)
                     action = "com.example.thebusysimulator.FAKE_MESSAGE_ALARM"
                 }
 
@@ -271,7 +274,7 @@ class FakeMessageViewModel(
         }
     }
 
-    fun showMessageNow(senderName: String, messageText: String) {
+    fun showMessageNow(senderName: String, messageText: String, appIconType: String = "default") {
         viewModelScope.launch {
             try {
                 // Kiểm tra quyền Notification (BẮT BUỘC)
@@ -318,7 +321,8 @@ class FakeMessageViewModel(
                     context = context,
                     senderName = senderName,
                     messageText = messageText,
-                    flashEnabled = flashEnabled
+                    flashEnabled = flashEnabled,
+                    appIconType = appIconType
                 )
                 android.util.Log.d("FakeMessageViewModel", "✅ Message shown immediately: $senderName - $messageText")
             } catch (e: Exception) {

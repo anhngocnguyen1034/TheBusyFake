@@ -303,6 +303,7 @@ fun MessageInputSection(
 ) {
     var senderName by rememberSaveable { mutableStateOf("") }
     var messageText by rememberSaveable { mutableStateOf("") }
+    var selectedAppIconType by rememberSaveable { mutableStateOf("default") }
 
     val quickTimeOptions = listOf(
         R.string.immediately to 5,
@@ -320,6 +321,7 @@ fun MessageInputSection(
             messageText = ""
             selectedDelaySeconds = 5
             customTimeInput = ""
+            selectedAppIconType = "default"
             viewModel.clearSuccessFlag()
         }
     }
@@ -440,6 +442,75 @@ fun MessageInputSection(
             )
         }
 
+        // App Icon Picker
+        HorizontalDivider(color = theme.border.copy(alpha = 0.3f))
+        Text(
+            text = "APP ICON",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Black,
+            fontFamily = FontFamily.Monospace,
+            color = theme.text
+        )
+        val appIconOptions = listOf(
+            "default" to Triple(R.drawable.ic_notification, "Default", Color(0xFF555555)),
+            "messenger" to Triple(R.drawable.ic_notif_messenger, "Messenger", Color(0xFF0084FF)),
+            "whatsapp" to Triple(R.drawable.ic_notif_whatsapp, "WhatsApp", Color(0xFF25D366)),
+            "telegram" to Triple(R.drawable.ic_notif_telegram, "Telegram", Color(0xFF229ED9)),
+            "sms" to Triple(R.drawable.ic_notif_sms, "SMS", Color(0xFF9C27B0)),
+            "instagram" to Triple(R.drawable.ic_notif_instagram, "Instagram", Color(0xFFE1306C))
+        )
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(appIconOptions) { (type, info) ->
+                val (iconRes, label, color) = info
+                val isSelected = selectedAppIconType == type
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val chipOffset by animateDpAsState(if (isPressed || isSelected) 0.dp else 2.dp, label = "iconChip")
+                Box(modifier = Modifier.padding(bottom = 2.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .offset(x = 2.dp, y = 2.dp)
+                            .background(theme.shadow, RoundedCornerShape(12.dp))
+                    )
+                    Column(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .offset(x = chipOffset, y = chipOffset)
+                            .background(
+                                if (isSelected) color else theme.surface,
+                                RoundedCornerShape(12.dp)
+                            )
+                            .border(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) color else theme.border,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable(interactionSource = interactionSource, indication = null) {
+                                selectedAppIconType = type
+                            },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(iconRes),
+                            contentDescription = label,
+                            tint = if (isSelected) Color.White else color,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) Color.White else theme.text,
+                            fontFamily = FontFamily.Monospace,
+                            maxLines = 1,
+                            fontSize = 8.sp
+                        )
+                    }
+                }
+            }
+        }
+
         // Row Flash
         GenZSwitchRow(
             label = stringResource(R.string.flash_on_message),
@@ -472,19 +543,21 @@ fun MessageInputSection(
                         if (isEnabled) {
                             if (selectedDelaySeconds <= 10) {
                                 // Gửi ngay
-                                viewModel.showMessageNow(senderName, messageText)
+                                viewModel.showMessageNow(senderName, messageText, selectedAppIconType)
                             } else {
                                 // Lên lịch
                                 viewModel.scheduleMessage(
                                     senderName,
                                     messageText,
-                                    createDateWithDelay(selectedDelaySeconds)
+                                    createDateWithDelay(selectedDelaySeconds),
+                                    selectedAppIconType
                                 )
                             }
                             senderName = ""
                             messageText = ""
                             selectedDelaySeconds = 5
                             customTimeInput = ""
+                            selectedAppIconType = "default"
                         }
                     }
                 )
