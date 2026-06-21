@@ -24,7 +24,8 @@ data class ChatMessageEntity(
     val text: String,
     val timestamp: Long,
     val isFromMe: Boolean,
-    val imageUri: String? = null, // URI của ảnh nếu có
-    val replyToMessageId: String? = null // ID của tin nhắn được phản hồi
+    val imageUri: String? = null,
+    val audioUri: String? = null,
+    val replyToMessageId: String? = null
 )
 

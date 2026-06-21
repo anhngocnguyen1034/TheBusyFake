@@ -526,6 +526,22 @@ class MessageViewModel(
         }
     }
     
+    fun sendAudioMessage(messageId: String, audioUri: String, isFromMe: Boolean = true) {
+        viewModelScope.launch {
+            try {
+                val chatMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = "",
+                    timestamp = Date(),
+                    isFromMe = isFromMe,
+                    audioUri = audioUri
+                )
+                messageRepository.insertChatMessage(chatMessage)
+            } catch (_: Exception) {}
+        }
+    }
+
     fun sendMessageFromContact(messageId: String, text: String, imageUri: String? = null) {
         viewModelScope.launch {
             try {
