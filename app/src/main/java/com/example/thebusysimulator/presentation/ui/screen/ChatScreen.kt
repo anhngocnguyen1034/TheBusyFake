@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -89,6 +90,7 @@ fun ChatScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSendOptionsSheet by remember { mutableStateOf(false) }
     var showDeleteChatDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
 
     fun openMessageOptions(message: ChatMessage) {
@@ -259,8 +261,27 @@ fun ChatScreen(
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
-                    IconButton(onClick = { showDeleteChatDialog = true }) {
-                        Icon(Icons.Filled.Delete, "Delete chat", tint = colorScheme.error)
+                    Box {
+                        IconButton(onClick = { showMoreMenu = true }) {
+                            Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
+                        }
+                        DropdownMenu(
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text("Delete chat", color = colorScheme.error)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Delete, null, tint = colorScheme.error)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showDeleteChatDialog = true
+                                }
+                            )
+                        }
                     }
                     if (showDeleteChatDialog) {
                         AlertDialog(
