@@ -7,8 +7,12 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import com.example.thebusysimulator.presentation.FakeCallActivity
+import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.presentation.service.FakeCallNotificationService
 import com.example.thebusysimulator.presentation.util.PermissionHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Receiver để nhận alarm và hiển thị fake call
@@ -19,8 +23,20 @@ class FakeCallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val callerName = intent.getStringExtra(FakeCallActivity.EXTRA_CALLER_NAME) ?: "Unknown"
         val callerNumber = intent.getStringExtra(FakeCallActivity.EXTRA_CALLER_NUMBER) ?: "Unknown"
+        val callId = intent.getStringExtra(FakeCallActivity.EXTRA_CALL_ID)
 
         android.util.Log.d("FakeCallReceiver", "🔔 Alarm triggered: $callerName ($callerNumber)")
+
+        // Mark call as completed when alarm fires
+        if (callId != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    AppContainer.fakeCallRepository.markCallAsCompleted(callId)
+                } catch (e: Exception) {
+                    android.util.Log.e("FakeCallReceiver", "Failed to mark call as completed", e)
+                }
+            }
+        }
 
         // Kiểm tra xem app có đang chạy ở foreground không
         val isAppRunning = isAppInForeground(context)

@@ -78,19 +78,8 @@ class FakeCallViewModel(
             scheduleFakeCallUseCase.invoke(fakeCall).fold(
                 onSuccess = {
                     callScheduler.schedule(fakeCall)
-                    // Mark call as completed ngay sau khi schedule để hiển thị trong lịch sử
-                    markCallAsCompletedUseCase.invoke(fakeCall.id).fold(
-                        onSuccess = {
-                            _uiState.value = _uiState.value.copy(isScheduling = false)
-                            loadScheduledCalls()
-                        },
-                        onFailure = { markException ->
-                            // Nếu mark failed, vẫn coi như schedule thành công
-                            android.util.Log.w("FakeCallViewModel", "Failed to mark call as completed: ${markException.message}")
-                            _uiState.value = _uiState.value.copy(isScheduling = false)
-                            loadScheduledCalls()
-                        }
-                    )
+                    _uiState.value = _uiState.value.copy(isScheduling = false)
+                    loadScheduledCalls()
                 },
                 onFailure = { exception ->
                     _uiState.value = _uiState.value.copy(

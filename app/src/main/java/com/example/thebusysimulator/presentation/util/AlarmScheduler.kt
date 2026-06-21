@@ -21,7 +21,7 @@ class AlarmSchedulerImpl(private val context: Context) : CallScheduler {
         val intent = Intent(context, FakeCallReceiver::class.java).apply {
             putExtra(FakeCallActivity.EXTRA_CALLER_NAME, fakeCall.callerName)
             putExtra(FakeCallActivity.EXTRA_CALLER_NUMBER, fakeCall.callerNumber)
-            // Đảm bảo intent có action để receiver có thể nhận được
+            putExtra(FakeCallActivity.EXTRA_CALL_ID, fakeCall.id)
             action = "com.example.thebusysimulator.FAKE_CALL_ALARM"
         }
 
