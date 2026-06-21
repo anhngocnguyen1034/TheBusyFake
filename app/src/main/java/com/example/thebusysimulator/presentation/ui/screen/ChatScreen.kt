@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -87,6 +88,7 @@ fun ChatScreen(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSendOptionsSheet by remember { mutableStateOf(false) }
+    var showDeleteChatDialog by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
 
     fun openMessageOptions(message: ChatMessage) {
@@ -243,7 +245,7 @@ fun ChatScreen(
                             context,
                             android.Manifest.permission.CAMERA
                         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                        
+
                         if (hasPermission) {
                             val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
                                 putExtra("caller_name", displayName)
@@ -256,6 +258,43 @@ fun ChatScreen(
                         }
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
+                    }
+                    IconButton(onClick = { showDeleteChatDialog = true }) {
+                        Icon(Icons.Filled.Delete, "Delete chat", tint = colorScheme.error)
+                    }
+                    if (showDeleteChatDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteChatDialog = false },
+                            title = {
+                                Text(
+                                    text = "Delete chat?",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "Delete \"$displayName\" and all messages? This cannot be undone.",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.deleteMessage(messageId)
+                                        showDeleteChatDialog = false
+                                        navController.popBackStack()
+                                    }
+                                ) {
+                                    Text("Delete", color = colorScheme.error)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDeleteChatDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
                     }
             }
             LazyColumn(
