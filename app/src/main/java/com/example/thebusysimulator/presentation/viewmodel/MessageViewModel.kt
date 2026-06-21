@@ -542,6 +542,22 @@ class MessageViewModel(
         }
     }
 
+    fun sendVideoMessage(messageId: String, videoUri: String, isFromMe: Boolean = true) {
+        viewModelScope.launch {
+            try {
+                val chatMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = "",
+                    timestamp = Date(),
+                    isFromMe = isFromMe,
+                    videoUri = videoUri
+                )
+                messageRepository.insertChatMessage(chatMessage)
+            } catch (_: Exception) {}
+        }
+    }
+
     fun sendMessageFromContact(messageId: String, text: String, imageUri: String? = null) {
         viewModelScope.launch {
             try {

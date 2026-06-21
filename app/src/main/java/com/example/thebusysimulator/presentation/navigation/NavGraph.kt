@@ -146,6 +146,26 @@ fun NavGraph(
             }
         }
 
+        composable(
+            route = Screen.ImageEditor.route,
+            arguments = listOf(
+                navArgument("messageId") { type = NavType.StringType },
+                navArgument("encodedPath") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val messageId = backStackEntry.arguments?.getString("messageId") ?: return@composable
+            val encodedPath = backStackEntry.arguments?.getString("encodedPath") ?: return@composable
+            val imagePath = URLDecoder.decode(encodedPath, StandardCharsets.UTF_8.name())
+            messageViewModel?.let { viewModel ->
+                ImageEditorScreen(
+                    navController = navController,
+                    messageId = messageId,
+                    imagePath = imagePath,
+                    viewModel = viewModel
+                )
+            }
+        }
+
         composable(Screen.Policy.route) {
             PolicyScreen(navController = navController)
         }

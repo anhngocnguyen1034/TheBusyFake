@@ -10,6 +10,7 @@ data class ChatMessage(
     val isFromMe: Boolean,
     val imageUri: String? = null,
     val audioUri: String? = null,
+    val videoUri: String? = null,
     val replyToMessageId: String? = null
 )
 

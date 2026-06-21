@@ -70,6 +70,27 @@ object ImageHelper {
     }
     
     /**
+     * Copy video from URI to app's internal storage and return the file path
+     */
+    suspend fun saveChatVideoToInternalStorage(context: Context, uri: Uri): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val dir = File(context.filesDir, "chat_videos")
+                if (!dir.exists()) dir.mkdirs()
+                val fileName = "chat_video_${System.currentTimeMillis()}.mp4"
+                val file = File(dir, fileName)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    FileOutputStream(file).use { output -> input.copyTo(output) }
+                }
+                file.absolutePath
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    /**
      * Get file URI from file path using FileProvider
      */
     fun getFileUri(context: Context, filePath: String): Uri? {

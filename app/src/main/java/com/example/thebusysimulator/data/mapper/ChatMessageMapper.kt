@@ -14,6 +14,7 @@ object ChatMessageMapper {
             isFromMe = data.isFromMe,
             imageUri = data.imageUri,
             audioUri = data.audioUri,
+            videoUri = data.videoUri,
             replyToMessageId = data.replyToMessageId
         )
     }
@@ -27,6 +28,7 @@ object ChatMessageMapper {
             isFromMe = entity.isFromMe,
             imageUri = entity.imageUri,
             audioUri = entity.audioUri,
+            videoUri = entity.videoUri,
             replyToMessageId = entity.replyToMessageId
         )
     }

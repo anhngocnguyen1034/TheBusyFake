@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.ui.text.SpanStyle
@@ -640,7 +641,9 @@ fun ChatScreen(
                                         uris.forEach { uri ->
                                             val imagePath = ImageHelper.saveChatImageToInternalStorage(context, uri)
                                             if (imagePath != null) {
-                                                viewModel.sendChatMessage(messageId, "", imagePath)
+                                                navController.navigate(
+                                                    com.example.thebusysimulator.presentation.navigation.Screen.ImageEditor.createRoute(messageId, imagePath)
+                                                )
                                             }
                                         }
                                     }
@@ -651,6 +654,21 @@ fun ChatScreen(
                                 imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             }) {
                                 Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
+                            }
+                            val videoPickerLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.PickVisualMedia()
+                            ) { uri: Uri? ->
+                                if (uri != null) {
+                                    scope.launch {
+                                        val videoPath = ImageHelper.saveChatVideoToInternalStorage(context, uri)
+                                        if (videoPath != null) viewModel.sendVideoMessage(messageId, videoPath)
+                                    }
+                                }
+                            }
+                            IconButton(onClick = {
+                                videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                            }) {
+                                Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
                             }
                             BasicTextField(
                                 value = messageText,
@@ -1048,6 +1066,10 @@ fun ChatBubble(
                         )
                     }
 
+                    message.videoUri?.let { videoUri ->
+                        VideoBubble(videoUri = videoUri)
+                    }
+
                     if (message.text.isNotBlank()) {
                         val baseColor = if (message.isFromMe) chatTheme.bubbleFromMeText else chatTheme.bubbleFromContactText
                         val displayText = if (searchQuery.isNotBlank() && message.text.contains(searchQuery, ignoreCase = true)) {
@@ -1077,7 +1099,7 @@ fun ChatBubble(
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
-                    } else if (originalMessage != null && message.imageUri == null && message.audioUri == null) {
+                    } else if (originalMessage != null && message.imageUri == null && message.audioUri == null && message.videoUri == null) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -1605,5 +1627,42 @@ fun AudioBubble(audioUri: String, isFromMe: Boolean, bubbleColor: Color) {
                 style = MaterialTheme.typography.labelSmall
             )
         }
+    }
+}
+
+@Composable
+fun VideoBubble(videoUri: String) {
+    val context = LocalContext.current
+
+    val player = remember(videoUri) {
+        androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+            val uri = if (videoUri.startsWith("/")) android.net.Uri.fromFile(java.io.File(videoUri))
+                      else android.net.Uri.parse(videoUri)
+            setMediaItem(androidx.media3.common.MediaItem.fromUri(uri))
+            prepare()
+            playWhenReady = false
+        }
+    }
+
+    DisposableEffect(videoUri) {
+        onDispose { player.release() }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
+            .clip(RoundedCornerShape(8.dp))
+    ) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { ctx ->
+                androidx.media3.ui.PlayerView(ctx).apply {
+                    this.player = player
+                    useController = true
+                    controllerAutoShow = true
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

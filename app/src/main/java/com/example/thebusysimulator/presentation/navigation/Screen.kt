@@ -24,6 +24,12 @@ sealed class Screen(val route: String) {
     data object EditContact : Screen("edit_contact/{messageId}") {
         fun createRoute(messageId: String): String = "edit_contact/$messageId"
     }
+    data object ImageEditor : Screen("image_editor/{messageId}/{encodedPath}") {
+        fun createRoute(messageId: String, imagePath: String): String {
+            val encoded = URLEncoder.encode(imagePath, StandardCharsets.UTF_8.name())
+            return "image_editor/$messageId/$encoded"
+        }
+    }
     data object Policy : Screen("policy")
 }
 
