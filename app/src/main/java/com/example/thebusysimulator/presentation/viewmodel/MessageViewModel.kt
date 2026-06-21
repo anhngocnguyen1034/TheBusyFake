@@ -407,6 +407,16 @@ class MessageViewModel(
         }
     }
     
+    fun updateChatTheme(messageId: String, theme: String) {
+        viewModelScope.launch {
+            try {
+                messageRepository.updateChatTheme(messageId, theme)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
+        }
+    }
+
     fun updateContact(messageId: String, newName: String, newAvatarUri: String?, isVerified: Boolean) {
         viewModelScope.launch {
             try {

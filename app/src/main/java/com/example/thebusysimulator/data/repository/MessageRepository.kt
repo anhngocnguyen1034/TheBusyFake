@@ -73,5 +73,9 @@ class MessageRepository(
     suspend fun getContactAvatarUri(contactName: String): String? {
         return messageDao.getMessageByContactName(contactName)?.avatarUri
     }
+
+    suspend fun updateChatTheme(messageId: String, theme: String) {
+        messageDao.updateChatTheme(messageId, theme)
+    }
 }
 

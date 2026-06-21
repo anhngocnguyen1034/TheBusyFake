@@ -9,6 +9,7 @@ data class Message(
     val timestamp: Date,
     val unreadCount: Int = 0,
     val avatarUri: String? = null,
-    val isVerified: Boolean = false
+    val isVerified: Boolean = false,
+    val chatTheme: String = "default"
 )
 

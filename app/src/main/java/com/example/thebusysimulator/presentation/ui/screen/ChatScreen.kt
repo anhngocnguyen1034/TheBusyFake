@@ -20,6 +20,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -67,6 +68,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.ChatThemes
 import com.example.thebusysimulator.presentation.util.DateUtils
 import com.example.thebusysimulator.presentation.util.ImageHelper
 import kotlinx.coroutines.launch
@@ -101,6 +103,7 @@ fun ChatScreen(
     var isSearchMode by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var currentSearchIndex by remember { mutableStateOf(0) }
+    var showThemePicker by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
 
     fun openMessageOptions(message: ChatMessage) {
@@ -138,6 +141,7 @@ fun ChatScreen(
     val message = uiState.messages.find { it.id == messageId }
     val avatarUri = message?.avatarUri
     val isVerified = message?.isVerified ?: false
+    val chatTheme = ChatThemes.fromId(message?.chatTheme ?: "default")
     
     // Kiểm tra xem có phải preset message không (Mẹ, Người yêu, Bác sĩ, Nhà khoa học)
     val displayName = getContactDisplayName(contactName)
@@ -185,11 +189,27 @@ fun ChatScreen(
 
     val colorScheme = MaterialTheme.colorScheme
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background gradient (3 stops)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            chatTheme.bgGradientStart,
+                            chatTheme.bgGradientMid,
+                            chatTheme.bgGradientEnd
+                        )
+                    )
+                )
+        )
+        // Pattern overlay
+        com.example.thebusysimulator.presentation.ui.theme.ChatPatternBackground(
+            pattern = chatTheme.pattern,
+            color = chatTheme.patternColor
+        )
+        // Content
         Column(modifier = Modifier.fillMaxSize()) {
             // Search bar overlay
             if (isSearchMode) {
@@ -354,6 +374,16 @@ fun ChatScreen(
                             onDismissRequest = { showMoreMenu = false }
                         ) {
                             DropdownMenuItem(
+                                text = { Text("Change theme") },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Star, null, tint = colorScheme.onSurface)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showThemePicker = true
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Search") },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Search, null, tint = colorScheme.onSurface)
@@ -482,6 +512,7 @@ fun ChatScreen(
                             isHighlighted = message.id == highlightedMessageId || isCurrentMatch,
                             showTimestamp = message.id == selectedMessageIdForTimestamp,
                             searchQuery = if (isSearchMatch) searchQuery else "",
+                            chatTheme = chatTheme,
                             onClick = {
                                 if (selectedMessageIdForTimestamp == message.id) {
                                     selectedMessageIdForTimestamp = null
@@ -705,6 +736,17 @@ fun ChatScreen(
         }
     }
 
+    if (showThemePicker) {
+        ChatThemePickerSheet(
+            currentThemeId = message?.chatTheme ?: "default",
+            onThemeSelected = { themeId ->
+                viewModel.updateChatTheme(messageId, themeId)
+                showThemePicker = false
+            },
+            onDismiss = { showThemePicker = false }
+        )
+    }
+
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { showBottomSheet = false },
@@ -752,6 +794,7 @@ fun ChatBubble(
     isHighlighted: Boolean = false,
     showTimestamp: Boolean = false,
     searchQuery: String = "",
+    chatTheme: com.example.thebusysimulator.presentation.ui.theme.ChatThemeConfig = ChatThemes.Default,
     onClick: () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -864,9 +907,9 @@ fun ChatBubble(
                     .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                     .background(
                         if (isHighlighted) {
-                            colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            chatTheme.bubbleFromMe.copy(alpha = 0.4f)
                         } else {
-                            if (message.isFromMe) colorScheme.primary else colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            if (message.isFromMe) chatTheme.bubbleFromMe else chatTheme.bubbleFromContact
                         }
                     )
             ) {
@@ -945,7 +988,7 @@ fun ChatBubble(
                     }
 
                     if (message.text.isNotBlank()) {
-                        val baseColor = if (message.isFromMe) Color.White else colorScheme.onBackground
+                        val baseColor = if (message.isFromMe) chatTheme.bubbleFromMeText else chatTheme.bubbleFromContactText
                         val displayText = if (searchQuery.isNotBlank() && message.text.contains(searchQuery, ignoreCase = true)) {
                             buildAnnotatedString {
                                 val lower = message.text.lowercase()
@@ -1167,6 +1210,139 @@ fun TypingIndicator(animatedValue: Float) {
             val phase = (animatedValue / 100f * 2 * kotlin.math.PI).toFloat() + (i * 2.5f)
             val yOffset = sin(phase) * jumpHeight.toPx()
             drawCircle(color = dotColor, radius = dotRadius.toPx(), center = Offset(startX + (i * (dotRadius.toPx() * 2 + spacing.toPx())), centerY + yOffset))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatThemePickerSheet(
+    currentThemeId: String,
+    onThemeSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0D0D1A),
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 40.dp)
+        ) {
+            Text(
+                text = "Chat Theme",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 16.dp)
+            )
+            androidx.compose.foundation.lazy.LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(ChatThemes.all) { theme ->
+                    val isSelected = theme.id == currentThemeId
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable { onThemeSelected(theme.id) }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        // Theme preview card: gradient + pattern + bubble chips
+                        Box(
+                            modifier = Modifier
+                                .size(width = 80.dp, height = 104.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .then(
+                                    if (isSelected) Modifier.border(
+                                        width = 2.5.dp,
+                                        color = Color.White,
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) else Modifier.border(
+                                        width = 1.dp,
+                                        color = Color.White.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                )
+                        ) {
+                            // Background gradient
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                theme.bgGradientStart,
+                                                theme.bgGradientMid,
+                                                theme.bgGradientEnd
+                                            )
+                                        )
+                                    )
+                            )
+                            // Pattern overlay
+                            com.example.thebusysimulator.presentation.ui.theme.ChatPatternBackground(
+                                pattern = theme.pattern,
+                                color = theme.patternColor.copy(alpha = theme.patternColor.alpha * 3f)
+                            )
+                            // Simulated chat bubbles
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically)
+                            ) {
+                                // Contact bubble (left)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.72f)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(6.dp, 6.dp, 6.dp, 2.dp))
+                                        .background(theme.bubbleFromContact)
+                                )
+                                // My bubble (right)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.6f)
+                                            .height(16.dp)
+                                            .clip(RoundedCornerShape(6.dp, 6.dp, 2.dp, 6.dp))
+                                            .background(theme.bubbleFromMe)
+                                    )
+                                }
+                                // Contact bubble 2
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.5f)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(6.dp, 6.dp, 6.dp, 2.dp))
+                                        .background(theme.bubbleFromContact)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Selected dot indicator
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        } else {
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+                        Text(
+                            text = theme.displayName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.55f),
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
         }
     }
 }
