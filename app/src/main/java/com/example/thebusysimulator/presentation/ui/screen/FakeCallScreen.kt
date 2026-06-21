@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -140,11 +141,9 @@ fun FakeCallScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Back Button (Vuông vức)
-                    GenZIconButton(
-                        icon = Icons.Rounded.ArrowBack,
-                        theme = theme,
-                        onClick = { navController.popBackStack() }
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() },
+                        theme = theme
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -183,6 +182,83 @@ fun FakeCallScreen(
             item {
                 SettingsSection(viewModel = viewModel, theme = theme)
             }
+
+            // --- PENDING CALLS ---
+            if (uiState.scheduledCalls.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "SCHEDULED",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = theme.text.copy(alpha = 0.6f)
+                    )
+                }
+                items(uiState.scheduledCalls) { call ->
+                    PendingCallItem(
+                        call = call,
+                        theme = theme,
+                        onCancel = { viewModel.cancelCall(call.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PendingCallItem(
+    call: com.example.thebusysimulator.domain.model.FakeCall,
+    theme: GenZThemeColors,
+    onCancel: () -> Unit
+) {
+    val timeFormat = java.text.SimpleDateFormat("HH:mm:ss dd/MM", java.util.Locale.getDefault())
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val offset by animateDpAsState(targetValue = if (isPressed) 0.dp else 4.dp, label = "pending")
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp)
+    ) {
+        // Shadow
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = 4.dp, y = 4.dp)
+                .background(theme.shadow, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(x = offset, y = offset)
+                .background(theme.surface, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .border(2.dp, theme.border, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = call.callerName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = theme.text,
+                    maxLines = 1
+                )
+                Text(
+                    text = timeFormat.format(call.scheduledTime),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = theme.text.copy(alpha = 0.6f)
+                )
+            }
+            GenZIconButton(
+                icon = Icons.Filled.Close,
+                theme = theme.copy(surface = androidx.compose.ui.graphics.Color(0xFFFF006E)),
+                onClick = onCancel
+            )
         }
     }
 }

@@ -84,15 +84,9 @@ fun CallHistoryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = stringResource(R.string.back),
-                            tint = colorScheme.onSurface
-                        )
-                    }
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() }
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = stringResource(R.string.call_history),

@@ -2,7 +2,9 @@ package com.example.thebusysimulator.presentation.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -46,6 +48,7 @@ fun MessageScreen(
     val uiState by viewModel.uiState.collectAsState()
     val messages = uiState.messages
     val context = LocalContext.current
+    var messageToDelete by remember { mutableStateOf<Message?>(null) }
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -73,18 +76,9 @@ fun MessageScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = colorScheme.surface.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            tint = colorScheme.onBackground
-                        )
-                    }
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() }
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = stringResource(R.string.messages),
@@ -150,28 +144,70 @@ fun MessageScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(messages, key = { it.id }) { message ->
+                        var lastClickTime by remember { mutableStateOf(0L) }
                         MessageItem(
                             message = message,
                             onClick = {
-                                navController.navigate(
-                                    Screen.Chat.createRoute(
-                                        contactName = message.contactName,
-                                        messageId = message.id
-                                    )
-                                )
-                            }
+                                val now = System.currentTimeMillis()
+                                if (now - lastClickTime > 600L) {
+                                    lastClickTime = now
+                                    navController.navigate(
+                                        Screen.Chat.createRoute(
+                                            contactName = message.contactName,
+                                            messageId = message.id
+                                        )
+                                    ) { launchSingleTop = true }
+                                }
+                            },
+                            onLongClick = { messageToDelete = message }
                         )
                     }
+                }
+                // Delete confirm dialog
+                messageToDelete?.let { msg ->
+                    AlertDialog(
+                        onDismissRequest = { messageToDelete = null },
+                        title = {
+                            Text(
+                                text = "Delete contact?",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "Delete \"${msg.contactName}\" and all their chat history? This cannot be undone.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    viewModel.deleteMessage(msg.id)
+                                    messageToDelete = null
+                                }
+                            ) {
+                                Text("Delete", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { messageToDelete = null }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MessageItem(
     message: Message,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     val displayName = getContactDisplayName(message.contactName)
     val colorScheme = MaterialTheme.colorScheme
@@ -192,12 +228,12 @@ fun MessageItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp), // Bo góc nhiều hơn
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f) // Màu nền nhẹ hơn
+            containerColor = colorScheme.surfaceVariant.copy(alpha = 0.3f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Phẳng
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier

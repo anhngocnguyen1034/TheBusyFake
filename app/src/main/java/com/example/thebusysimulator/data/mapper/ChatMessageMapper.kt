@@ -13,10 +13,12 @@ object ChatMessageMapper {
             timestamp = Date(data.timestamp),
             isFromMe = data.isFromMe,
             imageUri = data.imageUri,
+            audioUri = data.audioUri,
+            videoUri = data.videoUri,
             replyToMessageId = data.replyToMessageId
         )
     }
-    
+
     fun fromEntity(entity: ChatMessage): ChatMessageEntity {
         return ChatMessageEntity(
             id = entity.id,
@@ -25,8 +27,9 @@ object ChatMessageMapper {
             timestamp = entity.timestamp.time,
             isFromMe = entity.isFromMe,
             imageUri = entity.imageUri,
+            audioUri = entity.audioUri,
+            videoUri = entity.videoUri,
             replyToMessageId = entity.replyToMessageId
         )
     }
 }
-

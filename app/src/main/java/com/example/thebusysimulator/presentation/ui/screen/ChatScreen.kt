@@ -20,6 +20,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,8 +28,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -58,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import com.example.thebusysimulator.domain.model.ChatMessage
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.theme.ChatThemes
 import com.example.thebusysimulator.presentation.util.DateUtils
 import com.example.thebusysimulator.presentation.util.ImageHelper
 import kotlinx.coroutines.launch
@@ -87,7 +101,26 @@ fun ChatScreen(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSendOptionsSheet by remember { mutableStateOf(false) }
+    var showDeleteChatDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
+    var isSearchMode by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var currentSearchIndex by remember { mutableStateOf(0) }
+    var showThemePicker by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingSeconds by remember { mutableStateOf(0) }
+    val audioRecorder = remember { com.example.thebusysimulator.presentation.util.AudioRecorderHelper(context) }
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            recordingSeconds = 0
+            while (isRecording) {
+                kotlinx.coroutines.delay(1000)
+                recordingSeconds++
+            }
+        }
+    }
 
     fun openMessageOptions(message: ChatMessage) {
         selectedMessageForMenu = message
@@ -103,11 +136,28 @@ fun ChatScreen(
     val messages = chatUiState[messageId]?.chatMessages ?: emptyList()
     val isTyping = chatUiState[messageId]?.isTyping ?: false
     val reversedMessages = remember(messages) { messages.reversed() }
-    
+
+    // Search: indices in reversedMessages that match the query
+    val searchMatchIndices = remember(searchQuery, reversedMessages) {
+        if (searchQuery.isBlank()) emptyList()
+        else reversedMessages.mapIndexedNotNull { i, msg ->
+            if (msg.text.contains(searchQuery, ignoreCase = true)) i else null
+        }
+    }
+    LaunchedEffect(searchMatchIndices) {
+        if (searchMatchIndices.isNotEmpty()) currentSearchIndex = 0
+    }
+    LaunchedEffect(currentSearchIndex, searchMatchIndices) {
+        if (searchMatchIndices.isNotEmpty()) {
+            listState.animateScrollToItem(searchMatchIndices[currentSearchIndex])
+        }
+    }
+
     // Lấy avatarUri và isVerified từ Message
     val message = uiState.messages.find { it.id == messageId }
     val avatarUri = message?.avatarUri
     val isVerified = message?.isVerified ?: false
+    val chatTheme = ChatThemes.fromId(message?.chatTheme ?: "default")
     
     // Kiểm tra xem có phải preset message không (Mẹ, Người yêu, Bác sĩ, Nhà khoa học)
     val displayName = getContactDisplayName(contactName)
@@ -155,24 +205,97 @@ fun ChatScreen(
 
     val colorScheme = MaterialTheme.colorScheme
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(colorScheme.background, colorScheme.surface)))
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background gradient (3 stops)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            chatTheme.bgGradientStart,
+                            chatTheme.bgGradientMid,
+                            chatTheme.bgGradientEnd
+                        )
+                    )
+                )
+        )
+        // Pattern overlay
+        com.example.thebusysimulator.presentation.ui.theme.ChatPatternBackground(
+            pattern = chatTheme.pattern,
+            color = chatTheme.patternColor
+        )
+        // Content
         Column(modifier = Modifier.fillMaxSize()) {
-            Surface(
-                color = Color.White.copy(alpha = 0.1f),
-                modifier = Modifier.fillMaxWidth().statusBarPadding()
-            ) {
+            // Search bar overlay
+            if (isSearchMode) {
                 Row(
-                    modifier = Modifier.padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarPadding()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Rounded.ArrowBack, "Back", tint = colorScheme.onBackground)
+                    IconButton(onClick = {
+                        isSearchMode = false
+                        searchQuery = ""
+                    }) {
+                        Icon(Icons.Filled.Close, "Close search", tint = colorScheme.onBackground)
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(colorScheme.surfaceVariant, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        singleLine = true,
+                        textStyle = TextStyle(color = colorScheme.onSurface, fontSize = 16.sp),
+                        cursorBrush = SolidColor(colorScheme.primary),
+                        decorationBox = { inner ->
+                            if (searchQuery.isEmpty()) {
+                                Text("Search messages...", color = colorScheme.onSurfaceVariant, fontSize = 16.sp)
+                            }
+                            inner()
+                        }
+                    )
+                    if (searchMatchIndices.isNotEmpty()) {
+                        Text(
+                            text = "${currentSearchIndex + 1}/${searchMatchIndices.size}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                        IconButton(
+                            onClick = {
+                                currentSearchIndex = (currentSearchIndex - 1 + searchMatchIndices.size) % searchMatchIndices.size
+                            }
+                        ) {
+                            Icon(Icons.Filled.KeyboardArrowUp, "Previous", tint = colorScheme.primary)
+                        }
+                        IconButton(
+                            onClick = {
+                                currentSearchIndex = (currentSearchIndex + 1) % searchMatchIndices.size
+                            }
+                        ) {
+                            Icon(Icons.Filled.KeyboardArrowDown, "Next", tint = colorScheme.primary)
+                        }
+                    } else if (searchQuery.isNotBlank()) {
+                        Text("No results", style = MaterialTheme.typography.bodySmall, color = colorScheme.error)
+                    }
+                }
+            } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                        onClick = { navController.popBackStack() }
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -244,7 +367,7 @@ fun ChatScreen(
                             context,
                             android.Manifest.permission.CAMERA
                         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                        
+
                         if (hasPermission) {
                             val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
                                 putExtra("caller_name", displayName)
@@ -258,8 +381,94 @@ fun ChatScreen(
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
-                }
+                    Box {
+                        IconButton(onClick = { showMoreMenu = true }) {
+                            Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
+                        }
+                        DropdownMenu(
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Change theme") },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Star, null, tint = colorScheme.onSurface)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showThemePicker = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Search") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Search, null, tint = colorScheme.onSurface)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    isSearchMode = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Edit contact") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Edit, null, tint = colorScheme.onSurface)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    navController.navigate(
+                                        com.example.thebusysimulator.presentation.navigation.Screen.EditContact.createRoute(messageId)
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete chat", color = colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Delete, null, tint = colorScheme.error)
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showDeleteChatDialog = true
+                                }
+                            )
+                        }
+                    }
+                    if (showDeleteChatDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDeleteChatDialog = false },
+                            title = {
+                                Text(
+                                    text = "Delete chat?",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "Delete \"$displayName\" and all messages? This cannot be undone.",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.deleteMessage(messageId)
+                                        showDeleteChatDialog = false
+                                        navController.popBackStack()
+                                    }
+                                ) {
+                                    Text("Delete", color = colorScheme.error)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDeleteChatDialog = false }) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
             }
+            } // end else (normal header)
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -306,6 +515,8 @@ fun ChatScreen(
                         // Xác định tin nhắn tiếp theo (index - 1 vì list bị reverse, tin mới hơn ở index nhỏ hơn)
                         val nextMessage = if (index > 0) reversedMessages[index - 1] else null
                         
+                        val isSearchMatch = searchQuery.isNotBlank() && index in searchMatchIndices
+                        val isCurrentMatch = isSearchMatch && searchMatchIndices.getOrNull(currentSearchIndex) == index
                         ChatBubble(
                             message = message,
                             nextMessage = nextMessage,
@@ -314,8 +525,10 @@ fun ChatScreen(
                             avatarUri = avatarUri,
                             onLongClick = { openMessageOptions(message) },
                             onReplyClick = { replyId -> scrollToMessage(replyId) },
-                            isHighlighted = message.id == highlightedMessageId,
+                            isHighlighted = message.id == highlightedMessageId || isCurrentMatch,
                             showTimestamp = message.id == selectedMessageIdForTimestamp,
+                            searchQuery = if (isSearchMatch) searchQuery else "",
+                            chatTheme = chatTheme,
                             onClick = {
                                 if (selectedMessageIdForTimestamp == message.id) {
                                     selectedMessageIdForTimestamp = null
@@ -400,94 +613,151 @@ fun ChatScreen(
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val imagePickerLauncher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.PickMultipleVisualMedia()
-                        ) { uris: List<Uri> ->
-                            if (uris.isNotEmpty()) {
-                                scope.launch {
-                                    uris.forEach { uri ->
-                                        val imagePath = ImageHelper.saveChatImageToInternalStorage(context, uri)
-                                        if (imagePath != null) {
-                                            viewModel.sendChatMessage(messageId, "", imagePath)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        IconButton(onClick = {
-                            imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }) {
-                            Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
-                        }
-                        BasicTextField(
-                            value = messageText,
-                            onValueChange = { messageText = it },
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(
-                                    color = colorScheme.surfaceVariant.copy(alpha = 0.5f), // Màu nền xám nhẹ
-                                    shape = RoundedCornerShape(24.dp) // Bo tròn như viên thuốc
-                                ),
-                            textStyle = TextStyle(
-                                color = colorScheme.onBackground,
-                                fontSize = 16.sp
-                            ),
-                            singleLine = true,
-                            maxLines = 1,
-                            cursorBrush = SolidColor(colorScheme.primary), // Màu con trỏ chuột
-                            decorationBox = { innerTextField ->
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(modifier = Modifier.weight(1f)) {
-                                        if (messageText.isEmpty()) {
-                                            Text(
-                                                stringResource(R.string.typing_message),
-                                                style = TextStyle(
-                                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
-                                                    fontSize = 16.sp
-                                                )
-                                            )
-                                        }
-                                        innerTextField()
-                                    }
-                                }
+                    if (isRecording) {
+                        // Recording overlay bar
+                        RecordingBar(
+                            seconds = recordingSeconds,
+                            onCancel = {
+                                audioRecorder.cancelRecording()
+                                isRecording = false
+                            },
+                            onSend = {
+                                val path = audioRecorder.stopRecording()
+                                isRecording = false
+                                if (path != null) viewModel.sendAudioMessage(messageId, path, true)
                             }
                         )
-                        IconButton(
-                            onClick = {
-                                if (messageText.isNotBlank()) {
-                                    if (replyingToMessage != null) {
-                                        viewModel.replyToChatMessage(messageId, messageText, replyingToMessage!!)
-                                        replyingToMessage = null
-                                        messageText = ""
-                                    } else {
-                                        if (isPresetMessage) {
-                                            // Preset messages: Gửi luôn, không có chức năng nhận tin
-                                            viewModel.sendChatMessage(messageId, messageText, null)
-                                            messageText = ""
-                                        } else {
-                                            // Contact thường: Mở bottom sheet để chọn gửi/nhận
-                                            pendingMessageText = messageText
-                                            showSendOptionsSheet = true
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val imagePickerLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.PickMultipleVisualMedia()
+                            ) { uris: List<Uri> ->
+                                if (uris.isNotEmpty()) {
+                                    scope.launch {
+                                        uris.forEach { uri ->
+                                            val imagePath = ImageHelper.saveChatImageToInternalStorage(context, uri)
+                                            if (imagePath != null) {
+                                                navController.navigate(
+                                                    com.example.thebusysimulator.presentation.navigation.Screen.ImageEditor.createRoute(messageId, imagePath)
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                            },
-                           enabled = messageText.isNotBlank()
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.send), "Send",
-                                tint = if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.5f),
-                                modifier = Modifier.size(20.dp)
+                            }
+
+                            IconButton(onClick = {
+                                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }) {
+                                Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
+                            }
+                            val videoPickerLauncher = rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.PickVisualMedia()
+                            ) { uri: Uri? ->
+                                if (uri != null) {
+                                    scope.launch {
+                                        val videoPath = ImageHelper.saveChatVideoToInternalStorage(context, uri)
+                                        if (videoPath != null) viewModel.sendVideoMessage(messageId, videoPath)
+                                    }
+                                }
+                            }
+                            IconButton(onClick = {
+                                videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                            }) {
+                                Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
+                            }
+                            BasicTextField(
+                                value = messageText,
+                                onValueChange = { messageText = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(
+                                        color = colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(24.dp)
+                                    ),
+                                textStyle = TextStyle(
+                                    color = colorScheme.onBackground,
+                                    fontSize = 16.sp
+                                ),
+                                singleLine = true,
+                                maxLines = 1,
+                                cursorBrush = SolidColor(colorScheme.primary),
+                                decorationBox = { innerTextField ->
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            if (messageText.isEmpty()) {
+                                                Text(
+                                                    stringResource(R.string.typing_message),
+                                                    style = TextStyle(
+                                                        color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                                        fontSize = 16.sp
+                                                    )
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
+                                }
                             )
+                            if (messageText.isBlank()) {
+                                // Mic button
+                                val recordAudioPermission = rememberLauncherForActivityResult(
+                                    ActivityResultContracts.RequestPermission()
+                                ) { granted ->
+                                    if (granted) {
+                                        audioRecorder.startRecording()
+                                        isRecording = true
+                                    }
+                                }
+                                IconButton(onClick = {
+                                    if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
+                                        androidx.core.content.ContextCompat.checkSelfPermission(
+                                            context, android.Manifest.permission.RECORD_AUDIO
+                                        )
+                                    ) {
+                                        audioRecorder.startRecording()
+                                        isRecording = true
+                                    } else {
+                                        recordAudioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                                    }
+                                }) {
+                                    Icon(Icons.Filled.Mic, "Record voice", tint = colorScheme.primary)
+                                }
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        if (messageText.isNotBlank()) {
+                                            if (replyingToMessage != null) {
+                                                viewModel.replyToChatMessage(messageId, messageText, replyingToMessage!!)
+                                                replyingToMessage = null
+                                                messageText = ""
+                                            } else {
+                                                if (isPresetMessage) {
+                                                    viewModel.sendChatMessage(messageId, messageText, null)
+                                                    messageText = ""
+                                                } else {
+                                                    pendingMessageText = messageText
+                                                    showSendOptionsSheet = true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    enabled = messageText.isNotBlank()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.send), "Send",
+                                        tint = if (messageText.isNotBlank()) colorScheme.primary else colorScheme.onBackground.copy(0.5f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -539,6 +809,17 @@ fun ChatScreen(
         }
     }
 
+    if (showThemePicker) {
+        ChatThemePickerSheet(
+            currentThemeId = message?.chatTheme ?: "default",
+            onThemeSelected = { themeId ->
+                viewModel.updateChatTheme(messageId, themeId)
+                showThemePicker = false
+            },
+            onDismiss = { showThemePicker = false }
+        )
+    }
+
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { showBottomSheet = false },
@@ -585,6 +866,8 @@ fun ChatBubble(
     onReplyClick: (String) -> Unit = {},
     isHighlighted: Boolean = false,
     showTimestamp: Boolean = false,
+    searchQuery: String = "",
+    chatTheme: com.example.thebusysimulator.presentation.ui.theme.ChatThemeConfig = ChatThemes.Default,
     onClick: () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -697,9 +980,9 @@ fun ChatBubble(
                     .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                     .background(
                         if (isHighlighted) {
-                            colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            chatTheme.bubbleFromMe.copy(alpha = 0.4f)
                         } else {
-                            if (message.isFromMe) colorScheme.primary else colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            if (message.isFromMe) chatTheme.bubbleFromMe else chatTheme.bubbleFromContact
                         }
                     )
             ) {
@@ -765,9 +1048,7 @@ fun ChatBubble(
                         } catch (e: Exception) { null }
 
                         if (imageData != null) {
-                            // Nếu có reply, thêm khoảng cách phía trên ảnh
                             if (originalMessage != null) Spacer(modifier = Modifier.height(8.dp))
-
                             Image(
                                 painter = rememberAsyncImagePainter(ImageRequest.Builder(context).data(imageData).build()),
                                 contentDescription = stringResource(R.string.chat_image),
@@ -777,15 +1058,48 @@ fun ChatBubble(
                         }
                     }
 
+                    message.audioUri?.let { audioUri ->
+                        AudioBubble(
+                            audioUri = audioUri,
+                            isFromMe = message.isFromMe,
+                            bubbleColor = if (message.isFromMe) chatTheme.bubbleFromMe else chatTheme.bubbleFromContact
+                        )
+                    }
+
+                    message.videoUri?.let { videoUri ->
+                        VideoBubble(videoUri = videoUri)
+                    }
+
                     if (message.text.isNotBlank()) {
+                        val baseColor = if (message.isFromMe) chatTheme.bubbleFromMeText else chatTheme.bubbleFromContactText
+                        val displayText = if (searchQuery.isNotBlank() && message.text.contains(searchQuery, ignoreCase = true)) {
+                            buildAnnotatedString {
+                                val lower = message.text.lowercase()
+                                val queryLower = searchQuery.lowercase()
+                                var start = 0
+                                while (true) {
+                                    val idx = lower.indexOf(queryLower, start)
+                                    if (idx == -1) {
+                                        append(message.text.substring(start))
+                                        break
+                                    }
+                                    append(message.text.substring(start, idx))
+                                    withStyle(SpanStyle(background = Color(0xFFFFD600), color = Color.Black)) {
+                                        append(message.text.substring(idx, idx + searchQuery.length))
+                                    }
+                                    start = idx + searchQuery.length
+                                }
+                            }
+                        } else {
+                            buildAnnotatedString { append(message.text) }
+                        }
                         Text(
-                            text = message.text,
-                            color = if (message.isFromMe) Color.White else colorScheme.onBackground,
+                            text = displayText,
+                            color = baseColor,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
-                    } else if (originalMessage != null && message.imageUri == null) {
-                        // Trường hợp hiếm: chỉ reply mà không có text/ảnh (thường không xảy ra nhưng cứ padding cho đẹp)
+                    } else if (originalMessage != null && message.imageUri == null && message.audioUri == null && message.videoUri == null) {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -979,5 +1293,376 @@ fun TypingIndicator(animatedValue: Float) {
             val yOffset = sin(phase) * jumpHeight.toPx()
             drawCircle(color = dotColor, radius = dotRadius.toPx(), center = Offset(startX + (i * (dotRadius.toPx() * 2 + spacing.toPx())), centerY + yOffset))
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatThemePickerSheet(
+    currentThemeId: String,
+    onThemeSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0D0D1A),
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 40.dp)
+        ) {
+            Text(
+                text = "Chat Theme",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 16.dp)
+            )
+            androidx.compose.foundation.lazy.LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(ChatThemes.all) { theme ->
+                    val isSelected = theme.id == currentThemeId
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clickable { onThemeSelected(theme.id) }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        // Theme preview card: gradient + pattern + bubble chips
+                        Box(
+                            modifier = Modifier
+                                .size(width = 80.dp, height = 104.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .then(
+                                    if (isSelected) Modifier.border(
+                                        width = 2.5.dp,
+                                        color = Color.White,
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) else Modifier.border(
+                                        width = 1.dp,
+                                        color = Color.White.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                )
+                        ) {
+                            // Background gradient
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                theme.bgGradientStart,
+                                                theme.bgGradientMid,
+                                                theme.bgGradientEnd
+                                            )
+                                        )
+                                    )
+                            )
+                            // Pattern overlay
+                            com.example.thebusysimulator.presentation.ui.theme.ChatPatternBackground(
+                                pattern = theme.pattern,
+                                color = theme.patternColor.copy(alpha = theme.patternColor.alpha * 3f)
+                            )
+                            // Simulated chat bubbles
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically)
+                            ) {
+                                // Contact bubble (left)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.72f)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(6.dp, 6.dp, 6.dp, 2.dp))
+                                        .background(theme.bubbleFromContact)
+                                )
+                                // My bubble (right)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.6f)
+                                            .height(16.dp)
+                                            .clip(RoundedCornerShape(6.dp, 6.dp, 2.dp, 6.dp))
+                                            .background(theme.bubbleFromMe)
+                                    )
+                                }
+                                // Contact bubble 2
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.5f)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(6.dp, 6.dp, 6.dp, 2.dp))
+                                        .background(theme.bubbleFromContact)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Selected dot indicator
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        } else {
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+                        Text(
+                            text = theme.displayName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.55f),
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RecordingBar(
+    seconds: Int,
+    onCancel: () -> Unit,
+    onSend: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
+    val pulse by infiniteTransition.animateFloat(
+        initialValue = 0.4f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "pulse"
+    )
+    val minutes = seconds / 60
+    val secs = seconds % 60
+    val timeText = "%d:%02d".format(minutes, secs)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .background(Color(0xFF1A0A0A), RoundedCornerShape(24.dp)),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Spacer(Modifier.width(4.dp))
+        // Cancel
+        IconButton(onClick = onCancel, modifier = Modifier.size(36.dp)) {
+            Icon(Icons.Filled.Close, "Cancel", tint = Color(0xFFAAAAAA), modifier = Modifier.size(20.dp))
+        }
+        // Pulsing red dot
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFFF3B30).copy(alpha = pulse))
+        )
+        // Timer
+        Text(
+            text = timeText,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+        // Waveform placeholder
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val heights = remember { List(18) { (8..32).random().dp } }
+            heights.forEachIndexed { i, h ->
+                val animH by infiniteTransition.animateFloat(
+                    initialValue = h.value * 0.5f, targetValue = h.value,
+                    animationSpec = infiniteRepeatable(
+                        tween((400..900).random(), easing = LinearEasing),
+                        RepeatMode.Reverse
+                    ),
+                    label = "bar_$i"
+                )
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(animH.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFFFF3B30).copy(alpha = 0.7f))
+                )
+            }
+        }
+        // Send
+        IconButton(
+            onClick = onSend,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF007AFF))
+        ) {
+            Icon(Icons.Filled.Stop, "Send recording", tint = Color.White, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(4.dp))
+    }
+}
+
+@Composable
+fun AudioBubble(audioUri: String, isFromMe: Boolean, bubbleColor: Color) {
+    var isPlaying by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf(0f) }
+    var durationMs by remember { mutableStateOf(0) }
+    val mediaPlayer = remember { android.media.MediaPlayer() }
+
+    DisposableEffect(audioUri) {
+        try {
+            mediaPlayer.setDataSource(audioUri)
+            mediaPlayer.prepare()
+            durationMs = mediaPlayer.duration
+        } catch (_: Exception) {}
+        mediaPlayer.setOnCompletionListener {
+            isPlaying = false
+            progress = 0f
+        }
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
+
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            val current = mediaPlayer.currentPosition
+            val total = durationMs.takeIf { it > 0 } ?: 1
+            progress = current.toFloat() / total
+            kotlinx.coroutines.delay(100)
+        }
+    }
+
+    val durationLabel = if (durationMs > 0) {
+        "%d:%02d".format(durationMs / 60000, (durationMs / 1000) % 60)
+    } else "0:00"
+
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .widthIn(min = 160.dp, max = 240.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Play/Pause button
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.2f))
+                .clickable {
+                    if (isPlaying) {
+                        mediaPlayer.pause()
+                        isPlaying = false
+                    } else {
+                        if (progress == 0f || mediaPlayer.currentPosition >= durationMs - 100) {
+                            mediaPlayer.seekTo(0)
+                        }
+                        mediaPlayer.start()
+                        isPlaying = true
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Filled.Stop else Icons.Filled.Mic,
+                contentDescription = if (isPlaying) "Pause" else "Play",
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Waveform progress bar + duration
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Progress track
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White.copy(alpha = 0.25f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .fillMaxHeight()
+                        .background(Color.White.copy(alpha = 0.9f))
+                )
+            }
+            // Fake waveform bars
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val barHeights = remember(audioUri) {
+                    List(28) { (3..14).random() }
+                }
+                barHeights.forEachIndexed { i, h ->
+                    val barProgress = i.toFloat() / barHeights.size
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(h.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(
+                                if (barProgress <= progress) Color.White.copy(alpha = 0.9f)
+                                else Color.White.copy(alpha = 0.3f)
+                            )
+                    )
+                }
+            }
+            Text(
+                text = durationLabel,
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+    }
+}
+
+@Composable
+fun VideoBubble(videoUri: String) {
+    val context = LocalContext.current
+
+    val player = remember(videoUri) {
+        androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+            val uri = if (videoUri.startsWith("/")) android.net.Uri.fromFile(java.io.File(videoUri))
+                      else android.net.Uri.parse(videoUri)
+            setMediaItem(androidx.media3.common.MediaItem.fromUri(uri))
+            prepare()
+            playWhenReady = false
+        }
+    }
+
+    DisposableEffect(videoUri) {
+        onDispose { player.release() }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
+            .clip(RoundedCornerShape(8.dp))
+    ) {
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = { ctx ->
+                androidx.media3.ui.PlayerView(ctx).apply {
+                    this.player = player
+                    useController = true
+                    controllerAutoShow = true
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

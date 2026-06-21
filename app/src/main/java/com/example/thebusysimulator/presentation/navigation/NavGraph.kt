@@ -1,9 +1,13 @@
 package com.example.thebusysimulator.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.thebusysimulator.presentation.ui.screen.*
 import com.anhnn.language.LanguageScreen
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
@@ -117,6 +121,53 @@ fun NavGraph(
                     }
                 )
             }
+        }
+
+        composable(
+            route = Screen.EditContact.route,
+            arguments = listOf(navArgument("messageId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val messageId = backStackEntry.arguments?.getString("messageId") ?: return@composable
+            messageViewModel?.let { viewModel ->
+                val uiState by viewModel.uiState.collectAsState()
+                val message = uiState.messages.find { it.id == messageId }
+                if (message != null) {
+                    CreateMessageScreen(
+                        navController = navController,
+                        onConfirm = { name, uri, isVerified ->
+                            viewModel.updateContact(messageId, name, uri, isVerified)
+                        },
+                        initialName = message.contactName,
+                        initialAvatarUri = message.avatarUri,
+                        initialIsVerified = message.isVerified,
+                        isEditMode = true
+                    )
+                }
+            }
+        }
+
+        composable(
+            route = Screen.ImageEditor.route,
+            arguments = listOf(
+                navArgument("messageId") { type = NavType.StringType },
+                navArgument("encodedPath") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val messageId = backStackEntry.arguments?.getString("messageId") ?: return@composable
+            val encodedPath = backStackEntry.arguments?.getString("encodedPath") ?: return@composable
+            val imagePath = URLDecoder.decode(encodedPath, StandardCharsets.UTF_8.name())
+            messageViewModel?.let { viewModel ->
+                ImageEditorScreen(
+                    navController = navController,
+                    messageId = messageId,
+                    imagePath = imagePath,
+                    viewModel = viewModel
+                )
+            }
+        }
+
+        composable(Screen.Policy.route) {
+            PolicyScreen(navController = navController)
         }
     }
 }

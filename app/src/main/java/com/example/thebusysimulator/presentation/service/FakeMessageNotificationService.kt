@@ -78,7 +78,7 @@ object FakeMessageNotificationService {
 
         // Tạo notification với style tin nhắn
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.sym_def_app_icon) // Icon mặc định
+            .setSmallIcon(android.R.drawable.sym_def_app_icon)
             .setContentTitle(senderName) // Tên người gửi
             .setContentText(messageText) // Nội dung tin nhắn
             .setPriority(NotificationCompat.PRIORITY_HIGH) // HIGH priority

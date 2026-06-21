@@ -109,15 +109,10 @@ fun FakeMessageScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
                         onClick = { navController.popBackStack() },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = stringResource(R.string.back),
-                            tint = theme.text
-                        )
-                    }
+                        theme = theme
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
                         text = stringResource(R.string.fake_notification_uppercase),
@@ -147,6 +142,26 @@ fun FakeMessageScreen(
                     viewModel = viewModel,
                     theme = theme
                 )
+            }
+
+            // --- PENDING MESSAGES ---
+            if (uiState.scheduledMessages.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "SCHEDULED",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        fontFamily = FontFamily.Monospace,
+                        color = theme.text.copy(alpha = 0.6f)
+                    )
+                }
+                items(uiState.scheduledMessages) { msg ->
+                    PendingMessageItem(
+                        message = msg,
+                        theme = theme,
+                        onCancel = { viewModel.cancelMessage(msg.id) }
+                    )
+                }
             }
 
             // Error Message
@@ -523,6 +538,72 @@ fun MessageInputSection(
                         letterSpacing = 1.sp
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun PendingMessageItem(
+    message: com.example.thebusysimulator.presentation.viewmodel.ScheduledMessage,
+    theme: GenZThemeColors,
+    onCancel: () -> Unit
+) {
+    val timeFormat = java.text.SimpleDateFormat("HH:mm:ss dd/MM", java.util.Locale.getDefault())
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val offset by androidx.compose.animation.core.animateDpAsState(
+        targetValue = if (isPressed) 0.dp else 4.dp, label = "pending_msg"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = 4.dp, y = 4.dp)
+                .background(theme.shadow, RoundedCornerShape(12.dp))
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(x = offset, y = offset)
+                .background(theme.surface, RoundedCornerShape(12.dp))
+                .border(2.dp, theme.border, RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = message.senderName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    color = theme.text,
+                    maxLines = 1
+                )
+                Text(
+                    text = message.messageText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = theme.text.copy(alpha = 0.6f),
+                    maxLines = 1
+                )
+                Text(
+                    text = timeFormat.format(message.scheduledTime),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = theme.text.copy(alpha = 0.5f)
+                )
+            }
+            IconButton(onClick = onCancel) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Cancel",
+                    tint = Color(0xFFFF006E)
+                )
             }
         }
     }

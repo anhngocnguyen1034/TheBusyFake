@@ -62,10 +62,15 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource
 import com.example.thebusysimulator.presentation.util.FlashHelper
+import com.example.thebusysimulator.presentation.util.ImageHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import kotlinx.coroutines.cancel
 import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.R
@@ -122,9 +127,14 @@ class FakeCallActivity : ComponentActivity() {
 
         setContent {
             TheBusySimulatorTheme(themeMode = "system") {
+                var avatarUri by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(callerName) {
+                    avatarUri = AppContainer.messageRepository.getContactAvatarUri(callerName)
+                }
                 FakeCallScreen(
                     callerName = callerName,
                     callerNumber = callerNumber,
+                    avatarUri = avatarUri,
                     onAccept = {
                         stopRinging()
                     },
@@ -271,6 +281,7 @@ class FakeCallActivity : ComponentActivity() {
     companion object {
         const val EXTRA_CALLER_NAME = "caller_name"
         const val EXTRA_CALLER_NUMBER = "caller_number"
+        const val EXTRA_CALL_ID = "call_id"
         const val EXTRA_ACTION = "action" // "accept" or "decline"
     }
 }
@@ -279,6 +290,7 @@ class FakeCallActivity : ComponentActivity() {
 fun FakeCallScreen(
     callerName: String,
     callerNumber: String,
+    avatarUri: String? = null,
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
@@ -288,12 +300,14 @@ fun FakeCallScreen(
         InCallScreen(
             callerName = callerName,
             callerNumber = callerNumber,
+            avatarUri = avatarUri,
             onEndCall = { onDecline() }
         )
     } else {
         IncomingCallScreen(
             callerName = callerName,
             callerNumber = callerNumber,
+            avatarUri = avatarUri,
             onAnswer = {
                 isInCall = true
                 onAccept()
@@ -307,6 +321,7 @@ fun FakeCallScreen(
 fun IncomingCallScreen(
     callerName: String,
     callerNumber: String,
+    avatarUri: String? = null,
     onAnswer: () -> Unit,
     onDecline: () -> Unit
 ) {
@@ -328,20 +343,36 @@ fun IncomingCallScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            val context = LocalContext.current
+            val resolvedUri = remember(avatarUri) {
+                ImageHelper.getImageUri(context, avatarUri)
+            }
             Box(
                 modifier = Modifier
                     .size(140.dp)
                     .shadow(12.dp, CircleShape)
                     .background(Color(0xFF34495E), CircleShape)
-                    .border(2.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                    .border(2.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                    .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(80.dp)
-                )
+                if (resolvedUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context).data(resolvedUri).crossfade(true).build()
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = callerName.take(1).uppercase(),
+                        fontSize = 56.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
 
             Column(
@@ -492,6 +523,7 @@ fun IncomingCallScreen(
 fun InCallScreen(
     callerName: String,
     callerNumber: String,
+    avatarUri: String? = null,
     onEndCall: () -> Unit
 ) {
     var callDuration by remember { mutableStateOf(0) }
@@ -526,17 +558,33 @@ fun InCallScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val context = LocalContext.current
+            val resolvedUri = remember(avatarUri) {
+                ImageHelper.getImageUri(context, avatarUri)
+            }
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color.Gray.copy(alpha = 0.3f), CircleShape),
+                    .background(Color.Gray.copy(alpha = 0.3f), CircleShape)
+                    .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = callerName.take(1).uppercase(),
-                    fontSize = 32.sp,
-                    color = Color.White
-                )
+                if (resolvedUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context).data(resolvedUri).crossfade(true).build()
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = callerName.take(1).uppercase(),
+                        fontSize = 32.sp,
+                        color = Color.White
+                    )
+                }
             }
             Text(
                 text = callerName,

@@ -13,10 +13,11 @@ object MessageMapper {
             timestamp = Date(data.timestamp),
             unreadCount = data.unreadCount,
             avatarUri = data.avatarUri,
-            isVerified = data.isVerified
+            isVerified = data.isVerified,
+            chatTheme = data.chatTheme
         )
     }
-    
+
     fun fromEntity(entity: Message): MessageEntity {
         return MessageEntity(
             id = entity.id,
@@ -25,7 +26,8 @@ object MessageMapper {
             timestamp = entity.timestamp.time,
             unreadCount = entity.unreadCount,
             avatarUri = entity.avatarUri,
-            isVerified = entity.isVerified
+            isVerified = entity.isVerified,
+            chatTheme = entity.chatTheme
         )
     }
 }

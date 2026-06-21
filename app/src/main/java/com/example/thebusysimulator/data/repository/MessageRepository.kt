@@ -69,5 +69,13 @@ class MessageRepository(
     suspend fun isContactVerified(contactName: String): Boolean {
         return messageDao.getMessageByContactName(contactName)?.isVerified ?: false
     }
+
+    suspend fun getContactAvatarUri(contactName: String): String? {
+        return messageDao.getMessageByContactName(contactName)?.avatarUri
+    }
+
+    suspend fun updateChatTheme(messageId: String, theme: String) {
+        messageDao.updateChatTheme(messageId, theme)
+    }
 }
 

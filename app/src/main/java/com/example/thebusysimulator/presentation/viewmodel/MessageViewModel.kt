@@ -407,6 +407,33 @@ class MessageViewModel(
         }
     }
     
+    fun updateChatTheme(messageId: String, theme: String) {
+        viewModelScope.launch {
+            try {
+                messageRepository.updateChatTheme(messageId, theme)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
+        }
+    }
+
+    fun updateContact(messageId: String, newName: String, newAvatarUri: String?, isVerified: Boolean) {
+        viewModelScope.launch {
+            try {
+                val existing = messageRepository.getMessageById(messageId) ?: return@launch
+                messageRepository.updateMessage(
+                    existing.copy(
+                        contactName = newName,
+                        avatarUri = newAvatarUri,
+                        isVerified = isVerified
+                    )
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
+        }
+    }
+
     fun deleteMessage(messageId: String) {
         viewModelScope.launch {
             try {
@@ -499,6 +526,38 @@ class MessageViewModel(
         }
     }
     
+    fun sendAudioMessage(messageId: String, audioUri: String, isFromMe: Boolean = true) {
+        viewModelScope.launch {
+            try {
+                val chatMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = "",
+                    timestamp = Date(),
+                    isFromMe = isFromMe,
+                    audioUri = audioUri
+                )
+                messageRepository.insertChatMessage(chatMessage)
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun sendVideoMessage(messageId: String, videoUri: String, isFromMe: Boolean = true) {
+        viewModelScope.launch {
+            try {
+                val chatMessage = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    messageId = messageId,
+                    text = "",
+                    timestamp = Date(),
+                    isFromMe = isFromMe,
+                    videoUri = videoUri
+                )
+                messageRepository.insertChatMessage(chatMessage)
+            } catch (_: Exception) {}
+        }
+    }
+
     fun sendMessageFromContact(messageId: String, text: String, imageUri: String? = null) {
         viewModelScope.launch {
             try {

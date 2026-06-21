@@ -40,15 +40,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun CreateMessageScreen(
     navController: NavController,
-    onConfirm: (String, String?, Boolean) -> Unit
+    onConfirm: (String, String?, Boolean) -> Unit,
+    initialName: String = "",
+    initialAvatarUri: String? = null,
+    initialIsVerified: Boolean = false,
+    isEditMode: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val theme = getGenZTheme()
-    
-    var newContactName by remember { mutableStateOf("") }
-    var selectedAvatarUri by remember { mutableStateOf<Uri?>(null) }
-    var isVerified by remember { mutableStateOf(false) }
+
+    var newContactName by remember { mutableStateOf(initialName) }
+    var selectedAvatarUri by remember { mutableStateOf<Uri?>(initialAvatarUri?.let { Uri.parse(it) }) }
+    var isVerified by remember { mutableStateOf(initialIsVerified) }
 
     // Launcher chọn ảnh
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -88,18 +92,13 @@ fun CreateMessageScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = { navController.popBackStack() }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = stringResource(R.string.back),
-                        tint = theme.text
-                    )
-                }
+                com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
+                    onClick = { navController.popBackStack() },
+                    theme = theme
+                )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = stringResource(R.string.create_new_sender),
+                    text = if (isEditMode) "EDIT CONTACT" else stringResource(R.string.create_new_sender),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace
@@ -300,8 +299,12 @@ fun CreateMessageScreen(
                         onClick = {
                             if (isEnabled) {
                                 scope.launch {
-                                    val savedPath = selectedAvatarUri?.let {
-                                        ImageHelper.saveImageToInternalStorage(context, it)
+                                    val savedPath = if (selectedAvatarUri != null &&
+                                        selectedAvatarUri.toString() != initialAvatarUri
+                                    ) {
+                                        ImageHelper.saveImageToInternalStorage(context, selectedAvatarUri!!)
+                                    } else {
+                                        initialAvatarUri
                                     }
                                     onConfirm(newContactName, savedPath, isVerified)
                                     navController.popBackStack()
@@ -331,7 +334,7 @@ fun CreateMessageScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (isEnabled) stringResource(R.string.create_now) else stringResource(R.string.enter_name),
+                        text = if (isEnabled) (if (isEditMode) "SAVE CHANGES ✓" else stringResource(R.string.create_now)) else stringResource(R.string.enter_name),
                         color = if (isEnabled) Color.Black else theme.text.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,

@@ -124,26 +124,23 @@ fun NotificationHistoryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
+                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
                         onClick = { navController.popBackStack() },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = stringResource(R.string.back),
-                            tint = theme.text
-                        )
-                    }
+                        theme = theme
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
                     Row(
 
                     ) {
                         Text(
                             text = stringResource(R.string.fake_notification_log),
-                            style = MaterialTheme.typography.headlineMedium.copy(
+                            style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Black,
                                 fontFamily = FontFamily.Monospace
                             ),
                             color = theme.text,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
                         if (notifications.isNotEmpty() && !isLoading) {
@@ -310,7 +307,9 @@ fun HistoryNotificationItem(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Monospace,
-                            color = theme.text
+                            color = theme.text,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         if (notification.isScheduled) {
                             Surface(

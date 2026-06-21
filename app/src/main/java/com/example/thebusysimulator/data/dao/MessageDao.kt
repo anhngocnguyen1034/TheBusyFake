@@ -26,5 +26,8 @@ interface MessageDao {
     
     @Query("SELECT * FROM messages WHERE contactName = :contactName LIMIT 1")
     suspend fun getMessageByContactName(contactName: String): MessageEntity?
+
+    @Query("UPDATE messages SET chatTheme = :theme WHERE id = :id")
+    suspend fun updateChatTheme(id: String, theme: String)
 }
 

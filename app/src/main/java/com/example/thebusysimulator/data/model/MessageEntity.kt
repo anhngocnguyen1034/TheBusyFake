@@ -12,6 +12,7 @@ data class MessageEntity(
     val timestamp: Long,
     val unreadCount: Int = 0,
     val avatarUri: String? = null,
-    val isVerified: Boolean = false
+    val isVerified: Boolean = false,
+    val chatTheme: String = "default"
 )
 
