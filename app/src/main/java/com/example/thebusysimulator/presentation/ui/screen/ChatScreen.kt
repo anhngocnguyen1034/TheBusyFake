@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -106,6 +107,20 @@ fun ChatScreen(
     var searchQuery by remember { mutableStateOf("") }
     var currentSearchIndex by remember { mutableStateOf(0) }
     var pendingMessageText by remember { mutableStateOf("") }
+    // When the keyboard is up, collapse the two leading icons into a single chevron so
+    // the text field gets the full width. The user can tap the chevron to expand them.
+    // When the keyboard is hidden, the two icons are shown again.
+    // derivedStateOf so we only recompose when the boolean flips — reading the raw IME
+    // inset directly would recompose every frame while the keyboard animates (janky).
+    val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
+    val imeVisible by remember(imeInsets, density) {
+        derivedStateOf { imeInsets.getBottom(density) > 0 }
+    }
+    var leadingExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(imeVisible) {
+        if (!imeVisible) leadingExpanded = false
+    }
     var isRecording by remember { mutableStateOf(false) }
     var recordingSeconds by remember { mutableStateOf(0) }
     val audioRecorder = remember { com.example.thebusysimulator.presentation.util.AudioRecorderHelper(context) }
@@ -584,11 +599,6 @@ fun ChatScreen(
                                 }
                             }
 
-                            IconButton(onClick = {
-                                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            }) {
-                                Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
-                            }
                             val videoPickerLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.PickVisualMedia()
                             ) { uri: Uri? ->
@@ -599,14 +609,66 @@ fun ChatScreen(
                                     }
                                 }
                             }
-                            IconButton(onClick = {
-                                videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
-                            }) {
-                                Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
+
+                            // Leading icons (image + video). While the keyboard is up they
+                            // collapse into a single chevron so the text field gets the full
+                            // width. Tap the chevron to expand them; tap the text field to
+                            // collapse them again.
+                            val showLeadingIcons = !imeVisible || leadingExpanded
+                            val collapseSpec = tween<androidx.compose.ui.unit.IntSize>(durationMillis = 180)
+                            val fadeSpec = tween<Float>(durationMillis = 180)
+                            val leadingEnter = androidx.compose.animation.fadeIn(fadeSpec) +
+                                androidx.compose.animation.expandHorizontally(collapseSpec)
+                            val leadingExit = androidx.compose.animation.fadeOut(fadeSpec) +
+                                androidx.compose.animation.shrinkHorizontally(collapseSpec)
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = imeVisible && !leadingExpanded,
+                                enter = leadingEnter,
+                                exit = leadingExit
+                            ) {
+                                IconButton(onClick = { leadingExpanded = true }) {
+                                    Icon(
+                                        Icons.Filled.KeyboardArrowRight,
+                                        contentDescription = "More options",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showLeadingIcons,
+                                enter = leadingEnter,
+                                exit = leadingExit
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    IconButton(onClick = {
+                                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    }) {
+                                        Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
+                                    }
+                                    IconButton(onClick = {
+                                        videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                                    }) {
+                                        Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
+                                    }
+                                }
+                            }
+                            // Tapping the text field collapses the expanded leading icons.
+                            val inputInteractionSource = remember { MutableInteractionSource() }
+                            LaunchedEffect(inputInteractionSource) {
+                                inputInteractionSource.interactions.collect { interaction ->
+                                    if (interaction is androidx.compose.foundation.interaction.PressInteraction.Release) {
+                                        leadingExpanded = false
+                                    }
+                                }
                             }
                             BasicTextField(
                                 value = messageText,
                                 onValueChange = { messageText = it },
+                                interactionSource = inputInteractionSource,
                                 modifier = Modifier
                                     .weight(1f)
                                     .background(
