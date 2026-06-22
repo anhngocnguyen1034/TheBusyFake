@@ -28,8 +28,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -101,13 +103,19 @@ fun ChatScreen(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSendOptionsSheet by remember { mutableStateOf(false) }
-    var showDeleteChatDialog by remember { mutableStateOf(false) }
-    var showMoreMenu by remember { mutableStateOf(false) }
     var isSearchMode by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var currentSearchIndex by remember { mutableStateOf(0) }
-    var showThemePicker by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
+    // When the keyboard is up, collapse the two leading icons into a single chevron so
+    // the text field gets the full width. The user can tap the chevron to expand them.
+    // When the keyboard is hidden, the two icons are shown again.
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    var leadingExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(imeVisible) {
+        if (!imeVisible) leadingExpanded = false
+    }
     var isRecording by remember { mutableStateOf(false) }
     var recordingSeconds by remember { mutableStateOf(0) }
     val audioRecorder = remember { com.example.thebusysimulator.presentation.util.AudioRecorderHelper(context) }
@@ -129,6 +137,17 @@ fun ChatScreen(
 
     LaunchedEffect(messageId) {
         viewModel.loadChatMessages(messageId)
+    }
+
+    // Receive actions returned from the ChatSettings screen (e.g. start search).
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val chatAction by (savedStateHandle?.getStateFlow("chat_action", "")
+        ?.collectAsState() ?: remember { mutableStateOf("") })
+    LaunchedEffect(chatAction) {
+        if (chatAction == "search") {
+            isSearchMode = true
+            savedStateHandle?.set("chat_action", "")
+        }
     }
 
     val chatUiState by viewModel.chatUiState.collectAsState()
@@ -292,10 +311,14 @@ fun ChatScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                    com.example.thebusysimulator.presentation.ui.component.GenZBackButton(
-                        onClick = { navController.popBackStack() }
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = colorScheme.onBackground
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -381,91 +404,12 @@ fun ChatScreen(
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
-                    Box {
-                        IconButton(onClick = { showMoreMenu = true }) {
-                            Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
-                        }
-                        DropdownMenu(
-                            expanded = showMoreMenu,
-                            onDismissRequest = { showMoreMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Change theme") },
-                                leadingIcon = {
-                                    Icon(Icons.Rounded.Star, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    showThemePicker = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Search") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Search, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    isSearchMode = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Edit contact") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Edit, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    navController.navigate(
-                                        com.example.thebusysimulator.presentation.navigation.Screen.EditContact.createRoute(messageId)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Delete chat", color = colorScheme.error) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Delete, null, tint = colorScheme.error)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    showDeleteChatDialog = true
-                                }
-                            )
-                        }
-                    }
-                    if (showDeleteChatDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showDeleteChatDialog = false },
-                            title = {
-                                Text(
-                                    text = "Delete chat?",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Delete \"$displayName\" and all messages? This cannot be undone.",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        viewModel.deleteMessage(messageId)
-                                        showDeleteChatDialog = false
-                                        navController.popBackStack()
-                                    }
-                                ) {
-                                    Text("Delete", color = colorScheme.error)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDeleteChatDialog = false }) {
-                                    Text("Cancel")
-                                }
-                            }
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.example.thebusysimulator.presentation.navigation.Screen.ChatSettings.createRoute(messageId)
                         )
+                    }) {
+                        Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
                     }
             }
             } // end else (normal header)
@@ -650,11 +594,6 @@ fun ChatScreen(
                                 }
                             }
 
-                            IconButton(onClick = {
-                                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            }) {
-                                Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
-                            }
                             val videoPickerLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.PickVisualMedia()
                             ) { uri: Uri? ->
@@ -665,14 +604,60 @@ fun ChatScreen(
                                     }
                                 }
                             }
-                            IconButton(onClick = {
-                                videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
-                            }) {
-                                Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
+
+                            // Leading icons (image + video). While the keyboard is up they
+                            // collapse into a single chevron so the text field gets the full
+                            // width. Tap the chevron to expand them; tap the text field to
+                            // collapse them again.
+                            val showLeadingIcons = !imeVisible || leadingExpanded
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = imeVisible && !leadingExpanded,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(),
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally()
+                            ) {
+                                IconButton(onClick = { leadingExpanded = true }) {
+                                    Icon(
+                                        Icons.Filled.KeyboardArrowRight,
+                                        contentDescription = "More options",
+                                        tint = colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = showLeadingIcons,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandHorizontally(),
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkHorizontally()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    IconButton(onClick = {
+                                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    }) {
+                                        Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
+                                    }
+                                    IconButton(onClick = {
+                                        videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                                    }) {
+                                        Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
+                                    }
+                                }
+                            }
+                            // Tapping the text field collapses the expanded leading icons.
+                            val inputInteractionSource = remember { MutableInteractionSource() }
+                            LaunchedEffect(inputInteractionSource) {
+                                inputInteractionSource.interactions.collect { interaction ->
+                                    if (interaction is androidx.compose.foundation.interaction.PressInteraction.Release) {
+                                        leadingExpanded = false
+                                    }
+                                }
                             }
                             BasicTextField(
                                 value = messageText,
                                 onValueChange = { messageText = it },
+                                interactionSource = inputInteractionSource,
                                 modifier = Modifier
                                     .weight(1f)
                                     .background(
@@ -807,17 +792,6 @@ fun ChatScreen(
                 }
             }
         }
-    }
-
-    if (showThemePicker) {
-        ChatThemePickerSheet(
-            currentThemeId = message?.chatTheme ?: "default",
-            onThemeSelected = { themeId ->
-                viewModel.updateChatTheme(messageId, themeId)
-                showThemePicker = false
-            },
-            onDismiss = { showThemePicker = false }
-        )
     }
 
     if (showBottomSheet) {
