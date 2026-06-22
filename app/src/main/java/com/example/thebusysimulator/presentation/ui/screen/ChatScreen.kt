@@ -102,12 +102,9 @@ fun ChatScreen(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var showSendOptionsSheet by remember { mutableStateOf(false) }
-    var showDeleteChatDialog by remember { mutableStateOf(false) }
-    var showMoreMenu by remember { mutableStateOf(false) }
     var isSearchMode by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var currentSearchIndex by remember { mutableStateOf(0) }
-    var showThemePicker by remember { mutableStateOf(false) }
     var pendingMessageText by remember { mutableStateOf("") }
     var isRecording by remember { mutableStateOf(false) }
     var recordingSeconds by remember { mutableStateOf(0) }
@@ -130,6 +127,17 @@ fun ChatScreen(
 
     LaunchedEffect(messageId) {
         viewModel.loadChatMessages(messageId)
+    }
+
+    // Receive actions returned from the ChatSettings screen (e.g. start search).
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val chatAction by (savedStateHandle?.getStateFlow("chat_action", "")
+        ?.collectAsState() ?: remember { mutableStateOf("") })
+    LaunchedEffect(chatAction) {
+        if (chatAction == "search") {
+            isSearchMode = true
+            savedStateHandle?.set("chat_action", "")
+        }
     }
 
     val chatUiState by viewModel.chatUiState.collectAsState()
@@ -386,91 +394,12 @@ fun ChatScreen(
                     }) {
                         Icon(Icons.Filled.Call, "Video Call", tint = colorScheme.primary)
                     }
-                    Box {
-                        IconButton(onClick = { showMoreMenu = true }) {
-                            Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
-                        }
-                        DropdownMenu(
-                            expanded = showMoreMenu,
-                            onDismissRequest = { showMoreMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Change theme") },
-                                leadingIcon = {
-                                    Icon(Icons.Rounded.Star, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    showThemePicker = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Search") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Search, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    isSearchMode = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Edit contact") },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Edit, null, tint = colorScheme.onSurface)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    navController.navigate(
-                                        com.example.thebusysimulator.presentation.navigation.Screen.EditContact.createRoute(messageId)
-                                    )
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Delete chat", color = colorScheme.error) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Delete, null, tint = colorScheme.error)
-                                },
-                                onClick = {
-                                    showMoreMenu = false
-                                    showDeleteChatDialog = true
-                                }
-                            )
-                        }
-                    }
-                    if (showDeleteChatDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showDeleteChatDialog = false },
-                            title = {
-                                Text(
-                                    text = "Delete chat?",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Delete \"$displayName\" and all messages? This cannot be undone.",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        viewModel.deleteMessage(messageId)
-                                        showDeleteChatDialog = false
-                                        navController.popBackStack()
-                                    }
-                                ) {
-                                    Text("Delete", color = colorScheme.error)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDeleteChatDialog = false }) {
-                                    Text("Cancel")
-                                }
-                            }
+                    IconButton(onClick = {
+                        navController.navigate(
+                            com.example.thebusysimulator.presentation.navigation.Screen.ChatSettings.createRoute(messageId)
                         )
+                    }) {
+                        Icon(Icons.Filled.MoreVert, "More options", tint = colorScheme.onBackground)
                     }
             }
             } // end else (normal header)
@@ -812,17 +741,6 @@ fun ChatScreen(
                 }
             }
         }
-    }
-
-    if (showThemePicker) {
-        ChatThemePickerSheet(
-            currentThemeId = message?.chatTheme ?: "default",
-            onThemeSelected = { themeId ->
-                viewModel.updateChatTheme(messageId, themeId)
-                showThemePicker = false
-            },
-            onDismiss = { showThemePicker = false }
-        )
     }
 
     if (showBottomSheet) {

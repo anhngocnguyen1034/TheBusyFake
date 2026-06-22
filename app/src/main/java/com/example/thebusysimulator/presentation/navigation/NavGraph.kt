@@ -147,6 +147,29 @@ fun NavGraph(
         }
 
         composable(
+            route = Screen.ChatSettings.route,
+            arguments = listOf(navArgument("messageId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedMessageId = backStackEntry.arguments?.getString("messageId") ?: return@composable
+            val messageId = URLDecoder.decode(encodedMessageId, StandardCharsets.UTF_8.name())
+            messageViewModel?.let { viewModel ->
+                val uiState by viewModel.uiState.collectAsState()
+                val message = uiState.messages.find { it.id == messageId }
+                if (message != null) {
+                    ChatSettingsScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        messageId = messageId,
+                        contactName = message.contactName,
+                        avatarUri = message.avatarUri,
+                        isVerified = message.isVerified,
+                        currentThemeId = message.chatTheme
+                    )
+                }
+            }
+        }
+
+        composable(
             route = Screen.ImageEditor.route,
             arguments = listOf(
                 navArgument("messageId") { type = NavType.StringType },
