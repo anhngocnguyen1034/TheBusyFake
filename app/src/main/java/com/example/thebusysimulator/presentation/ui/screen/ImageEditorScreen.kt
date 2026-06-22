@@ -756,7 +756,16 @@ private fun DrawScope.drawStroke(offsets: List<Offset>, color: Color, strokeWidt
     if (offsets.size == 1) { drawCircle(color = color, radius = strokeWidthPx / 2f, center = offsets[0]); return }
     val path = Path()
     path.moveTo(offsets[0].x, offsets[0].y)
-    for (i in 1 until offsets.size) path.lineTo(offsets[i].x, offsets[i].y)
+    // Smooth the stroke: draw quadratic curves through the midpoints, using each
+    // sampled point as the control point. This avoids the "connected straight
+    // segments" look on arcs and gives a continuously curved line.
+    for (i in 1 until offsets.size - 1) {
+        val midX = (offsets[i].x + offsets[i + 1].x) / 2f
+        val midY = (offsets[i].y + offsets[i + 1].y) / 2f
+        path.quadraticBezierTo(offsets[i].x, offsets[i].y, midX, midY)
+    }
+    // Finish at the last point.
+    path.lineTo(offsets[offsets.size - 1].x, offsets[offsets.size - 1].y)
     drawPath(path = path, color = color, style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
@@ -804,10 +813,25 @@ private suspend fun flattenAndSave(
             paint.color = dp.color.toArgb()
             paint.strokeWidth = dp.strokeWidthPx * scaleX
             val ap = AndroidPath()
-            dp.offsets.forEachIndexed { i, o ->
-                val ix = (o.x - imageDisplayBounds.left) * scaleX
-                val iy = (o.y - imageDisplayBounds.top) * scaleY
-                if (i == 0) ap.moveTo(ix, iy) else ap.lineTo(ix, iy)
+            // Map display-space offsets to bitmap space.
+            val pts = dp.offsets.map { o ->
+                Offset(
+                    (o.x - imageDisplayBounds.left) * scaleX,
+                    (o.y - imageDisplayBounds.top) * scaleY
+                )
+            }
+            if (pts.size == 1) {
+                ap.addCircle(pts[0].x, pts[0].y, paint.strokeWidth / 2f, AndroidPath.Direction.CW)
+            } else {
+                ap.moveTo(pts[0].x, pts[0].y)
+                // Same quadratic-Bézier smoothing as the on-screen preview so the
+                // saved bitmap matches what the user drew.
+                for (i in 1 until pts.size - 1) {
+                    val midX = (pts[i].x + pts[i + 1].x) / 2f
+                    val midY = (pts[i].y + pts[i + 1].y) / 2f
+                    ap.quadTo(pts[i].x, pts[i].y, midX, midY)
+                }
+                ap.lineTo(pts[pts.size - 1].x, pts[pts.size - 1].y)
             }
             canvas.drawPath(ap, paint)
         }
