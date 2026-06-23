@@ -615,17 +615,7 @@ fun ChatScreen(
                             // width. Tap the chevron to expand them; tap the text field to
                             // collapse them again.
                             val showLeadingIcons = !imeVisible || leadingExpanded
-                            val collapseSpec = tween<androidx.compose.ui.unit.IntSize>(durationMillis = 180)
-                            val fadeSpec = tween<Float>(durationMillis = 180)
-                            val leadingEnter = androidx.compose.animation.fadeIn(fadeSpec) +
-                                androidx.compose.animation.expandHorizontally(collapseSpec)
-                            val leadingExit = androidx.compose.animation.fadeOut(fadeSpec) +
-                                androidx.compose.animation.shrinkHorizontally(collapseSpec)
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = imeVisible && !leadingExpanded,
-                                enter = leadingEnter,
-                                exit = leadingExit
-                            ) {
+                            if (imeVisible && !leadingExpanded) {
                                 IconButton(onClick = { leadingExpanded = true }) {
                                     Icon(
                                         Icons.Filled.KeyboardArrowRight,
@@ -635,25 +625,16 @@ fun ChatScreen(
                                     )
                                 }
                             }
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = showLeadingIcons,
-                                enter = leadingEnter,
-                                exit = leadingExit
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    IconButton(onClick = {
-                                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                    }) {
-                                        Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
-                                    }) {
-                                        Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
-                                    }
+                            if (showLeadingIcons) {
+                                IconButton(onClick = {
+                                    imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                }) {
+                                    Icon(painter = painterResource(R.drawable.ic_image), "Select Image", tint = colorScheme.primary)
+                                }
+                                IconButton(onClick = {
+                                    videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+                                }) {
+                                    Icon(Icons.Filled.Videocam, "Select Video", tint = colorScheme.primary)
                                 }
                             }
                             // Tapping the text field collapses the expanded leading icons.
