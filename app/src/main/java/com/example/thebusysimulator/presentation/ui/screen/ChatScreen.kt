@@ -72,7 +72,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import com.example.thebusysimulator.domain.model.ChatMessage
+import com.example.thebusysimulator.presentation.ui.component.PermissionSettingsDialog
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.util.PermissionHelper
 import com.example.thebusysimulator.presentation.ui.theme.ChatThemes
 import com.example.thebusysimulator.presentation.util.DateUtils
 import com.example.thebusysimulator.presentation.util.ImageHelper
@@ -187,15 +189,28 @@ fun ChatScreen(
     val displayName = getContactDisplayName(contactName)
     val isPresetMessage = MessageViewModel.isPresetContact(contactName)
 
+    // Dialog dẫn người dùng vào Settings khi một quyền đã bị từ chối vĩnh viễn.
+    // Lưu (titleRes, bodyRes, iconRes) của quyền tương ứng; null = không hiện.
+    var permissionDialogContent by remember { mutableStateOf<Triple<Int, Int, Int>?>(null) }
+
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
-            putExtra("caller_name", displayName)
-            putExtra("caller_number", "")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        if (isGranted) {
+            val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
+                putExtra("caller_name", displayName)
+                putExtra("caller_number", "")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } else {
+            // Bị từ chối tới mức hệ thống không còn hiện dialog -> hiện dialog vào Settings.
+            (context as? android.app.Activity)?.let { activity ->
+                if (PermissionHelper.isPermanentlyDenied(activity, android.Manifest.permission.CAMERA)) {
+                    permissionDialogContent = Triple(R.string.camera_permission_required_title, R.string.camera_permission_body, R.drawable.ic_camera_off)
+                }
+            }
         }
-        context.startActivity(intent)
     }
 
     // Hàm để scroll đến tin nhắn được phản hồi
@@ -391,10 +406,10 @@ fun ChatScreen(
                     }
 
                     IconButton(onClick = {
-                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                            context,
-                            android.Manifest.permission.CAMERA
-                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        val hasPermission = PermissionHelper.isPermissionGranted(
+                            context, android.Manifest.permission.CAMERA
+                        )
+                        val activity = context as? android.app.Activity
 
                         if (hasPermission) {
                             val intent = Intent(context, com.example.thebusysimulator.presentation.FakeVideoCallActivity::class.java).apply {
@@ -403,7 +418,10 @@ fun ChatScreen(
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             }
                             context.startActivity(intent)
+                        } else if (activity != null && PermissionHelper.isPermanentlyDenied(activity, android.Manifest.permission.CAMERA)) {
+                            permissionDialogContent = Triple(R.string.camera_permission_required_title, R.string.camera_permission_body, R.drawable.ic_camera_off)
                         } else {
+                            PermissionHelper.markPermissionRequested(context, android.Manifest.permission.CAMERA)
                             cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                         }
                     }) {
@@ -691,17 +709,23 @@ fun ChatScreen(
                                     if (granted) {
                                         audioRecorder.startRecording()
                                         isRecording = true
+                                    } else {
+                                        (context as? android.app.Activity)?.let { activity ->
+                                            if (PermissionHelper.isPermanentlyDenied(activity, android.Manifest.permission.RECORD_AUDIO)) {
+                                                permissionDialogContent = Triple(R.string.record_audio_permission_required_title, R.string.record_audio_permission_body, R.drawable.ic_mic)
+                                            }
+                                        }
                                     }
                                 }
                                 IconButton(onClick = {
-                                    if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
-                                        androidx.core.content.ContextCompat.checkSelfPermission(
-                                            context, android.Manifest.permission.RECORD_AUDIO
-                                        )
-                                    ) {
+                                    val activity = context as? android.app.Activity
+                                    if (PermissionHelper.isPermissionGranted(context, android.Manifest.permission.RECORD_AUDIO)) {
                                         audioRecorder.startRecording()
                                         isRecording = true
+                                    } else if (activity != null && PermissionHelper.isPermanentlyDenied(activity, android.Manifest.permission.RECORD_AUDIO)) {
+                                        permissionDialogContent = Triple(R.string.record_audio_permission_required_title, R.string.record_audio_permission_body, R.drawable.ic_mic)
                                     } else {
+                                        PermissionHelper.markPermissionRequested(context, android.Manifest.permission.RECORD_AUDIO)
                                         recordAudioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
                                     }
                                 }) {
@@ -784,6 +808,19 @@ fun ChatScreen(
                 }
             }
         }
+    }
+
+    permissionDialogContent?.let { (titleRes, bodyRes, iconRes) ->
+        PermissionSettingsDialog(
+            title = stringResource(titleRes),
+            body = stringResource(bodyRes),
+            iconRes = iconRes,
+            onDismiss = { permissionDialogContent = null },
+            onOpenSettings = {
+                permissionDialogContent = null
+                PermissionHelper.openAppSettings(context)
+            }
+        )
     }
 
     if (showBottomSheet) {

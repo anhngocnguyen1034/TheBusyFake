@@ -61,6 +61,8 @@
     <string name="grant_permission">GRANT PERMISSION</string>
     <string name="open_settings">Open Settings</string>
     <string name="later">Later</string>
+    <string name="record_audio_permission_required_title">Microphone permission required</string>
+    <string name="record_audio_permission_body">The app needs microphone access to record voice messages. Please open Settings and grant Microphone permission.</string>
 
     <!-- Fake Notification / Fake Message -->
     <string name="fake_message_title">Fake Message</string>

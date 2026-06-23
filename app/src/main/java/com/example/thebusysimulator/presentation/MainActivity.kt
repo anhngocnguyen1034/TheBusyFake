@@ -66,9 +66,8 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(PermissionHelper.hasCameraPermission(context))
                 }
 
-                // State to show settings dialog when permission is denied
+                // State to show settings dialog when permission is permanently denied
                 var showPermissionDeniedDialog by remember { mutableStateOf(false) }
-                var permissionDeniedCount by remember { mutableStateOf(0) }
 
                 // Camera permission launcher
                 val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -76,9 +75,13 @@ class MainActivity : ComponentActivity() {
                 ) { isGranted ->
                     hasCameraPermission = isGranted
                     if (!isGranted) {
-                        permissionDeniedCount++
-                        // Show dialog if permission is denied
-                        showPermissionDeniedDialog = true
+                        // Nếu người dùng đã từ chối tới mức hệ thống không còn hiện
+                        // dialog xin quyền nữa -> hiện dialog dẫn vào Settings.
+                        (context as? Activity)?.let { activity ->
+                            if (PermissionHelper.isPermanentlyDenied(activity, Manifest.permission.CAMERA)) {
+                                showPermissionDeniedDialog = true
+                            }
+                        }
                     }
                     permissionCheckKey++
                 }
@@ -138,63 +141,32 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     onRequestCameraPermission = {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        val activity = context as? Activity
+                        if (activity != null && PermissionHelper.isPermanentlyDenied(activity, Manifest.permission.CAMERA)) {
+                            // Hệ thống sẽ không hiện dialog nữa -> dẫn thẳng vào Settings.
+                            showPermissionDeniedDialog = true
+                        } else {
+                            PermissionHelper.markPermissionRequested(context, Manifest.permission.CAMERA)
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
                     }
                 )
 
                 // Show Permission Denied Dialog
                 if (showPermissionDeniedDialog) {
-                    PermissionDeniedDialog(
+                    com.example.thebusysimulator.presentation.ui.component.PermissionSettingsDialog(
+                        title = stringResource(R.string.camera_permission_required_title),
+                        body = stringResource(R.string.camera_permission_body),
+                        iconRes = R.drawable.ic_camera_off,
                         onDismiss = { showPermissionDeniedDialog = false },
                         onOpenSettings = {
                             showPermissionDeniedDialog = false
-                            val intent = android.content.Intent(
-                                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                android.net.Uri.parse("package:${context.packageName}")
-                            )
-                            context.startActivity(intent)
+                            PermissionHelper.openAppSettings(context)
                         }
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-fun PermissionDeniedDialog(
-    onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit
-) {
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            androidx.compose.material3.Text(
-                text = stringResource(R.string.camera_permission_required_title),
-                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
-        },
-        text = {
-            androidx.compose.material3.Text(
-                text = stringResource(R.string.camera_permission_body),
-                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            androidx.compose.material3.Button(
-                onClick = onOpenSettings
-            ) {
-                androidx.compose.material3.Text(stringResource(R.string.open_settings))
-            }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(
-                onClick = onDismiss
-            ) {
-                androidx.compose.material3.Text(stringResource(R.string.later))
-            }
-        }
-    )
 }
 

@@ -59,6 +59,8 @@
     <string name="grant_permission">CẤP QUYỀN</string>
     <string name="open_settings">Mở Cài đặt</string>
     <string name="later">Để sau</string>
+    <string name="record_audio_permission_required_title">Cần quyền micro</string>
+    <string name="record_audio_permission_body">Ứng dụng cần quyền truy cập micro để ghi âm tin nhắn thoại. Vui lòng cấp quyền trong Cài đặt.</string>
 
     <string name="fake_message_title">Tin nhắn ảo</string>
     <string name="fake_notification_uppercase">THÔNG BÁO ẢO</string>
