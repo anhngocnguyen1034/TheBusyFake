@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -32,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.anhnn.ads.Ads
 import com.example.thebusysimulator.R
+import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.navigationBarPadding
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
@@ -114,13 +117,28 @@ fun MainScreenUI(
     navController: NavController,
     theme: GenZThemeColors
 ) {
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+
+    // Nạp trước interstitial của 3 tính năng để hiện tức thì khi bấm card.
+    LaunchedEffect(Unit) {
+        Ads.preload(
+            context,
+            AdNames.HOME_FAKE_CALL,
+            AdNames.HOME_FAKE_CHAT,
+            AdNames.HOME_NOTIFICATION,
+        )
+    }
+
     var lastNavTime by remember { mutableStateOf(0L) }
-    fun navigate(route: String) {
+    // Xen interstitial (module tự áp cooldown ~30s) rồi mới điều hướng vào tính năng;
+    // chưa sẵn/tắt ads thì đi thẳng.
+    fun openFeature(adName: String, route: String) {
         val now = System.currentTimeMillis()
-        if (now - lastNavTime > 600L) {
-            lastNavTime = now
-            navController.navigate(route) { launchSingleTop = true }
-        }
+        if (now - lastNavTime <= 600L) return
+        lastNavTime = now
+        val go = { navController.navigate(route) { launchSingleTop = true } }
+        if (activity != null) Ads.showInterstitial(activity, adName) { go() } else go()
     }
 
     Column(
@@ -155,7 +173,7 @@ fun MainScreenUI(
             iconId = R.drawable.ic_call,
             accentColor = GenZYellow,
             theme = theme,
-            onClick = { navigate(Screen.FakeCall.route) }
+            onClick = { openFeature(AdNames.HOME_FAKE_CALL, Screen.FakeCall.route) }
         )
         NeoBrutalistCard(
             title = stringResource(R.string.fake_chat),
@@ -163,7 +181,7 @@ fun MainScreenUI(
             iconId = R.drawable.ic_message,
             accentColor = GenZPink,
             theme = theme,
-            onClick = { navigate(Screen.Message.route) }
+            onClick = { openFeature(AdNames.HOME_FAKE_CHAT, Screen.Message.route) }
         )
         NeoBrutalistCard(
             title = stringResource(R.string.notifications),
@@ -171,7 +189,7 @@ fun MainScreenUI(
             iconId = R.drawable.ic_notification,
             accentColor = GenZBlue,
             theme = theme,
-            onClick = { navigate(Screen.FakeMessage.route) }
+            onClick = { openFeature(AdNames.HOME_NOTIFICATION, Screen.FakeMessage.route) }
         )
     }
 }

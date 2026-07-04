@@ -31,9 +31,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.anhnn.ads.BannerAd
+import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.domain.model.Message
 import com.example.thebusysimulator.presentation.navigation.Screen
 import com.example.thebusysimulator.presentation.ui.hideKeyboardOnClick
+import com.example.thebusysimulator.presentation.ui.navigationBarPadding
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
 import java.text.SimpleDateFormat
@@ -140,7 +143,8 @@ fun MessageScreen(
                 }
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    // Chừa chỗ ở đáy cho banner quảng cáo ghim dưới.
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(messages, key = { it.id }) { message ->
@@ -199,6 +203,15 @@ fun MessageScreen(
                 }
             }
         }
+
+        // Banner cuối màn danh sách hội thoại.
+        BannerAd(
+            adName = AdNames.MESSAGE_BANNER,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarPadding()
+        )
     }
 }
 

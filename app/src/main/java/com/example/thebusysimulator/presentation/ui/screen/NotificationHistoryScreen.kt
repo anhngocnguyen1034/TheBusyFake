@@ -31,6 +31,9 @@ import com.example.thebusysimulator.R
 import com.example.thebusysimulator.domain.model.FakeNotification
 import com.example.thebusysimulator.domain.repository.FakeNotificationRepository
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.navigationBarPadding
+import com.anhnn.ads.BannerAd
+import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.presentation.ui.theme.GenZBlue
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -114,7 +117,8 @@ fun NotificationHistoryScreen(
         }
 
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp, start = 16.dp, end = 16.dp),
+            // Chừa chỗ ở đáy cho banner quảng cáo ghim dưới.
+            contentPadding = PaddingValues(bottom = 80.dp, top = 16.dp, start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -242,6 +246,15 @@ fun NotificationHistoryScreen(
                 }
             )
         }
+
+        // Banner cuối màn lịch sử thông báo.
+        BannerAd(
+            adName = AdNames.NOTIFICATION_HISTORY_BANNER,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarPadding()
+        )
     }
 }
 
