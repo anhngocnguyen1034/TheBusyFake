@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What This Is
+
+"The Busy Simulator" — a Gen-Z themed Android prank app (Neo-Brutalism UI) with three core features: schedule **fake incoming calls** (full-screen, voice + video), simulate two-way **fake chats** (incl. preset auto-reply contacts: Mom, Partner, Doctor, Scientist — see `MessageViewModel.isPresetContact`), and schedule **fake notifications**. 20+ languages, Light/Dark/System theme.
+
 ## Build Commands
 
 ```bash
@@ -26,9 +30,15 @@ CI builds are handled by `.anhnn/build.sh` (called from `Jenkinsfile`) — it au
 - Kotlin 2.0.21, Java 11, KSP for annotation processing
 - Compose BOM 2024.09.00, Room 2.6.1, Navigation Compose 2.8.4
 
+## Modules
+
+Two Gradle modules (`settings.gradle.kts`):
+- `:app` — the application (package `com.example.thebusysimulator`)
+- `:language` — standalone Android library (namespace `com.anhnn.language`) owning runtime language switching: `LanguageManager`, `LanguageDataSource` (DataStore), `LanguageScreen`. `:app` depends on it; `MainActivity.attachBaseContext` reads the persisted locale through it.
+
 ## Architecture
 
-Clean Architecture with 3 layers. Dependency direction: `presentation → domain ← data`.
+`:app` uses Clean Architecture with 3 layers. Dependency direction: `presentation → domain ← data`.
 
 ```
 domain/       # Pure Kotlin — no Android dependencies
@@ -39,7 +49,7 @@ domain/       # Pure Kotlin — no Android dependencies
 
 data/         # Android-aware implementations
   dao/        # Room DAOs (FakeCall, Message, ChatMessage, FakeNotification)
-  database/   # AppDatabase (Room v8, 7 migrations)
+  database/   # AppDatabase (Room v11, migrations 1→2 … 10→11)
   datasource/ # Local data sources (Room + DataStore)
   mapper/     # Entity ↔ Domain model converters
   model/      # Room entities + data models
@@ -47,7 +57,7 @@ data/         # Android-aware implementations
 
 presentation/ # UI layer (Jetpack Compose)
   di/         # AppContainer — manual DI via lazy singletons (no Hilt/Koin)
-  navigation/ # NavGraph + Screen sealed class (11 routes)
+  navigation/ # NavGraph + Screen sealed class (15 routes)
   receiver/   # BroadcastReceivers: FakeCallReceiver, FakeMessageReceiver
   service/    # Foreground services: FakeCallNotificationService, FakeCallService, FakeMessageNotificationService
   ui/screen/  # One Compose file per screen
@@ -62,11 +72,13 @@ Activities: `MainActivity`, `FakeCallActivity` (full-screen incoming call UI), `
 ## Key Patterns
 
 - **Dependency Injection**: `AppContainer` singleton requires `AppContainer.init(context)` before use. All deps are `lazy`.
-- **Navigation**: Compose Navigation. `Screen.kt` sealed class defines all 11 routes. `Chat` route uses URL-encoded args: `chat/{contactName}/{messageId}`.
-- **Database**: Room with explicit migrations. **Always add a migration when changing the schema.** `AppDatabase` is at version 8. Version code formula: `major*1000000 + minor*10000 + patch*100 + develop`.
+- **Navigation**: Compose Navigation. `Screen.kt` sealed class defines all 15 routes. Routes with args URL-encode them, e.g. `Chat` = `chat/{contactName}/{messageId}`.
+- **Database**: Room with explicit migrations. **Always add a migration when changing the schema.** `AppDatabase` is at version 11. Version code formula: `major*1000000 + minor*10000 + patch*100 + develop`.
 - **Settings persistence**: DataStore Preferences for theme mode and language. Language switching requires `attachBaseContext` override.
 - **Fake Call flow**: `ScheduleFakeCallUseCase` → `AlarmSchedulerImpl` (AlarmManager exact alarm) → `FakeCallReceiver` → `FakeCallNotificationService` → `FakeCallActivity` (full-screen intent).
-- **Permissions required**: `SCHEDULE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, `CAMERA`, `SYSTEM_ALERT_WINDOW` (overlay).
+- **No overlay permission**: incoming-call UI uses `USE_FULL_SCREEN_INTENT`, not `SYSTEM_ALERT_WINDOW` (Google Play compliance — see `GOOGLE_PLAY_COMPLIANCE.md`). `PermissionHelper.canDrawOverlays`/overlay APIs are deprecated stubs.
+- **Permissions**: declared in manifest — `SCHEDULE_EXACT_ALARM`, `USE_FULL_SCREEN_INTENT`, `POST_NOTIFICATIONS`, `CAMERA`, `RECORD_AUDIO`, plus `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, `WAKE_LOCK`, `DISABLE_KEYGUARD`, `MODIFY_AUDIO_SETTINGS`.
+- **Runtime-permission denial**: `PermissionHelper.isPermanentlyDenied()` (tracks "requested before" in prefs + `shouldShowRequestPermissionRationale`) detects when the system will no longer prompt; callers then show `PermissionSettingsDialog` to route the user into app Settings instead of silently failing.
 
 ## CI / Discord Notifications
 

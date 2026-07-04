@@ -4,6 +4,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 sealed class Screen(val route: String) {
+    data object Splash : Screen("splash")
     data object Home : Screen("home")
     data object FakeCall : Screen("fake_call")
     data object FakeMessage : Screen("fake_message")
