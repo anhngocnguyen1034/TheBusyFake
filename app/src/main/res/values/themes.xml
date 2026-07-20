@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.TheBusySimulator" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.TheBusySimulator" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Brand yellow as the launch window background so the very first frame
+             matches the Sticker Pop splash (no white flash before Compose draws). -->
+        <item name="android:windowBackground">@color/splash_yellow</item>
+    </style>
     
     <style name="Theme.FakeCall" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowFullscreen">true</item>

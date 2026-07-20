@@ -16,6 +16,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // anhnn-components-ads (module quảng cáo) được publish qua JitPack.
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

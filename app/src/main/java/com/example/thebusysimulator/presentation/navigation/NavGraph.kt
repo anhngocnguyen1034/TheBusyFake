@@ -9,7 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.thebusysimulator.presentation.ui.screen.*
+import com.anhnn.ads.Ads
 import com.anhnn.language.LanguageScreen
+import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
@@ -29,12 +31,32 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+            SplashScreen(
+                onFinish = {
+                    val goHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                    // Xen quảng cáo 1 lần trước khi vào Home; chưa sẵn/tắt ads thì vào thẳng.
+                    if (activity != null) {
+                        Ads.showInterstitial(activity, AdNames.SPLASH_OPEN) { goHome() }
+                    } else {
+                        goHome()
+                    }
+                }
+            )
+        }
+
         composable(Screen.Home.route) {
             MainScreen(navController = navController)
         }
-        
+
         composable(Screen.FakeCall.route) {
             fakeCallViewModel?.let { viewModel ->
                 FakeCallScreen(

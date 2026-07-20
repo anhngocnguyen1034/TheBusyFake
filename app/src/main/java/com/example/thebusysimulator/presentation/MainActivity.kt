@@ -18,6 +18,8 @@ import com.example.thebusysimulator.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.rememberNavController
+import com.anhnn.ads.Ads
+import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.presentation.di.AppContainer
 import com.example.thebusysimulator.presentation.navigation.NavGraph
 import com.example.thebusysimulator.presentation.ui.theme.TheBusySimulatorTheme
@@ -44,6 +46,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppContainer.init(this)
+
+        // Xin consent (UMP) + init Mobile Ads SDK; xong thì nạp trước interstitial cho Splash.
+        Ads.start(this) {
+            Ads.preload(this, AdNames.SPLASH_OPEN)
+        }
 
         enableEdgeToEdge()
         setContent {

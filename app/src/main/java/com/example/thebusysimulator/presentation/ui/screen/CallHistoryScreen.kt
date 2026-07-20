@@ -29,6 +29,9 @@ import androidx.navigation.NavController
 import com.example.thebusysimulator.domain.model.FakeCall
 import com.example.thebusysimulator.domain.repository.FakeCallRepository
 import com.example.thebusysimulator.presentation.ui.statusBarPadding
+import com.example.thebusysimulator.presentation.ui.navigationBarPadding
+import com.anhnn.ads.BannerAd
+import com.example.thebusysimulator.ads.AdNames
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -74,7 +77,8 @@ fun CallHistoryScreen(
             .statusBarPadding()
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 16.dp, top = 16.dp, start = 16.dp, end = 16.dp),
+            // Chừa chỗ ở đáy cho banner quảng cáo ghim dưới.
+            contentPadding = PaddingValues(bottom = 80.dp, top = 16.dp, start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -147,6 +151,15 @@ fun CallHistoryScreen(
                 )
             }
         }
+
+        // Banner cuối màn lịch sử cuộc gọi.
+        BannerAd(
+            adName = AdNames.CALL_HISTORY_BANNER,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .navigationBarPadding()
+        )
     }
 }
 

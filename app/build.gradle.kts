@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -69,6 +70,13 @@ dependencies {
 
     // Language module
     implementation(project(":language"))
+
+    // Quảng cáo (AdMob) — quản lý qua module anhnn-components-ads (đã api-expose
+    // play-services-ads + UMP consent). Ad unit id / bật-tắt / cooldown lấy từ Remote Config.
+    implementation(libs.anhnn.components.ads)
+    implementation(libs.play.services.ads)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config.ktx)
     
     // CameraX
     implementation(libs.androidx.camera.core)
