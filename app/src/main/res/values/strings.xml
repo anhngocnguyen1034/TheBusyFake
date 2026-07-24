@@ -207,4 +207,10 @@
     <string name="seconds">s</string>
     <string name="minutes_unit">min</string>
     <string name="hours">h</string>
+    <string name="intro_skip">Skip intro</string>
+    <string name="intro_next">Next</string>
+    <string name="intro_get_started">Get started</string>
+    <string name="intro_slide_call">Fake a call, anytime</string>
+    <string name="intro_slide_chat">Chats that never happened</string>
+    <string name="intro_slide_notification">Ping yourself on cue</string>
 </resources>

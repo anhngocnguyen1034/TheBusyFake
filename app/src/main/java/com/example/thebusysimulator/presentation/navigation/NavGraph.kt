@@ -15,6 +15,7 @@ import com.example.thebusysimulator.ads.AdNames
 import com.example.thebusysimulator.presentation.viewmodel.FakeCallViewModel
 import com.example.thebusysimulator.presentation.viewmodel.FakeMessageViewModel
 import com.example.thebusysimulator.presentation.viewmodel.MessageViewModel
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -34,20 +35,44 @@ fun NavGraph(
         startDestination = Screen.Splash.route
     ) {
         composable(Screen.Splash.route) {
-            val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val activity = context as? android.app.Activity
+            val settings = androidx.compose.runtime.remember {
+                com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource(context)
+            }
+            // Lần đầu mở app -> vào onboarding; các lần sau vào thẳng Home.
+            val introSeen by settings.introSeen.collectAsState(initial = false)
             SplashScreen(
                 onFinish = {
-                    val goHome = {
-                        navController.navigate(Screen.Home.route) {
+                    val goNext = {
+                        val destination = if (introSeen) Screen.Home.route else Screen.Intro.route
+                        navController.navigate(destination) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
-                    // Xen quảng cáo 1 lần trước khi vào Home; chưa sẵn/tắt ads thì vào thẳng.
+                    // Xen quảng cáo 1 lần trước khi rời splash; chưa sẵn/tắt ads thì đi thẳng.
                     if (activity != null) {
-                        Ads.showInterstitial(activity, AdNames.SPLASH_OPEN) { goHome() }
+                        Ads.showInterstitial(activity, AdNames.SPLASH_OPEN) { goNext() }
                     } else {
-                        goHome()
+                        goNext()
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Intro.route) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+            val settings = androidx.compose.runtime.remember {
+                com.example.thebusysimulator.data.datasource.FakeCallSettingsDataSource(context)
+            }
+            IntroScreen(
+                onFinish = {
+                    scope.launch { settings.setIntroSeen(true) }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Intro.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )

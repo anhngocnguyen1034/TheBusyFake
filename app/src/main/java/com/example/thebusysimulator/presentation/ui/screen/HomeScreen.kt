@@ -131,8 +131,6 @@ fun MainScreenUI(
     }
 
     var lastNavTime by remember { mutableStateOf(0L) }
-    // Xen interstitial (module tự áp cooldown ~30s) rồi mới điều hướng vào tính năng;
-    // chưa sẵn/tắt ads thì đi thẳng.
     fun openFeature(adName: String, route: String) {
         val now = System.currentTimeMillis()
         if (now - lastNavTime <= 600L) return
