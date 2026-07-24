@@ -20,6 +20,18 @@ class FakeCallSettingsDataSource(context: Context) {
         private val FLASH_ENABLED_KEY = booleanPreferencesKey("flash_enabled")
         private val FLASH_MESSAGE_ENABLED_KEY = booleanPreferencesKey("flash_message_enabled")
         private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        private val INTRO_SEEN_KEY = booleanPreferencesKey("intro_seen")
+    }
+
+    /** Đã xem xong onboarding chưa — false với người dùng lần đầu. */
+    val introSeen: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[INTRO_SEEN_KEY] ?: false
+    }
+
+    suspend fun setIntroSeen(seen: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[INTRO_SEEN_KEY] = seen
+        }
     }
 
     val vibrationEnabled: Flow<Boolean> = dataStore.data.map { preferences ->
